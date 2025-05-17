@@ -1,0 +1,217 @@
+{
+
+    "doctors": [
+      {
+        "id": 1,
+        "name": "دکتر احمدی",
+        "specialtyIds": [1, 7],
+        "cityId": 1,
+        "imageUrl": "/src/assets/images/Doctors/doctor2.jpg",
+        "availableTimes": [
+          { "date": "1404/02/21", "time": "10:00" },
+          { "date": "1404/02/21", "time": "11:00" }
+        ]
+      },
+      {
+        "id": 2,
+        "name": "دکتر سلیمانی",
+        "specialtyIds": [2],
+        "cityId": 2,
+        "imageUrl": "/src/assets/images/Doctors/doctor1.jpg",
+        "availableTimes": [
+          { "date": "1404/02/22", "time": "09:00" },
+          { "date": "1404/02/22", "time": "10:30" }
+        ]
+      },
+      {
+        "id": 3,
+        "name": "دکتر موسوی",
+        "specialtyIds": [3],
+        "cityId": 3,
+        "imageUrl": "/src/assets/images/Doctors/doctor2.jpg",
+        "availableTimes": [
+          { "date": "1404/02/23", "time": "08:00" },
+          { "date": "1404/02/23", "time": "09:00" }
+        ]
+      },
+      {
+        "id": 4,
+        "name": "دکتر نادری",
+        "specialtyIds": [4],
+        "cityId": 1,
+        "imageUrl": "/src/assets/images/Doctors/doctor1.jpg",
+        "availableTimes": [
+          { "date": "1404/02/24", "time": "13:00" },
+          { "date": "1404/02/24", "time": "14:00" }
+        ]
+      },
+      {
+        "id": 5,
+        "name": "دکتر حسینی",
+        "specialtyIds": [5, 6], 
+        "cityId": 2,
+        "imageUrl": "/src/assets/images/Doctors/doctor2.jpg",
+        "availableTimes": [
+          { "date": "1404/02/25", "time": "15:00" },
+          { "date": "1404/02/25", "time": "16:00" }
+        ]
+      }
+    ],
+    "appointments": [
+      {
+        "id": 1,
+        "doctorId": 1,
+        "patientName": "علی محمدی",
+        "date": "1404/02/21",
+        "time": "10:00"
+      }
+    ],
+    "specialties": [
+      { "id": 1, "name": "قلب و عروق" , "imageUrl": "/src/assets/images/specialty/Tooth.svg"},
+      { "id": 2, "name": "ارتوپدی" , "imageUrl": "/src/assets/images/specialty/Heart.svg" },
+      { "id": 3, "name": "مغز و اعصاب" , "imageUrl": "/src/assets/images/specialty/Tooth.svg"},
+      { "id": 4, "name": "پوست و مو" , "imageUrl": "/src/assets/images/specialty/Heart.svg"},
+      { "id": 5, "name": "چشم پزشکی" , "imageUrl": "/src/assets/images/specialty/Tooth.svg"},
+      { "id": 6, "name": "گوش، حلق و بینی" , "imageUrl": "/src/assets/images/specialty/Heart.svg"},
+      { "id": 7, "name": "داخلی" , "imageUrl": "/src/assets/images/specialty/Tooth.svg"}
+    ],
+    "users": [
+      { "id": 1, "name": "علی محمدی", "role": "patient" },
+      { "id": 2, "name": "ادمین", "role": "admin" }
+    ],
+    "provinces": [
+      { "id": 1, "name": "آذربایجان شرقی" },
+      { "id": 2, "name": "آذربایجان غربی" },
+      { "id": 3, "name": "اردبیل" },
+      { "id": 4, "name": "اصفهان" },
+      { "id": 5, "name": "البرز" },
+      { "id": 6, "name": "ایلام" },
+      { "id": 7, "name": "کرمان" }
+    ],
+    "symptoms": [
+      {
+        "id": 1,
+        "name": "دکتر گفتار درمانی",
+        "slug": "speech-therapy",
+        "imageUrl": "/src/assets/images/symptoms/Container.svg"
+      },
+      {
+        "id": 2,
+        "name": "دکتر آلزایمر",
+        "slug": "alzheimers",
+        "imageUrl": "/src/assets/images/symptoms/Container-1.svg"
+      },
+      {
+        "id": 3,
+        "name": "دکتر تعیین جنسیت",
+        "slug": "gender-determination",
+        "imageUrl": "/src/assets/images/symptoms/Container-2.svg"
+      },
+      {
+        "id": 4,
+        "name": "دکتر مشاوره خانواده",
+        "slug": "family-counseling",
+        "imageUrl": "/src/assets/images/symptoms/Container-3.svg"
+      },
+      {
+        "id": 5,
+        "name": "دکتر کیست مویی",
+        "slug": "pilonidal-cyst",
+        "imageUrl": "/src/assets/images/symptoms/Container-4.svg"
+      },
+      {
+        "id": 6,
+        "name": "دکتر تیروئید",
+        "slug": "thyroid",
+        "imageUrl": "/src/assets/images/symptoms/Container-5.svg"
+      },
+      {
+        "id": 7,
+        "name": "دکتر ریزش مو",
+        "slug": "hair-loss",
+        "imageUrl": "/src/assets/images/symptoms/Container-6.svg"
+      },
+      {
+        "id": 8,
+        "name": "دکتر آلوپسی",
+        "slug": "alopecia",
+        "imageUrl": "/src/assets/images/symptoms/Container-7.svg"
+      },
+      {
+        "id": 9,
+        "name": "دکتر زگیل تناسلی مردان",
+        "slug": "genital-warts-men",
+        "imageUrl": "/src/assets/images/symptoms/Container-8.svg"
+      },
+      {
+        "id": 10,
+        "name": "دکتر کم‌ خونی",
+        "slug": "anemia",
+        "imageUrl": "/src/assets/images/symptoms/Container-9.svg"
+      },
+      {
+        "id": 11,
+        "name": "دکتر افزایش قد",
+        "slug": "height-increase",
+        "imageUrl": "/src/assets/images/symptoms/Container-10.svg"
+      },
+      {
+        "id": 12,
+        "name": "دکتر سینوزیت",
+        "slug": "sinusitis",
+        "imageUrl": "/src/assets/images/symptoms/Container-11.svg"
+      }
+    ],
+    "services": [
+        {
+          "id": 1,
+          "doctorId": 1,
+          "name": "معاینه عمومی",
+          "price": 500000,
+          "discountedPrice": 450000,
+          "imageUrl": "/src/assets/images/service/1.png"
+        },
+        {
+          "id": 2,
+          "doctorId": 2,
+          "name": "اکوکاردیوگرافی",
+          "price": 1200000,
+          "discountedPrice": 1000000,
+          "imageUrl": "/src/assets/images/service/1.png"
+        },
+        {
+          "id": 3,
+          "doctorId": 3,
+          "name": "جراحی ارتوپدی",
+          "price": 15000000,
+          "discountedPrice": 13500000,
+          "imageUrl": "/src/assets/images/service/1.png"
+        },
+        {
+          "id": 4,
+          "doctorId": 2,
+          "name": "لیزر پوست",
+          "price": 2000000,
+          "discountedPrice": 0,
+          "imageUrl": "/src/assets/images/service/1.png"
+        },
+        {
+          "id": 5,
+          "doctorId": 4,
+          "name": "جراحی آب مروارید",
+          "price": 8000000,
+          "discountedPrice": 7200000,
+          "imageUrl": "/src/assets/images/service/1.png"
+        },
+        {
+          "id": 6,
+          "doctorId": 1,
+          "name": "آندوسکوپی بینی",
+          "price": 3000000,
+          "discountedPrice": 0,
+          "imageUrl": "/src/assets/images/service/1.png"
+        }
+    ]
+  }
+
+
