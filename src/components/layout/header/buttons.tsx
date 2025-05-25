@@ -1,10 +1,13 @@
 
 import Button from '../../ui/Button';
-import { HiOutlineUserCircle ,  HiUserPlus} from "react-icons/hi2";
+import { HiOutlineUserCircle} from "react-icons/hi2";
+import { Link } from "react-router-dom";
+
 const Headerbuttons = () => {
     return (
         <div className='flex gap-2'>
-        <Button
+        <Link to={`/UserProfile`}>
+         <Button
                 variant="solid"
                 icon={<HiOutlineUserCircle className="text-2xl"/>}
                 iconAlignment="start"
@@ -12,7 +15,9 @@ const Headerbuttons = () => {
                 size='sm'
             >
                 ورود کاربران
-            </Button>
+            </Button>   
+        </Link>    
+        <Link to={`/doctor-Profile`}> 
             <Button
                 variant="outline"
  
@@ -22,6 +27,7 @@ const Headerbuttons = () => {
             >
                 پرتال پزشکان
             </Button>
+        </Link> 
         </div>
     );
 }

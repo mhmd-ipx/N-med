@@ -56,25 +56,3 @@ export default tseslint.config({
   //npm run start:server
   //RUN SERVER
 
-  
-/*
-      [
-      "send-code":{
-        "mobile":09138579706,
-        "msg": "ok"
-      }
-    ],
-[
-  "vrfy-code":{
-    "token": "sdfefgercafegeg",
-    "user": {
-      name
-      mobile
-      ralated-data{
-        دکتر
-        بیمار
-      }
-    }
-  }
-]
-*/
