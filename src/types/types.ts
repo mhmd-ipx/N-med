@@ -137,3 +137,51 @@ export interface VerifyOtpResponse {
   };
   message?: string;
 }
+
+
+export type ProfileInfoProps = {
+  user: {
+    name?: string;
+    email?: string;
+  };
+  token: string | null | undefined;
+};
+
+
+export interface Clinic {
+  id: number;
+  name: string;
+  address: string;
+  phone: string;
+  description: string;
+  geo: string;
+  created_at: string;
+  updated_at: string;
+  pivot: {
+    doctor_id: number;
+    clinic_id: number;
+  };
+}
+
+export interface ClinicResponse {
+  clinics: Clinic[];
+}
+
+export interface updateClinicResponse {
+  id: number;
+  message: string;
+  clinic: Clinic;
+}
+
+export interface UpdateClinicData {
+  name: string;
+  address: string;
+  phone: string;
+  description: string;
+  geo: string;
+}
+
+
+export interface deleteClinicResponse {
+  message: string;
+}

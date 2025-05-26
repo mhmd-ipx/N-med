@@ -4,16 +4,18 @@ import UserDataProvider from '../../components/ui/login/UserDataProvider';
 import SidebarMenu from './SidebarMenu';
 import Loading from '../../components/ui/Loading/Loading';
 import { ProfileInfo, Appointments, MedicalRecords, Settings } from './MenuContentComponents';
+import ServicesClinics from './ContetnsComponents/ServicesClinics/ServicesClinics'
+import LogOut from './ContetnsComponents/LogOut';
 import { HiMiniPencilSquare } from 'react-icons/hi2';
 
 const menuItems = [
   { id: 'Dashboard', name: 'پروفایل', component: ProfileInfo },
   { id: 'Edit-account', name: 'ملاقات‌ها', component: Appointments },
   { id: 'Turns', name: 'سوابق', component: MedicalRecords },
-  { id: 'Services', name: 'تنظیمات', component: Settings },
+  { id: 'Services', name: 'خدمات و مطب ها', component: ServicesClinics },
   { id: 'Accounting', name: 'تنظیمات', component: Settings },
   { id: 'Support', name: 'تنظیمات', component: Settings },
-  { id: 'Log-out', name: 'تنظیمات', component: Settings },
+  { id: 'Log-out', name: 'تنظیمات', component: LogOut },
 ];
 
 
