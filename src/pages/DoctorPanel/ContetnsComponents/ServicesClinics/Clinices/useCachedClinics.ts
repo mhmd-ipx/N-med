@@ -1,5 +1,5 @@
-import type { Clinic } from '../../../../types/types.ts';
-import   getClinics from '../../../../services/serverapi.ts';
+import type { Clinic } from '../../../../../types/types.ts';
+import   getClinics from '../../../../../services/serverapi.ts';
 
 
 interface CacheData {

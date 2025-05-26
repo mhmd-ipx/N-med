@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { Clinic } from '../../../../types/types.ts';
-import { CreateClinic } from '../../../../services/serverapi.ts';
+import type { Clinic } from '../../../../../types/types.ts';
+import { CreateClinic } from '../../../../../services/serverapi.ts';
 import { HiOutlineX } from 'react-icons/hi';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L, { LatLngBounds } from 'leaflet';

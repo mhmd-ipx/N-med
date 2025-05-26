@@ -1,5 +1,5 @@
-import { getClinics } from '../../../../services/serverapi.ts';
-import type { Clinic } from '../../../../types/types.ts';
+import { getClinics } from '../../../../../services/serverapi.ts';
+import type { Clinic } from '../../../../../types/types.ts';
 
 const CACHE_KEY = 'clinics_cache';
 const CACHE_EXPIRY = 60 * 60 * 1000; // 1 ساعت

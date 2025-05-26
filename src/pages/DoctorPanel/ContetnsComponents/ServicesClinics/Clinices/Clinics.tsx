@@ -1,13 +1,13 @@
 import { useState, useEffect, Fragment } from 'react';
-import type { ProfileInfoProps, Clinic } from '../../../../types/types.ts';
+import type { ProfileInfoProps, Clinic } from '../../../../../types/types.ts';
 import { fetchClinicsData, getCachedClinics } from './ClinicDataManager.ts';
-import Accordion from '../../../../components/ui/Accordion/Accordion.tsx';
+import Accordion from '../../../../../components/ui/Accordion/Accordion.tsx';
 import { HiOutlineMapPin, HiOutlinePhone, HiOutlineDocumentText, HiOutlineFire } from 'react-icons/hi2'; // Added HiOutlineRefresh
-import MapComponent from '../../../../components/ui/MapComponent/MapComponent';
+import MapComponent from '../../../../../components/ui/MapComponent/MapComponent.tsx';
 import EditClinicModal from './EditClinicModal.tsx';
 import CreateClinicModal from './CreateClinicModal.tsx';
-import SuccessPopup from './SuccessPopup.tsx';
-import { DeleteClinic } from '../../../../services/serverapi.ts';
+import SuccessPopup from '../../../../../components/ui/SuccessPopup.tsx';
+import { DeleteClinic } from '../../../../../services/serverapi.ts';
 
 const Clinics = ({ token }: ProfileInfoProps) => {
   const [clinics, setClinics] = useState<Clinic[]>([]);

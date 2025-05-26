@@ -1,5 +1,5 @@
 import type { ProfileInfoProps } from '../../../../types/types.ts';
-import Clinics from './Clinics';
+import Clinics from './Clinices/Clinics.tsx';
 
 
 const ServicesClinics = ({ user, token }: ProfileInfoProps) => (
