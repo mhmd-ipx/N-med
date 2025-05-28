@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import type { Clinic } from '../../../../../types/types.ts';
-import { updateClinic } from '../../../../../services/serverapi.ts';
+import type { Clinic, City, Province, UpdateClinicData } from '../../../../../types/types.ts';
+import { updateClinic, getProvinces, getCitiesByProvince } from '../../../../../services/serverapi.ts';
 import { HiOutlineX } from 'react-icons/hi';
+import { getCachedLocations, setCachedLocations, updateCachedCities } from './cache.ts';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L, { LatLngBounds } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -28,29 +29,99 @@ interface EditClinicModalProps {
   token: string;
 }
 
-const EditClinicModal = ({ clinic, isOpen, onClose, onClinicUpdate }: EditClinicModalProps) => {
+const EditClinicModal = ({ clinic, isOpen, onClose, onClinicUpdate, token }: EditClinicModalProps) => {
   const [position, setPosition] = useState(() => {
-    const [lat, lng] = clinic.geo ? clinic.geo.split(',').map(Number) : [32.4279, 53.6880]; // مرکز ایران
+    const [lat, lng] = clinic.geo ? clinic.geo.split(',').map(Number) : [32.4279, 53.6880];
     return { lat, lng };
   });
-
   const [formData, setFormData] = useState({
     name: clinic.name,
     address: clinic.address,
     phone: clinic.phone,
-    description: clinic.description,
+    description: clinic.description || '',
     geo: clinic.geo || `${position.lat},${position.lng}`,
   });
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [selectedProvince, setSelectedProvince] = useState<Province | null>(clinic.province || null);
+  const [selectedCity, setSelectedCity] = useState<City | null>(clinic.city || null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // بارگذاری استان‌ها از کش یا API
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      const cache = getCachedLocations();
+      if (cache.provinces.length > 0) {
+        setProvinces(cache.provinces);
+      } else {
+        try {
+          const response = await getProvinces();
+          setProvinces(response);
+          setCachedLocations(response, cache.cities);
+        } catch (err) {
+          setError('خطا در بارگذاری استان‌ها');
+        }
+      }
+    };
+    fetchProvinces();
+  }, []);
+
+  // بارگذاری شهرها از کش یا API
+  useEffect(() => {
+    if (selectedProvince) {
+      const cache = getCachedLocations();
+      const cachedCities = cache.cities[selectedProvince.id] || [];
+      if (cachedCities.length > 0) {
+        setCities(cachedCities);
+        if (clinic.city && clinic.city.province_id === selectedProvince.id) {
+          setSelectedCity(cachedCities.find((c) => c.id === clinic.city!.id) || clinic.city);
+        } else {
+          setSelectedCity(null);
+        }
+      } else {
+        const fetchCities = async () => {
+          try {
+            const response = await getCitiesByProvince(selectedProvince.id);
+            setCities(response);
+            updateCachedCities(selectedProvince.id, response);
+            if (clinic.city && clinic.city.province_id === selectedProvince.id) {
+              setSelectedCity(response.find((c) => c.id === clinic.city!.id) || clinic.city);
+            } else {
+              setSelectedCity(null);
+            }
+          } catch (err) {
+            setError('خطا در بارگذاری شهرها');
+          }
+        };
+        fetchCities();
+      }
+    } else {
+      setCities([]);
+      setSelectedCity(null);
+    }
+  }, [selectedProvince, clinic.city]);
+
 
   useEffect(() => {
     setFormData((prev) => ({ ...prev, geo: `${position.lat},${position.lng}` }));
   }, [position]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const provinceId = parseInt(e.target.value);
+    const province = provinces.find((p) => p.id === provinceId) || null;
+    setSelectedProvince(province);
+  };
+
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const cityId = parseInt(e.target.value);
+    const city = cities.find((c) => c.id === cityId) || null;
+    setSelectedCity(city);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,12 +129,30 @@ const EditClinicModal = ({ clinic, isOpen, onClose, onClinicUpdate }: EditClinic
     setIsLoading(true);
     setError(null);
 
+    if (!selectedProvince || !selectedCity) {
+      setError('لطفاً استان و شهر را انتخاب کنید');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      await updateClinic(clinic.id, formData);
+      const clinicData: UpdateClinicData = {
+        name: formData.name,
+        address: formData.address,
+        phone: formData.phone,
+        description: formData.description,
+        geo: `${position.lat},${position.lng}`,
+        city_id: selectedCity.id,
+        province_id: selectedProvince.id,
+      };
+
+      await updateClinic(clinic.id, clinicData, token);
 
       const updatedClinic: Clinic = {
         ...clinic,
         ...formData,
+        city: selectedCity,
+        province: selectedProvince,
       };
 
       onClinicUpdate(updatedClinic);
@@ -79,7 +168,6 @@ const EditClinicModal = ({ clinic, isOpen, onClose, onClinicUpdate }: EditClinic
 
       onClose();
     } catch (err) {
-      console.error('Submit error:', err);
       setError('خطا در به‌روزرسانی کلینیک');
     } finally {
       setIsLoading(false);
@@ -107,10 +195,11 @@ const EditClinicModal = ({ clinic, isOpen, onClose, onClinicUpdate }: EditClinic
           <HiOutlineX className="text-xl" />
         </button>
         <h2 className="text-lg font-semibold mb-4">ویرایش کلینیک</h2>
-        <form onSubmit={handleSubmit} className=" flex-col gap-4">
-          <div className='flex flex-row gap-2'>
+        <form onSubmit={handleSubmit} className="flex-col gap-4">
+          <div className="flex flex-row gap-2">
             <div className="w-1/2 space-y-4">
-              <div>
+            <div className='flex w-full gap-2'>
+              <div className='w-1/2'>
                 <label className="block text-sm font-medium">نام کلینیک</label>
                 <input
                   type="text"
@@ -120,6 +209,54 @@ const EditClinicModal = ({ clinic, isOpen, onClose, onClinicUpdate }: EditClinic
                   className="w-full p-2 border rounded"
                   required
                 />
+              </div>
+              <div className='w-1/2'>
+                <label className="block text-sm font-medium">تلفن</label>
+                <input
+                  type="text"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+            </div>
+              <div className="w-full flex gap-2">
+                <div className='w-1/2'>
+                  <label className="block text-sm font-medium">استان</label>
+                  <select
+                    name="province"
+                    value={selectedProvince?.id || ''}
+                    onChange={handleProvinceChange}
+                    className="w-full p-2 border rounded"
+                    required
+                  >
+                    <option value="">انتخاب استان</option>
+                    {provinces.map((province) => (
+                      <option key={province.id} value={province.id}>
+                        {province.faname}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className='w-1/2'>
+                  <label className="block text-sm font-medium">شهر</label>
+                  <select
+                    name="city"
+                    value={selectedCity?.id || ''}
+                    onChange={handleCityChange}
+                    className="w-full p-2 border rounded"
+                    disabled={!selectedProvince}
+                    required
+                  >
+                    <option value="">انتخاب شهر</option>
+                    {cities.map((city) => (
+                      <option key={city.id} value={city.id}>
+                        {city.faname}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium">آدرس</label>
@@ -133,16 +270,6 @@ const EditClinicModal = ({ clinic, isOpen, onClose, onClinicUpdate }: EditClinic
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium">تلفن</label>
-                <input
-                  type="text"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-              <div>
                 <label className="block text-sm font-medium">توضیحات</label>
                 <textarea
                   name="description"
@@ -151,6 +278,7 @@ const EditClinicModal = ({ clinic, isOpen, onClose, onClinicUpdate }: EditClinic
                   className="w-full p-2 border rounded"
                 />
               </div>
+              
               {error && <p className="text-red-500 text-sm">{error}</p>}
             </div>
             <div className="w-1/2">
@@ -167,7 +295,7 @@ const EditClinicModal = ({ clinic, isOpen, onClose, onClinicUpdate }: EditClinic
                 >
                   <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   />
                   <Marker position={[position.lat, position.lng]} />
                   <MapClickHandler />

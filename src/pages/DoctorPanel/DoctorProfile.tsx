@@ -56,7 +56,7 @@ const DoctorProfile = () => {
                 {/* Sidebar */}
                 <SidebarMenu user={user} token={token} activeItem={activeItem} setActiveItem={setActiveItem} />
                 {/* Content Area */}
-                <div className="flex-1 p-6 bg-white">
+                <div className="flex-1 p-0 ">
                   {ActiveComponent ? (
                     <ActiveComponent user={user} token={token} />
                   ) : (

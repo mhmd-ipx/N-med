@@ -95,6 +95,7 @@ export type SecretaryRelatedData = {
 
 // رابط برای اطلاعات کاربر
 export interface User {
+  user: User;
   id: number;
   name: string;
   phone?: string;
@@ -148,23 +149,39 @@ export type ProfileInfoProps = {
 };
 
 
+export interface City {
+  id: number;
+  province_id: number;
+  enname: string;
+  faname: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Province {
+  id: number;
+  enname: string;
+  faname: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Clinic {
   id: number;
   name: string;
   address: string;
   phone: string;
   description: string;
+  avatar: string | null;
   geo: string;
+  city: City | null;
+  province: Province | null;
   created_at: string;
   updated_at: string;
-  pivot: {
-    doctor_id: number;
-    clinic_id: number;
-  };
 }
 
 export interface ClinicResponse {
-  clinics: Clinic[];
+  data: Clinic[];
 }
 
 export interface updateClinicResponse {
@@ -179,8 +196,9 @@ export interface UpdateClinicData {
   phone: string;
   description: string;
   geo: string;
+  city_id: number | null;
+  province_id: number | null;
 }
-
 
 export interface deleteClinicResponse {
   message: string;

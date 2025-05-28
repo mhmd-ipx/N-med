@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import type { Clinic } from '../../../../../types/types.ts';
-import { CreateClinic } from '../../../../../services/serverapi.ts';
+import { useState, useEffect } from 'react';
+import type { Clinic, City, Province , UpdateClinicData } from '../../../../../types/types.ts';
+import { CreateClinic, getProvinces, getCitiesByProvince } from '../../../../../services/serverapi.ts';
 import { HiOutlineX } from 'react-icons/hi';
+import { getCachedLocations, setCachedLocations, updateCachedCities } from './cache.ts';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L, { LatLngBounds } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -28,7 +29,7 @@ interface CreateClinicModalProps {
 }
 
 const CreateClinicModal = ({ isOpen, onClose, onClinicCreate, token }: CreateClinicModalProps) => {
-  const [position, setPosition] = useState({ lat: 32.4279, lng: 53.6880 }); // Center of Iran
+  const [position, setPosition] = useState({ lat: 32.4279, lng: 53.6880 });
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -36,59 +37,137 @@ const CreateClinicModal = ({ isOpen, onClose, onClinicCreate, token }: CreateCli
     description: '',
     geo: `${position.lat},${position.lng}`,
   });
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [selectedProvince, setSelectedProvince] = useState<Province | null>(null);
+  const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  // بارگذاری استان‌ها از کش یا API
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      const cache = getCachedLocations();
+      if (cache.provinces.length > 0) {
+        setProvinces(cache.provinces);
+      } else {
+        try {
+          const response = await getProvinces();
+          setProvinces(response);
+          setCachedLocations(response, cache.cities);
+        } catch (err) {
+          console.error('خطا در دریافت استان‌ها:', err);
+          setError('خطا در بارگذاری استان‌ها');
+        }
+      }
+    };
+    fetchProvinces();
+  }, []);
+
+  // بارگذاری شهرها از کش یا API
+  useEffect(() => {
+    if (selectedProvince) {
+      const cache = getCachedLocations();
+      const cachedCities = cache.cities[selectedProvince.id] || [];
+      if (cachedCities.length > 0) {
+        setCities(cachedCities);
+        setSelectedCity(null);
+      } else {
+        const fetchCities = async () => {
+          try {
+            const response = await getCitiesByProvince(selectedProvince.id);
+            setCities(response);
+            updateCachedCities(selectedProvince.id, response);
+            setSelectedCity(null);
+          } catch (err) {
+            console.error('خطا در دریافت شهرها:', err);
+            setError('خطا در بارگذاری شهرها');
+          }
+        };
+        fetchCities();
+      }
+    } else {
+      setCities([]);
+      setSelectedCity(null);
+    }
+  }, [selectedProvince]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Call CreateClinic with form data and token in header
-      const response = await CreateClinic({
-        ...formData,
-        geo: `${position.lat},${position.lng}`,
-      }, token);
-
-      const newClinic: Clinic = {
-          id: response.id, // Assuming API returns the server-generated ID
-          name: formData.name,
-          address: formData.address,
-          phone: formData.phone,
-          description: formData.description,
-          geo: `${position.lat},${position.lng}`,
-          created_at: '',
-          updated_at: '',
-          pivot: {
-              doctor_id: 0,
-              clinic_id: 0
-          }
-      };
-
-      onClinicCreate(newClinic);
-
-      // Update cache
-      const cachedClinics = JSON.parse(localStorage.getItem('clinics_cache') || '{}').clinics || [];
-      const updatedClinics = [...cachedClinics, newClinic];
-      localStorage.setItem('clinics_cache', JSON.stringify({
-        clinics: updatedClinics,
-        timestamp: Date.now(),
-      }));
-
-      onClose();
-    } catch (err) {
-      console.error('Create error:', err);
-      setError('خطا در ایجاد کلینیک');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const provinceId = parseInt(e.target.value);
+    const province = provinces.find((p) => p.id === provinceId) || null;
+    setSelectedProvince(province);
   };
+
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const cityId = parseInt(e.target.value);
+    const city = cities.find((c) => c.id === cityId) || null;
+    setSelectedCity(city);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError(null);
+
+
+  // بررسی وجود استان و شهر
+  if (!selectedProvince || !selectedCity) {
+    setError('لطفاً استان و شهر را انتخاب کنید');
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const clinicData: UpdateClinicData = {
+      name: formData.name,
+      address: formData.address,
+      phone: formData.phone,
+      description: formData.description,
+      geo: `${position.lat},${position.lng}`,
+      city_id: selectedCity?.id ?? null,
+      province_id: selectedProvince?.id ?? null,
+    };
+
+
+    const response = await CreateClinic(clinicData, token);
+
+    const newClinic: Clinic = {
+      id: response.id,
+      name: formData.name,
+      address: formData.address,
+      phone: formData.phone,
+      description: formData.description,
+      geo: `${position.lat},${position.lng}`,
+      city: selectedCity,
+      province: selectedProvince,
+      avatar: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    onClinicCreate(newClinic);
+
+    // به‌روزرسانی کش
+    const cachedClinics = JSON.parse(localStorage.getItem('clinics_cache') || '{}').clinics || [];
+    const updatedClinics = [...cachedClinics, newClinic];
+    localStorage.setItem('clinics_cache', JSON.stringify({
+      clinics: updatedClinics,
+      timestamp: Date.now(),
+    }));
+
+    onClose();
+  } catch (err) {
+    console.error('خطا در ایجاد کلینیک:', err);
+    setError('خطا در ایجاد کلینیک');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const MapClickHandler = () => {
     useMapEvents({
@@ -112,25 +191,15 @@ const CreateClinicModal = ({ isOpen, onClose, onClinicCreate, token }: CreateCli
         </button>
         <h2 className="text-lg font-semibold mb-4">ایجاد کلینیک جدید</h2>
         <form onSubmit={handleSubmit} className="flex-col gap-4">
-          <div className='flex flex-row gap-2'>
+          <div className='flex flex-row gap-4'>
             <div className="w-1/2 space-y-4">
-              <div>
+            <div className='w-full flex gap-2'>
+              <div className='w-1/2'>
                 <label className="block text-sm font-medium">نام کلینیک</label>
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">آدرس</label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
                   onChange={handleChange}
                   className="w-full p-2 border rounded"
                   required
@@ -146,6 +215,56 @@ const CreateClinicModal = ({ isOpen, onClose, onClinicCreate, token }: CreateCli
                   className="w-full p-2 border rounded"
                 />
               </div>
+            </div>
+              <div className='w-full flex gap-2'>
+                <div className='w-1/2'>
+                  <label className="text-sm font-medium">استان</label>
+                  <select
+                    name="province"
+                    value={selectedProvince?.id || ''}
+                    onChange={handleProvinceChange}
+                    className="w-full p-2 border rounded"
+                    required
+                  >
+                    <option value="">انتخاب استان</option>
+                    {provinces.map((province) => (
+                      <option key={province.id} value={province.id}>
+                        {province.faname}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className='w-1/2'>
+                  <label className="text-sm font-medium">شهر</label>
+                  <select
+                    name="city"
+                    value={selectedCity?.id || ''}
+                    onChange={handleCityChange}
+                    className="w-full p-2 border rounded"
+                    disabled={!selectedProvince}
+                    required
+                  >
+                    <option value="">انتخاب شهر</option>
+                    {cities.map((city) => (
+                      <option key={city.id} value={city.id}>
+                        {city.faname}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium">آدرس</label>
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+              
               <div>
                 <label className="block text-sm font-medium">توضیحات</label>
                 <textarea
@@ -155,6 +274,8 @@ const CreateClinicModal = ({ isOpen, onClose, onClinicCreate, token }: CreateCli
                   className="w-full p-2 border rounded"
                 />
               </div>
+
+              
               {error && <p className="text-red-500 text-sm">{error}</p>}
             </div>
             <div className="w-1/2">

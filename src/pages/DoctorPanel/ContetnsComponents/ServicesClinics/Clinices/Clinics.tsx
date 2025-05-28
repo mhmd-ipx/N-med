@@ -2,7 +2,7 @@ import { useState, useEffect, Fragment } from 'react';
 import type { ProfileInfoProps, Clinic } from '../../../../../types/types.ts';
 import { fetchClinicsData, getCachedClinics } from './ClinicDataManager.ts';
 import Accordion from '../../../../../components/ui/Accordion/Accordion.tsx';
-import { HiOutlineMapPin, HiOutlinePhone, HiOutlineDocumentText, HiOutlineFire } from 'react-icons/hi2'; // Added HiOutlineRefresh
+import { HiOutlineMapPin, HiOutlinePhone, HiOutlineDocumentText, HiOutlineFire } from 'react-icons/hi2';
 import MapComponent from '../../../../../components/ui/MapComponent/MapComponent.tsx';
 import EditClinicModal from './EditClinicModal.tsx';
 import CreateClinicModal from './CreateClinicModal.tsx';
@@ -18,54 +18,49 @@ const Clinics = ({ token }: ProfileInfoProps) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const loadClinics = () => {
+  const loadClinics = async () => {
     const cachedClinics = getCachedClinics();
-    if (!cachedClinics) {
-      fetchClinicsData(token ?? '', setClinics, setError, setIsLoading);
-    } else {
+    if (cachedClinics) {
       setClinics(cachedClinics);
       setError(null);
       setIsLoading(false);
+    } else {
+      await fetchClinicsData(token ?? '', setClinics, setError, setIsLoading);
     }
   };
 
-  // New handler for refreshing clinics data
-  const handleRefreshClinics = () => {
+  const handleRefreshClinics = async () => {
     setIsLoading(true);
     setError(null);
-    // Clear cache to force fetch from server
     localStorage.removeItem('clinics_cache');
-    fetchClinicsData(token ?? '', setClinics, setError, setIsLoading);
+    await fetchClinicsData(token ?? '', setClinics, setError, setIsLoading);
   };
 
-    const handleClinicUpdate = (updatedClinic: Clinic) => {
+  const handleClinicUpdate = (updatedClinic: Clinic) => {
     setClinics((prevClinics) =>
-        prevClinics.map((clinic) =>
+      prevClinics.map((clinic) =>
         clinic.id === updatedClinic.id ? updatedClinic : clinic
-        )
+      )
     );
     setSuccessMessage('کلینیک با موفقیت به‌روزرسانی شد');
-    // Update cache
     const cachedClinics = JSON.parse(localStorage.getItem('clinics_cache') || '{}').clinics || [];
     const updatedClinics = cachedClinics.map((clinic: Clinic) =>
-        clinic.id === updatedClinic.id ? updatedClinic : clinic
+      clinic.id === updatedClinic.id ? updatedClinic : clinic
     );
     localStorage.setItem('clinics_cache', JSON.stringify({
-        clinics: updatedClinics,
-        timestamp: Date.now(),
+      clinics: updatedClinics,
+      timestamp: Date.now(),
     }));
-    };
+  };
 
-    const handleClinicCreate = (newClinic: Clinic) => {
+  const handleClinicCreate = async (newClinic: Clinic) => {
     setClinics((prevClinics) => [...prevClinics, newClinic]);
     setSuccessMessage('کلینیک با موفقیت ایجاد شد');
-    // Update cache
     setIsLoading(true);
     setError(null);
-    // Clear cache to force fetch from server
     localStorage.removeItem('clinics_cache');
-    fetchClinicsData(token ?? '', setClinics, setError, setIsLoading);
-    };
+    await fetchClinicsData(token ?? '', setClinics, setError, setIsLoading);
+  };
 
   const handleClinicDelete = async (clinicId: number) => {
     const confirmed = window.confirm('آیا مطمئن هستید که می‌خواهید این کلینیک را حذف کنید؟');
@@ -74,12 +69,10 @@ const Clinics = ({ token }: ProfileInfoProps) => {
     try {
       const response = await DeleteClinic(clinicId, token ?? '');
       setClinics((prevClinics) => prevClinics.filter((clinic) => clinic.id !== clinicId));
-        
-        setIsLoading(true);
-        setError(null);
-        // Clear cache to force fetch from server
-        localStorage.removeItem('clinics_cache');
-        fetchClinicsData(token ?? '', setClinics, setError, setIsLoading);
+      setIsLoading(true);
+      setError(null);
+      localStorage.removeItem('clinics_cache');
+      await fetchClinicsData(token ?? '', setClinics, setError, setIsLoading);
       setSuccessMessage(response.message);
     } catch (err) {
       console.error('Delete error:', err);
@@ -110,7 +103,7 @@ const Clinics = ({ token }: ProfileInfoProps) => {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <span className="">آدرس مطب / مطب‌ها:</span>
+        <span>آدرس مطب / مطب‌ها:</span>
         <div className="flex gap-2">
           <button
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
@@ -146,7 +139,7 @@ const Clinics = ({ token }: ProfileInfoProps) => {
                     <div className="flex justify-center items-center">
                       <HiOutlineMapPin className="text-primary text-xl" />
                       <h3 className="text-sm font-semibold ml-4 mr-2">{clinic.name}</h3>
-                      <p>{clinic.address}</p>
+                      <p>{`${clinic.province?.faname}، ${clinic.city?.faname}`}</p>
                     </div>
                   }
                   content={
@@ -154,8 +147,15 @@ const Clinics = ({ token }: ProfileInfoProps) => {
                       <div className="flex-1 space-y-3">
                         <p className="flex items-center gap-2">
                           <HiOutlineDocumentText className="text-primary text-xl" />
-                          {clinic.description}
+                          {clinic.address || 'آدرس مشخص نشده است.'}
                         </p>
+
+                        <p className="flex items-center gap-2">
+                          <HiOutlineDocumentText className="text-primary text-xl" />
+                          {clinic.description || 'توضیحی برای این کلینیک وجود ندارد.'}
+                        </p>
+
+
                         <p className="flex items-center gap-2">
                           <HiOutlinePhone className="text-primary text-xl" />
                           {clinic.phone}

@@ -43,17 +43,31 @@ const UserDataProvider = ({ children, role, redirectPath }: UserDataProviderExte
 
       if (authData) {
         try {
-          const parsedData: { token: string } = JSON.parse(authData);
+          const parsedData: { token: string; user?: User } = JSON.parse(authData);
           setToken(parsedData.token);
 
-          // اگه اطلاعات کاربر توی localStorage بود، از همون استفاده کن
-          if (storedUser) {
-            setUser(JSON.parse(storedUser));
+          // اگر authData شامل user باشد، از آن استفاده کن
+          if (parsedData.user && parsedData.user.role) {
+            setUser(parsedData.user);
+            localStorage.setItem('userData', JSON.stringify(parsedData.user));
+          } else if (storedUser) {
+            // اگر userData در localStorage بود، بررسی کن که role معتبر باشد
+            const parsedUser: User = JSON.parse(storedUser);
+            if (parsedUser.role) {
+              setUser(parsedUser);
+            } else {
+              // اگر role در userData null بود، از API بگیر
+              const userData = await getUser(parsedData.token);
+              const finalUser = userData.user || userData;
+              setUser(finalUser);
+              localStorage.setItem('userData', JSON.stringify(finalUser));
+            }
           } else {
-            // اگه نبود، از API بگیر
+            // اگر هیچ داده‌ای در localStorage نبود، از API بگیر
             const userData = await getUser(parsedData.token);
-            setUser(userData);
-            localStorage.setItem('userData', JSON.stringify(userData));
+            const finalUser = userData.user || userData;
+            setUser(finalUser);
+            localStorage.setItem('userData', JSON.stringify(finalUser));
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -86,7 +100,8 @@ const UserDataProvider = ({ children, role, redirectPath }: UserDataProviderExte
     return <div className="text-center mt-8 text-red-500">خطا در بارگذاری اطلاعات کاربر</div>;
   }
 
-  if (user.role !== role) {
+  // بررسی role با مدیریت null و مقایسه case-insensitive
+  if (!user.role || user.role.trim().toLowerCase() !== role.trim().toLowerCase()) {
     const redirectTo =
       user.role === 'doctor' ? '/doctor-Profile' :
       user.role === 'patient' ? '/UserProfile' :
@@ -95,13 +110,13 @@ const UserDataProvider = ({ children, role, redirectPath }: UserDataProviderExte
       <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-md text-center">
         <h2 className="text-2xl font-bold text-red-600 mb-4">دسترسی غیرمجاز</h2>
         <p className="text-gray-600 mb-4">
-          شما با نقش «{user.role === 'patient' ? 'بیمار' : user.role === 'doctor' ? 'پزشک' : 'منشی'}» وارد شده‌اید و نمی‌توانید به این پنل دسترسی داشته باشید.
+          شما با نقش «{user.role === 'patient' ? 'بیمار' : user.role === 'doctor' ? 'پزشک' : user.role === 'secretary' ? 'منشی' : 'نامشخص'}» وارد شده‌اید و نمی‌توانید به این پنل دسترسی داشته باشید.
         </p>
         <Link
           to={redirectTo}
           className="text-indigo-600 hover:text-indigo-800 font-medium"
         >
-          برو به {user.role === 'patient' ? 'پروفایل بیمار' : user.role === 'doctor' ? 'پروفایل پزشک' : 'پروفایل منشی'}
+          برو به {user.role === 'patient' ? 'پروفایل بیمار' : user.role === 'doctor' ? 'پروفایل پزشک' : user.role === 'secretary' ? 'پروفایل منشی' : 'صفحه اصلی'}
         </Link>
       </div>
     );

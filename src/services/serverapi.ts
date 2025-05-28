@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type {OtpResponse , User , VerifyOtpResponse , ClinicResponse , UpdateClinicData , updateClinicResponse , deleteClinicResponse} from '../types/types'
+import type {City , Province , OtpResponse , User , VerifyOtpResponse , ClinicResponse , UpdateClinicData , updateClinicResponse , deleteClinicResponse} from '../types/types'
 
 // ایجاد نمونه axios با تنظیمات پایه
 const api = axios.create({
@@ -23,36 +23,77 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
-
-
+export const getProvinces = async (): Promise<Province[]> => {
+  try {
+    const response = await api.get<Province[]>('/api/provinces');
+    return response.data;
+  } catch (error) {
+    console.error('خطا در دریافت لیست استان‌ها:', error);
+    throw new Error('خطا در دریافت لیست استان‌ها');
+  }
+};
+// تابع برای دریافت لیست شهرهای یک استان
+export const getCitiesByProvince = async (provinceId: number): Promise<City[]> => {
+  try {
+    const response = await api.get<City[]>(`/api/cities/${provinceId}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(`خطا در دریافت لیست شهرهای استان ${provinceId}`);
+  }
+};
 
 // تابع برای دریافت لیست کلینیک‌ها
 export const getClinics = async (): Promise<ClinicResponse> => {
   try {
     const response = await api.get<ClinicResponse>('/api/clinics');
+    if (!response.data || !response.data.data) {
+
+      throw new Error('پاسخ API داده‌ی معتبر ندارد');
+    }
     return response.data;
   } catch (error) {
+    console.error('خطا در دریافت لیست کلینیک‌ها:', error);
     if (error instanceof Error) {
+      if ('response' in error) {
+        const axiosError = error as any;
+
+        if (axiosError.response) {
+          switch (axiosError.response.status) {
+            case 400:
+              throw new Error('درخواست نامعتبر است (400)');
+            case 401:
+              throw new Error('عدم احراز هویت (401)');
+            case 403:
+              throw new Error('دسترسی غیرمجاز (403)');
+            case 404:
+              throw new Error('کلینیک‌ها یافت نشدند (404)');
+            case 500:
+              throw new Error('خطای سرور (500)');
+            default:
+              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+          }
+        } else if (axiosError.request) {
+          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+        }
+      }
       throw new Error('خطا در دریافت لیست کلینیک‌ها: ' + error.message);
-    } else {
-      throw new Error('خطا در دریافت لیست کلینیک‌ها');
     }
+    throw new Error('خطای ناشناخته در دریافت لیست کلینیک‌ها');
   }
 };
 
+
+
+
 // تابع برای به‌روزرسانی کلینیک
-export const updateClinic = async (clinicId: number, data: UpdateClinicData): Promise<updateClinicResponse> => {
+export const updateClinic = async (clinicId: number, data: UpdateClinicData, token: string): Promise<updateClinicResponse> => {
   try {
-    console.log('Sending update request:', { url: `/api/clinics/${clinicId}`, data });
     const response = await api.put<updateClinicResponse>(`/api/clinics/${clinicId}`, data);
-    console.log('Update response:', response.data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      console.error('Update error:', error.response.data);
       throw new Error(error.response.data.message || 'خطا در به‌روزرسانی کلینیک');
     }
-    console.error('Update error:', error);
     throw new Error('خطا در ارتباط با سرور');
   }
 };
@@ -62,20 +103,17 @@ export const updateClinic = async (clinicId: number, data: UpdateClinicData): Pr
 // تابع برای حذف کلینیک
 export const DeleteClinic = async (clinicId: number, token: string): Promise<deleteClinicResponse> => {
   try {
-    console.log('Sending delete request:', { url: `/api/clinics/${clinicId}` });
     const response = await api.delete<deleteClinicResponse>(`/api/clinics/${clinicId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log('Delete response:', response.data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       console.error('Delete error:', error.response.data);
       throw new Error(error.response.data.message || 'خطا در حذف کلینیک');
     }
-    console.error('Delete error:', error);
     throw new Error('خطا در ارتباط با سرور');
   }
 };
@@ -86,16 +124,12 @@ export const DeleteClinic = async (clinicId: number, token: string): Promise<del
 // تابع برای ساخت کلینیک
 export const CreateClinic = async (data: UpdateClinicData, _token: string): Promise<updateClinicResponse> => {
   try {
-    console.log('Sending update request:', { url: `/api/clinics`, data });
     const response = await api.post<updateClinicResponse>(`/api/clinics`, data);
-    console.log('Update response:', response.data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      console.error('Update error:', error.response.data);
       throw new Error(error.response.data.message || 'خطا در ایجاد کلینیک');
     }
-    console.error('Update error:', error);
     throw new Error('خطا در ارتباط با سرور');
   }
 };
