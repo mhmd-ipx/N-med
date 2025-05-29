@@ -3,7 +3,8 @@ import type { ProfileInfoProps } from '../../../../types/types.ts';
 import Clinics from './Clinices/Clinics';
 import Operators from './Operators/Operators.tsx'
 import Tabs from '../../../../components/ui/Tabs/Tabs';
-import ErrorBoundary from '../ServicesClinics/Clinices/ErrorBoundary'; // مسیر درست رو وارد کن
+import ErrorBoundary from '../ServicesClinics/Clinices/ErrorBoundary';
+import Services from './Services/Services'
 import { HiOutlineBuildingOffice2, HiOutlineUsers, HiOutlineCog6Tooth } from 'react-icons/hi2';
 
 
@@ -35,7 +36,7 @@ const ServicesClinics: React.FC<ProfileInfoProps> = ({ user, token }) => {
       id: 'tab3',
       label: 'خدمات',
       icon: <HiOutlineCog6Tooth className='text-xl' />,
-      content: <TabThree />,
+      content: <Services user={user} token={token} />,
     },
   ];
 

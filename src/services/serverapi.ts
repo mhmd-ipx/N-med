@@ -11,7 +11,8 @@ import type {
   deleteClinicResponse , 
   OperatorsResponse ,
   DetachOperatorResponse ,
-  CreateAndAssignOperatorResponse} from '../types/types'
+  CreateAndAssignOperatorResponse ,
+  ServicesResponse} from '../types/types'
 
 // ایجاد نمونه axios با تنظیمات پایه
 const api = axios.create({
@@ -35,6 +36,45 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+
+// تابع برای دریافت لیست سرویس‌ها
+export const getServices = async (): Promise<ServicesResponse> => {
+  try {
+    const response = await api.get<ServicesResponse>('/api/services');
+    if (!response.data || !response.data.data) {
+      throw new Error('پاسخ API داده‌ی معتبر ندارد');
+    }
+    return response.data;
+  } catch (error) {
+    console.error('خطا در دریافت لیست سرویس‌ها:', error);
+    if (error instanceof Error) {
+      if ('response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response) {
+          switch (axiosError.response.status) {
+            case 400:
+              throw new Error('درخواست نامعتبر است (400)');
+            case 401:
+              throw new Error('عدم احراز هویت (401)');
+            case 403:
+              throw new Error('دسترسی غیرمجاز (403)');
+            case 404:
+              throw new Error('سرویس‌ها یافت نشدند (404)');
+            case 500:
+              throw new Error('خطای سرور (500)');
+            default:
+              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+          }
+        } else if (axiosError.request) {
+          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+        }
+      }
+      throw new Error('خطا در دریافت لیست سرویس‌ها: ' + error.message);
+    }
+    throw new Error('خطای ناشناخته در دریافت لیست سرویس‌ها');
+  }
+};
 
 
 // تابع برای دریافت لیست اوپراتورهای یک کلینیک

@@ -233,3 +233,41 @@ export interface CreateAndAssignOperatorResponse {
     clinic_id: number;
   };
 }
+
+
+
+// تایپ برای اطلاعات کاربر (اوپراتور)
+export interface ServiceUser {
+  id: number;
+  name: string;
+  phone: string;
+  role: string | null;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+  pivot: {
+    service_id: number;
+    user_id: number;
+  };
+  related_data: any | null;
+}
+
+// تایپ برای هر سرویس
+export interface Service {
+  id: number;
+  clinic: Clinic;
+  user: ServiceUser[];
+  thumbnail: string | null;
+  title: string;
+  description: string;
+  time: number;
+  price: number;
+  discount_price: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// تایپ برای پاسخ API سرویس‌ها
+export interface ServicesResponse {
+  data: Service[];
+}

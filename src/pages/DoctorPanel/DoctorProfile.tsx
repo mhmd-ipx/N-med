@@ -42,7 +42,7 @@ const DoctorProfile = () => {
         }
 
         return (
-          <div className='bg-primary pt-14'>
+          <div className='bg-primary pt-14 pb-14'>
             <div className="max-w-[1300px] mx-auto">
               <div className='flex flex-col gap-3 pr-72 pb-3 text-white'>
                 
@@ -52,7 +52,7 @@ const DoctorProfile = () => {
                   <HiMiniPencilSquare className='text-xl' />
                 </div>
               </div>
-              <div className="flex bg-white rounded-3xl p-8 h-[100vh] ">
+              <div className="flex bg-white rounded-3xl p-8 min-h-[80vh]">
                 {/* Sidebar */}
                 <SidebarMenu user={user} token={token} activeItem={activeItem} setActiveItem={setActiveItem} />
                 {/* Content Area */}
