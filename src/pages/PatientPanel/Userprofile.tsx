@@ -1,30 +1,38 @@
-import type { ReactNode } from 'react';
+import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import UserDataProvider from '../../components/ui/login/UserDataProvider';
-import { useNavigate } from 'react-router-dom';
+import SidebarMenu from './SidebarMenu';
+import Loading from '../../components/ui/Loading/Loading';
+import { ProfileInfo, Appointments, MedicalRecords, Settings } from './MenuContentComponents';
+import LogOut from './LogOut';
+import { HiMiniPencilSquare } from 'react-icons/hi2';
+
+const menuItems = [
+  { id: 'Dashboard', name: 'پروفایل', component: ProfileInfo },
+  { id: 'Edit-account', name: 'ملاقات‌ها', component: Appointments },
+  { id: 'Turns', name: 'سوابق', component: MedicalRecords },
+  { id: 'Accounting', name: 'تنظیمات', component: Settings },
+  { id: 'Support', name: 'تنظیمات', component: Settings },
+  { id: 'Log-out', name: 'تنظیمات', component: LogOut },
+];
+
+
+
 
 const UserProfile = () => {
-  const navigate = useNavigate();
+  const location = useLocation();
+  const [activeItem, setActiveItem] = useState(() => {
+    const path = location.pathname.split('/').pop();
+    return menuItems.find(item => item.id === path)?.id || menuItems[0].id;
+  });
 
-  // تابع برای کوتاه کردن توکن برای نمایش
-  const shortenToken = (token: string | null) => {
-    if (!token) return 'ناموجود';
-    if (token.length <= 10) return token;
-    return `${token.slice(0, 6)}...${token.slice(-4)}`;
-  };
-
-  // تابع برای کپی کردن توکن
-  const copyTokenToClipboard = (token: string | null) => {
-    if (token) {
-      navigator.clipboard.writeText(token);
-      alert('توکن با موفقیت کپی شد!');
-    }
-  };
+  const ActiveComponent = menuItems.find(item => item.id === activeItem)?.component;
 
   return (
     <UserDataProvider role="patient" redirectPath="/Patient-Login">
       {({ user, token, isLoading }) => {
         if (isLoading) {
-          return <div className="text-center mt-8">در حال بارگذاری...</div>;
+          return <Loading />;
         }
 
         if (!user || !token) {
@@ -32,78 +40,29 @@ const UserProfile = () => {
         }
 
         return (
-          <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">پروفایل بیمار</h2>
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">نام:</span>
-                <span className="text-gray-600">{user.name || 'بدون‌نام'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">شماره تلفن:</span>
-                <span className="text-gray-600">{user.phone || 'ثبت نشده'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">نقش:</span>
-                <span className="text-gray-600">{user.role === 'patient' ? 'بیمار' : user.role}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">کد ملی:</span>
-                <span className="text-gray-600">{user.related_data?.melli_code || 'ثبت نشده'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">تاریخچه پزشکی:</span>
-                <span className="text-gray-600">{user.related_data?.medical_history || 'ثبت نشده'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">اطلاعات بیمه:</span>
-                <span className="text-gray-600">{user.related_data?.insurance_info || 'ثبت نشده'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">تاریخ ثبت:</span>
-                <span className="text-gray-600">
-                  {user.related_data?.created_at
-                    ? new Date(user.related_data.created_at).toLocaleDateString('fa-IR')
-                    : 'ثبت نشده'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-700">توکن:</span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-gray-600 font-mono">{shortenToken(token)}</span>
-                  <button
-                    onClick={() => copyTokenToClipboard(token)}
-                    className="text-sm text-indigo-600 hover:text-indigo-800 focus:outline-none"
-                  >
-                    کپی
-                  </button>
+          <div className='bg-primary pt-14'>
+            <div className="max-w-[1300px] mx-auto">
+              <div className='flex flex-col gap-3 pr-72 pb-3 text-white'>
+                
+                <span className='text-2xl font-medium'>{`${user.name || 'بدون نام'}`}</span>
+                <div className='flex gap-2'>
+                  <span className='text-sm '>فوق تخصص قلب و عروق</span>
+                  <HiMiniPencilSquare className='text-xl' />
                 </div>
               </div>
-              {user.related_data?.attachments && user.related_data.attachments.length > 0 ? (
-                <div>
-                  <span className="font-medium text-gray-700">پیوست‌ها:</span>
-                  <ul className="list-disc list-inside text-gray-600">
-                    {user.related_data.attachments.map((attachment: string, index: number) => (
-                      <li key={index}>{attachment}</li>
-                    ))}
-                  </ul>
+              <div className="flex bg-white rounded-3xl p-8 h-[100vh] ">
+                {/* Sidebar */}
+                <SidebarMenu user={user} token={token} activeItem={activeItem} setActiveItem={setActiveItem} />
+                {/* Content Area */}
+                <div className="flex-1 p-0 ">
+                  {ActiveComponent ? (
+                    <ActiveComponent user={user} token={token} />
+                  ) : (
+                    <div className="text-center text-gray-500">محتوایی انتخاب نشده است</div>
+                  )}
                 </div>
-              ) : (
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-700">پیوست‌ها:</span>
-                  <span className="text-gray-600">هیچ پیوستی ثبت نشده</span>
-                </div>
-              )}
+              </div>
             </div>
-            <button
-              onClick={() => {
-                localStorage.removeItem('authData');
-                navigate('/Patient-Login');
-              }}
-              className="w-full mt-6 py-2 px-4 bg-red-600 text-white rounded-full hover:bg-red-700 focus:outline-none"
-            >
-              خروج
-            </button>
           </div>
         );
       }}

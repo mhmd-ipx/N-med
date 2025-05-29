@@ -203,3 +203,33 @@ export interface UpdateClinicData {
 export interface deleteClinicResponse {
   message: string;
 }
+
+
+
+export interface Operator {
+  operator_id: number;
+  user_id: number;
+  nickname: string;
+  phone: string;
+}
+
+export interface OperatorsResponse {
+  success: boolean;
+  data: Operator[];
+}
+
+
+export interface DetachOperatorResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface CreateAndAssignOperatorResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user_id: number;
+    operator_id: number;
+    clinic_id: number;
+  };
+}

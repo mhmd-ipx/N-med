@@ -5,7 +5,7 @@ import SidebarMenu from './SidebarMenu';
 import Loading from '../../components/ui/Loading/Loading';
 import { ProfileInfo, Appointments, MedicalRecords, Settings } from './MenuContentComponents';
 import ServicesClinics from './ContetnsComponents/ServicesClinics/ServicesClinics'
-import LogOut from './ContetnsComponents/LogOut';
+import LogOut from './LogOut';
 import { HiMiniPencilSquare } from 'react-icons/hi2';
 
 const menuItems = [

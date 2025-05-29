@@ -1,4 +1,4 @@
-import type { Clinic } from '../../../../../types/types.ts';
+import type { Clinic , Operator} from '../../../../../types/types.ts';
 import { getClinics } from '../../../../../services/serverapi.ts';
 
 interface CacheData {
@@ -44,4 +44,39 @@ export const fetchClinicsData = async (
   } finally {
     setIsLoading(false);
   }
+};
+
+
+
+export const cacheClinics = (clinics: Clinic[]) => {
+  localStorage.setItem(
+    'clinics_cache',
+    JSON.stringify({
+      clinics,
+      timestamp: Date.now(),
+    })
+  );
+};
+
+export const getCachedOperators = (clinicId: number): Operator[] | null => {
+  const cachedData = localStorage.getItem(`operators_cache_${clinicId}`);
+  if (cachedData) {
+    const { operators, timestamp } = JSON.parse(cachedData);
+    const cacheAge = Date.now() - timestamp;
+    // فرض می‌کنیم کش بعد از 1 ساعت منقضی می‌شود
+    if (cacheAge < 60 * 60 * 1000) {
+      return operators;
+    }
+  }
+  return null;
+};
+
+export const cacheOperators = (clinicId: number, operators: Operator[]) => {
+  localStorage.setItem(
+    `operators_cache_${clinicId}`,
+    JSON.stringify({
+      operators,
+      timestamp: Date.now(),
+    })
+  );
 };

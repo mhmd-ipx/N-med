@@ -1,5 +1,17 @@
 import axios from 'axios';
-import type {City , Province , OtpResponse , User , VerifyOtpResponse , ClinicResponse , UpdateClinicData , updateClinicResponse , deleteClinicResponse} from '../types/types'
+import type {
+  City ,
+  Province ,
+  OtpResponse ,
+  User ,
+  VerifyOtpResponse , 
+  ClinicResponse , 
+  UpdateClinicData , 
+  updateClinicResponse , 
+  deleteClinicResponse , 
+  OperatorsResponse ,
+  DetachOperatorResponse ,
+  CreateAndAssignOperatorResponse} from '../types/types'
 
 // ایجاد نمونه axios با تنظیمات پایه
 const api = axios.create({
@@ -23,6 +35,133 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+
+// تابع برای دریافت لیست اوپراتورهای یک کلینیک
+export const getOperators = async (clinicId: number): Promise<OperatorsResponse> => {
+  try {
+    const response = await api.get<OperatorsResponse>(`/api/clinics/${clinicId}/operators`);
+    if (!response.data || !response.data.data) {
+      throw new Error('پاسخ API داده‌ی معتبر ندارد');
+    }
+    return response.data;
+  } catch (error) {
+    console.error('خطا در دریافت لیست اوپراتورها:', error);
+    if (error instanceof Error) {
+      if ('response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response) {
+          switch (axiosError.response.status) {
+            case 400:
+              throw new Error('درخواست نامعتبر است (400)');
+            case 401:
+              throw new Error('عدم احراز هویت (401)');
+            case 403:
+              throw new Error('دسترسی غیرمجاز (403)');
+            case 404:
+              throw new Error('اوپراتورها یافت نشدند (404)');
+            case 500:
+              throw new Error('خطای سرور (500)');
+            default:
+              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+          }
+        } else if (axiosError.request) {
+          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+        }
+      }
+      throw new Error('خطا در دریافت لیست اوپراتورها: ' + error.message);
+    }
+    throw new Error('خطای ناشناخته در دریافت لیست اوپراتورها');
+  }
+};
+
+// تابع برای جدا کردن اوپراتور از کلینیک
+export const detachOperator = async (clinicId: number, operatorId: number): Promise<DetachOperatorResponse> => {
+  try {
+    const response = await api.post<DetachOperatorResponse>('/api/operators/detach', {
+      clinic_id: clinicId,
+      operator_id: operatorId,
+    });
+    if (!response.data) {
+      throw new Error('پاسخ API داده‌ی معتبر ندارد');
+    }
+    return response.data;
+  } catch (error) {
+    console.error('خطا در جدا کردن اوپراتور:', error);
+    if (error instanceof Error) {
+      if ('response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response) {
+          switch (axiosError.response.status) {
+            case 400:
+              throw new Error('درخواست نامعتبر است (400)');
+            case 401:
+              throw new Error('عدم احراز هویت (401)');
+            case 403:
+              throw new Error('دسترسی غیرمجاز (403)');
+            case 404:
+              throw new Error('اوپراتور یا کلینیک یافت نشد (404)');
+            case 500:
+              throw new Error('خطای سرور (500)');
+            default:
+              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+          }
+        } else if (axiosError.request) {
+          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+        }
+      }
+      throw new Error('خطا در جدا کردن اوپراتور: ' + error.message);
+    }
+    throw new Error('خطای ناشناخته در جدا کردن اوپراتور');
+  }
+};
+
+// تابع برای ایجاد و اختصاص اوپراتور به کلینیک
+export const createAndAssignOperator = async (
+  clinicId: number,
+  name: string,
+  phone: string
+): Promise<CreateAndAssignOperatorResponse> => {
+  try {
+    const response = await api.post<CreateAndAssignOperatorResponse>('/api/operators/create-and-assign', {
+      clinic_id: clinicId,
+      name,
+      phone,
+    });
+    if (!response.data) {
+      throw new Error('پاسخ API داده‌ی معتبر ندارد');
+    }
+    return response.data;
+  } catch (error) {
+    console.error('خطا در ایجاد و اختصاص اوپراتور:', error);
+    if (error instanceof Error) {
+      if ('response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response) {
+          switch (axiosError.response.status) {
+            case 400:
+              throw new Error('درخواست نامعتبر است (400)');
+            case 401:
+              throw new Error('عدم احراز هویت (401)');
+            case 403:
+              throw new Error('دسترسی غیرمجاز (403)');
+            case 404:
+              throw new Error('کلینیک یافت نشد (404)');
+            case 500:
+              throw new Error('خطای سرور (500)');
+            default:
+              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+          }
+        } else if (axiosError.request) {
+          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+        }
+      }
+      throw new Error('خطا در ایجاد و اختصاص اوپراتور: ' + error.message);
+    }
+    throw new Error('خطای ناشناخته در ایجاد و اختصاص اوپراتور');
+  }
+};
+
 export const getProvinces = async (): Promise<Province[]> => {
   try {
     const response = await api.get<Province[]>('/api/provinces');

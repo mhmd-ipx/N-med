@@ -1,11 +1,12 @@
 import { lazy } from 'react';
 import type { ProfileInfoProps } from '../../../../types/types.ts';
 import Clinics from './Clinices/Clinics';
+import Operators from './Operators/Operators.tsx'
 import Tabs from '../../../../components/ui/Tabs/Tabs';
 import ErrorBoundary from '../ServicesClinics/Clinices/ErrorBoundary'; // مسیر درست رو وارد کن
 import { HiOutlineBuildingOffice2, HiOutlineUsers, HiOutlineCog6Tooth } from 'react-icons/hi2';
 
-const TabTwo = lazy(() => Promise.resolve({ default: () => <p>اپراتورها</p> }));
+
 const TabThree = lazy(() => Promise.resolve({ default: () => <p>خدمات</p> }));
 
 const ServicesClinics: React.FC<ProfileInfoProps> = ({ user, token }) => {
@@ -24,7 +25,11 @@ const ServicesClinics: React.FC<ProfileInfoProps> = ({ user, token }) => {
       id: 'tab2',
       label: 'اپراتورها',
       icon: <HiOutlineUsers className='text-xl' />,
-      content: <TabTwo />,
+            content: (
+        <ErrorBoundary>
+          <Operators user={user} token={token} />
+        </ErrorBoundary>
+      ),
     },
     {
       id: 'tab3',
