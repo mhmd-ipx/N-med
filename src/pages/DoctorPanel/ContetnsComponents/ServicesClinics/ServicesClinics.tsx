@@ -42,8 +42,8 @@ const ServicesClinics: React.FC<ProfileInfoProps> = ({ user, token }) => {
 
   return (
     <div className="">
-      <Services user={user} token={token} />
-      {/*<Tabs tabs={tabs} />*/}
+       {/*<Services user={user} token={token} />*/}
+     <Tabs tabs={tabs} />
     </div>
   );
 };

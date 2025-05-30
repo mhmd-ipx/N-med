@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { getServices } from '../../../../../services/serverapi.ts';
-import type { ProfileInfoProps, Service, ServicesResponse } from '../../../../../types/types.ts';
+import { getServices, deleteService } from '../../../../../services/serverapi.ts';
+import type { ProfileInfoProps, Service, ServicesResponse, ServiceDeleteResponse, CreateServiceResponse } from '../../../../../types/types.ts';
 import {
   HiOutlinePencilSquare,
   HiOutlineMapPin,
@@ -13,13 +13,18 @@ import {
   HiOutlineChevronUp,
   HiOutlineTrash,
   HiUser,
+  HiOutlinePlusCircle,
 } from 'react-icons/hi2';
+import SuccessPopup from '../../../../../components/ui/SuccessPopup.tsx';
+import CreateServiceModal from './CreateServiceModal.tsx';
 
-const Services: React.FC<ProfileInfoProps> = ({ token }) => {
+const Services: React.FC<ProfileInfoProps> = ({  user, token} ) => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [openDetails, setOpenDetails] = useState<number | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
 
   const CACHE_KEY = 'cached_services';
 
@@ -60,8 +65,26 @@ const Services: React.FC<ProfileInfoProps> = ({ token }) => {
     alert(`ویرایش سرویس: ${service.title}`);
   };
 
-  const handleDelete = (service: Service) => {
-    alert(`حذف سرویس: ${service.title}`);
+  const handleDelete = async (service: Service) => {
+    const confirmed = window.confirm(`آیا مطمئن هستید که می‌خواهید سرویس "${service.title}" را حذف کنید؟`);
+    if (!confirmed) return;
+
+    try {
+      const response: ServiceDeleteResponse = await deleteService(service.id);
+      setSuccessMessage(response.message);
+      localStorage.removeItem(CACHE_KEY);
+      const updatedServicesResponse = await getServices();
+      setServices(updatedServicesResponse.data);
+      localStorage.setItem(CACHE_KEY, JSON.stringify(updatedServicesResponse.data));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطای ناشناخته در حذف سرویس');
+    }
+  };
+
+  const handleServiceCreate = (response: CreateServiceResponse) => {
+    setSuccessMessage('سرویس با موفقیت ایجاد شد');
+    localStorage.removeItem(CACHE_KEY);
+    fetchAndCacheServices();
   };
 
   const toggleDetails = (id: number) => {
@@ -88,13 +111,23 @@ const Services: React.FC<ProfileInfoProps> = ({ token }) => {
       </style>
       <div className="flex justify-between items-center mb-4">
         <span className="text-xl font-semibold">خدمات</span>
-        <button
-          onClick={handleRefresh}
-          className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 flex items-center gap-2 disabled:opacity-50"
-          disabled={loading}
-        >
-          {loading ? 'در حال بارگذاری...' : 'به‌روزرسانی'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark flex items-center gap-2"
+          >
+            <HiOutlinePlusCircle className="text-xl" />
+            افزودن سرویس
+            
+          </button>
+          <button
+            onClick={handleRefresh}
+            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 flex items-center gap-2 disabled:opacity-50"
+            disabled={loading}
+          >
+            {loading ? 'در حال بارگذاری...' : 'به‌روزرسانی'}
+          </button>
+        </div>
       </div>
       {loading ? (
         <div className="text-center">در حال بارگذاری...</div>
@@ -212,6 +245,22 @@ const Services: React.FC<ProfileInfoProps> = ({ token }) => {
             </div>
           ))}
         </div>
+      )}
+      {successMessage && (
+        <SuccessPopup
+          key="success-popup"
+          message={successMessage}
+          onClose={() => setSuccessMessage(null)}
+        />
+      )}
+      {isCreateModalOpen && (
+        <CreateServiceModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onServiceCreate={handleServiceCreate}
+          token={token ?? '' }
+          userid={user.id ?? 0}
+        />
       )}
     </div>
   );

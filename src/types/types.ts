@@ -1,4 +1,4 @@
-import {type JSX } from 'react';
+import {type JSX, type ReactNode } from 'react';
 
 
 // تایپ تخصص
@@ -142,6 +142,7 @@ export interface VerifyOtpResponse {
 
 export type ProfileInfoProps = {
   user: {
+    id?: number ;
     name?: string;
     email?: string;
   };
@@ -270,4 +271,20 @@ export interface Service {
 // تایپ برای پاسخ API سرویس‌ها
 export interface ServicesResponse {
   data: Service[];
+}
+
+
+export interface ServiceDeleteResponse {
+  message: string;
+}
+
+
+
+export interface AddServiceToUserResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface CreateServiceResponse {
+  data: Service;
 }
