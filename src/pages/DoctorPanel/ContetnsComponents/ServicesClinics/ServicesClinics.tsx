@@ -22,6 +22,12 @@ const ServicesClinics: React.FC<ProfileInfoProps> = ({ user, token }) => {
         </ErrorBoundary>
       ),
     },
+        {
+      id: 'tab3',
+      label: 'خدمات',
+      icon: <HiOutlineCog6Tooth className='text-xl' />,
+      content: <Services user={user} token={token} />,
+    },
     {
       id: 'tab2',
       label: 'اپراتورها',
@@ -32,12 +38,7 @@ const ServicesClinics: React.FC<ProfileInfoProps> = ({ user, token }) => {
         </ErrorBoundary>
       ),
     },
-    {
-      id: 'tab3',
-      label: 'خدمات',
-      icon: <HiOutlineCog6Tooth className='text-xl' />,
-      content: <Services user={user} token={token} />,
-    },
+
   ];
 
   return (
