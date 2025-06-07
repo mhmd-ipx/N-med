@@ -288,3 +288,115 @@ export interface AddServiceToUserResponse {
 export interface CreateServiceResponse {
   data: Service;
 }
+
+
+
+// Define response types for file operations
+export interface FileUploadResponse {
+  message: string;
+  file_url: string;
+  path: string;
+}
+
+export interface FileDeleteResponse {
+  message: string;
+  file_url: string;
+  file_path: string;
+}
+
+
+export interface UserTime {
+  id: number;
+  user_id: number;
+  clinic_id: number;
+  weekday: string;
+  start_date: string;
+  end_date: string;
+  services: number[];
+  created_at: string;
+  updated_at: string;
+}
+
+// پاسخ API مستقیماً آرایه است
+export type UserTimesResponse = UserTime[];
+
+export interface Schedule {
+  user_id: number;
+  clinic_id: number;
+  weekday: string;
+  start_date: string;
+  end_date: string;
+  services: number[];
+  updated_at: string;
+  created_at: string;
+  id: number;
+}
+
+export interface CreateSchedulesResponse {
+  message: string;
+  count: number;
+  data: Schedule[];
+}
+
+export interface ScheduleTime {
+  clinic_id: number;
+  start_date: string;
+  end_date: string;
+  services: number[];
+}
+
+export interface ScheduleData {
+  weekday: string;
+  times: ScheduleTime[];
+}
+
+export interface CreateSchedulesRequest {
+  user_id: number;
+  data: ScheduleData[];
+}
+
+
+
+
+
+export interface CancellationRequest {
+  user_id: string;
+  start_date: string;
+  end_date: string;
+  description: string;
+}
+
+export interface CancellationResponse {
+  id: number;
+  user_id: number;
+  start_date: string;
+  end_date: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+export interface UserCancellation {
+  id: number;
+  name: string;
+  phone: string;
+  role: string | null;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+  related_data: any | null;
+}
+
+export interface Cancellation {
+  id: number;
+  user_id: number;
+  start_date: string;
+  end_date: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  user: UserCancellation;
+}
+
+export interface CancellationsResponse {
+  data: Cancellation[];
+}

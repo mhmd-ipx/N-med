@@ -1,4 +1,4 @@
-import type { Clinic , Operator} from '../../../../../types/types.ts';
+import type { Clinic , Operator , UserTime} from '../../../../../types/types.ts';
 import { getClinics } from '../../../../../services/serverapi.ts';
 
 interface CacheData {
@@ -71,6 +71,31 @@ export const getCachedOperators = (clinicId: number): Operator[] | null => {
   return null;
 };
 
+// ClinicDataManager.ts
+
+// ClinicDataManager.ts
+
+// ذخیره تایم‌ها در کش
+export const cacheUserTimes = (userId: number, times: UserTime[]) => {
+  try {
+    localStorage.setItem(`user_times_cache_${userId}`, JSON.stringify(times));
+  } catch (err) {
+    console.error('Error caching user times:', err);
+  }
+};
+
+// بازیابی تایم‌ها از کش
+export const getCachedUserTimes = (userId: number): UserTime[] | null => {
+  try {
+    const cached = localStorage.getItem(`user_times_cache_${userId}`);
+    return cached ? JSON.parse(cached) : null;
+  } catch (err) {
+    console.error('Error retrieving cached user times:', err);
+    return null;
+  }
+};
+
+// سایر توابع مانند getCachedClinics، cacheOperators و ... بدون تغییر باقی می‌مانند
 export const cacheOperators = (clinicId: number, operators: Operator[]) => {
   localStorage.setItem(
     `operators_cache_${clinicId}`,

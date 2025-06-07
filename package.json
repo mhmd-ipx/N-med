@@ -13,8 +13,10 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.4",
     "@tanstack/react-query": "^5.75.7",
     "axios": "^1.9.0",
+    "date-fns-jalali": "^4.1.0-0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.511.0",
     "path": "^0.12.7",
@@ -26,7 +28,10 @@
     "react-hook-form": "^7.56.3",
     "react-icons": "^5.5.0",
     "react-leaflet": "^4.2.1",
+    "react-multi-date-picker": "^4.5.2",
+    "react-persian-datepicker": "^3.0.2",
     "react-router-dom": "^7.6.0",
+    "react-select": "^5.10.1",
     "react-toastify": "^11.0.5"
   },
   "scripts": {

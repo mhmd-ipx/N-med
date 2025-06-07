@@ -17,14 +17,17 @@ import {
 } from 'react-icons/hi2';
 import SuccessPopup from '../../../../../components/ui/SuccessPopup.tsx';
 import CreateServiceModal from './CreateServiceModal.tsx';
+import EditServiceModal from './EditServiceModal.tsx';
 
-const Services: React.FC<ProfileInfoProps> = ({  user, token} ) => {
+const Services: React.FC<ProfileInfoProps> = ({ user, token }) => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [openDetails, setOpenDetails] = useState<number | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
 
   const CACHE_KEY = 'cached_services';
 
@@ -62,7 +65,8 @@ const Services: React.FC<ProfileInfoProps> = ({  user, token} ) => {
   };
 
   const handleEdit = (service: Service) => {
-    alert(`ویرایش سرویس: ${service.title}`);
+    setSelectedService(service);
+    setIsEditModalOpen(true);
   };
 
   const handleDelete = async (service: Service) => {
@@ -85,6 +89,14 @@ const Services: React.FC<ProfileInfoProps> = ({  user, token} ) => {
     setSuccessMessage('سرویس با موفقیت ایجاد شد');
     localStorage.removeItem(CACHE_KEY);
     fetchAndCacheServices();
+  };
+
+  const handleServiceUpdate = (response: CreateServiceResponse) => {
+    setSuccessMessage('سرویس با موفقیت به‌روزرسانی شد');
+    localStorage.removeItem(CACHE_KEY);
+    fetchAndCacheServices();
+    setIsEditModalOpen(false);
+    setSelectedService(null);
   };
 
   const toggleDetails = (id: number) => {
@@ -118,7 +130,6 @@ const Services: React.FC<ProfileInfoProps> = ({  user, token} ) => {
           >
             <HiOutlinePlusCircle className="text-xl" />
             افزودن سرویس
-            
           </button>
           <button
             onClick={handleRefresh}
@@ -134,7 +145,8 @@ const Services: React.FC<ProfileInfoProps> = ({  user, token} ) => {
       ) : error ? (
         <div className="text-red-500 text-center">خطا: {error}</div>
       ) : services.length === 0 ? (
-        <div className="text-center">سرویسی یافت نشد</div>
+        <div className='p-2 border rounded flex justify-center items-center bg-gray-100 text-gray-500'> سرویسی یافت نشد</div>
+
       ) : (
         <div className="grid gap-4">
           {services.map((service) => (
@@ -258,8 +270,19 @@ const Services: React.FC<ProfileInfoProps> = ({  user, token} ) => {
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           onServiceCreate={handleServiceCreate}
-          token={token ?? '' }
-          userid={user.id ?? 0}
+          token={token ?? ''}
+        />
+      )}
+      {isEditModalOpen && selectedService && (
+        <EditServiceModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedService(null);
+          }}
+          onServiceUpdate={handleServiceUpdate}
+          service={selectedService}
+          token={token ?? ''}
         />
       )}
     </div>

@@ -15,7 +15,16 @@ import type {
   ServicesResponse ,
   ServiceDeleteResponse ,
   CreateServiceResponse ,
-  AddServiceToUserResponse } from '../types/types'
+  AddServiceToUserResponse  ,
+  FileDeleteResponse ,
+  FileUploadResponse ,
+  UserTimesResponse ,
+  CreateSchedulesResponse ,
+  CreateSchedulesRequest} from '../types/types'
+
+  import type {  CancellationRequest ,
+  CancellationsResponse,
+  CancellationResponse} from '../types/cancelltypes'
 
 // ایجاد نمونه axios با تنظیمات پایه
 const api = axios.create({
@@ -41,170 +50,227 @@ api.interceptors.request.use(
 );
 
 
-// تابع برای دریافت لیست سرویس‌ها
-export const getServices = async (): Promise<ServicesResponse> => {
+export const createCancellation = async (
+  payload: CancellationRequest
+): Promise<CancellationResponse> => {
+  console.log('شروع تابع createCancellation با payload:', JSON.stringify(payload, null, 2));
+
   try {
-    const response = await api.get<ServicesResponse>('/api/services');
-    if (!response.data || !response.data.data) {
-      throw new Error('پاسخ API داده‌ی معتبر ندارد');
-    }
+    console.log('ارسال درخواست POST به /api/cancellations');
+    const response = await api.post<CancellationResponse>('/api/cancellations', payload);
+    console.log('پاسخ دریافت شد:', JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error) {
-    console.error('خطا در دریافت لیست سرویس‌ها:', error);
-    if (error instanceof Error) {
-      if ('response' in error) {
-        const axiosError = error as any;
-        if (axiosError.response) {
-          switch (axiosError.response.status) {
-            case 400:
-              throw new Error('درخواست نامعتبر است (400)');
-            case 401:
-              throw new Error('عدم احراز هویت (401)');
-            case 403:
-              throw new Error('دسترسی غیرمجاز (403)');
-            case 404:
-              throw new Error('سرویس‌ها یافت نشدند (404)');
-            case 500:
-              throw new Error('خطای سرور (500)');
-            default:
-              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
-          }
-        } else if (axiosError.request) {
-          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+    console.error('خطا در تابع createCancellation:', error);
+
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        console.error('وضعیت پاسخ سرور:', axiosError.response.status);
+        console.error('داده‌های پاسخ سرور:', JSON.stringify(axiosError.response.data, null, 2));
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
         }
+      } else if (axiosError.request) {
+        console.error('هیچ پاسخی از سرور دریافت نشد. جزئیات درخواست:', axiosError.request);
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
       }
-      throw new Error('خطا در دریافت لیست سرویس‌ها: ' + error.message);
     }
-    throw new Error('خطای ناشناخته در دریافت لیست سرویس‌ها');
+    console.error('خطای ناشناخته در ایجاد کنسلی:', error);
+    throw new Error('خطای ناشناخته در ایجاد کنسلی');
+  }
+};
+
+// دریافت کنسلی‌ها برای یک کاربر (GET)
+export const getCancellations = async (
+  userId: number
+): Promise<CancellationsResponse> => {
+  console.debug('شروع درخواست getCancellations برای userId:', userId);
+  try {
+    const response = await api.get<CancellationsResponse>(`/api/cancellations?user_id=${userId}`);
+    console.debug('پاسخ getCancellations دریافت شد:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('خطا در getCancellations:', error);
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        console.debug('جزئیات خطای سرور:', {
+          status: axiosError.response.status,
+          data: axiosError.response.data,
+        });
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 404:
+            throw new Error('کنسلی یافت نشد (404)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        console.debug('هیچ پاسخی از سرور دریافت نشد');
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در دریافت کنسلی‌ها');
   }
 };
 
 
-// تابع برای حذف سرویس
-export const deleteService = async (serviceId: number): Promise<ServiceDeleteResponse> => {
+// به‌روزرسانی کنسلی
+export const updateCancellation = async (
+  cancelId: number,
+  payload: CancellationRequest
+): Promise<CancellationResponse> => {
   try {
-    const response = await api.delete<ServiceDeleteResponse>(`/api/services/${serviceId}`);
-    if (!response.data) {
-      throw new Error('پاسخ API داده‌ی معتبر ندارد');
-    }
+    const response = await api.put<CancellationResponse>(`/api/cancellations/${cancelId}`, payload);
     return response.data;
   } catch (error) {
-    console.error(`خطا در حذف سرویس با شناسه ${serviceId}:`, error);
-    if (error instanceof Error) {
-      if ('response' in error) {
-        const axiosError = error as any;
-        if (axiosError.response) {
-          switch (axiosError.response.status) {
-            case 400:
-              throw new Error('درخواست نامعتبر است (400)');
-            case 401:
-              throw new Error('عدم احراز هویت (401)');
-            case 403:
-              throw new Error('دسترسی غیرمجاز (403)');
-            case 404:
-              throw new Error('سرویس یافت نشد (404)');
-            case 500:
-              throw new Error('خطای سرور (500)');
-            default:
-              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
-          }
-        } else if (axiosError.request) {
-          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 404:
+            throw new Error('کنسلی یافت نشد (404)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
         }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
       }
-      throw new Error(`خطا در حذف سرویس: ${error.message}`);
     }
-    throw new Error('خطای ناشناخته در حذف سرویس');
+    throw new Error('خطای ناشناخته در به‌روزرسانی کنسلی');
   }
 };
 
-
-
-// تابع برای افزودن سرویس به کاربر
-export const addServiceToUser = async (userId: number, serviceId: number): Promise<AddServiceToUserResponse> => {
+// حذف کنسلی
+export const deleteCancellation = async (
+  cancelId: number
+): Promise<void> => {
   try {
-    const response = await api.post<AddServiceToUserResponse>('/api/user/add-service', {
-      user_id: userId,
-      service_id: serviceId,
-    });
-    if (!response.data) {
-      throw new Error('پاسخ API داده‌ی معتبر ندارد');
-    }
-    return response.data;
+    await api.delete(`/api/cancellations/${cancelId}`);
   } catch (error) {
-    console.error(`خطا در افزودن سرویس به کاربر ${userId}:`, error);
-    if (error instanceof Error) {
-      if ('response' in error) {
-        const axiosError = error as any;
-        if (axiosError.response) {
-          switch (axiosError.response.status) {
-            case 400:
-              throw new Error('درخواست نامعتبر است (400)');
-            case 401:
-              throw new Error('عدم احراز هویت (401)');
-            case 403:
-              throw new Error('دسترسی غیرمجاز (403)');
-            case 404:
-              throw new Error('کاربر یا سرویس یافت نشد (404)');
-            case 500:
-              throw new Error('خطای سرور (500)');
-            default:
-              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
-          }
-        } else if (axiosError.request) {
-          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 404:
+            throw new Error('کنسلی یافت نشد (404)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
         }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
       }
-      throw new Error(`خطا در افزودن سرویس به کاربر: ${error.message}`);
     }
-    throw new Error('خطای ناشناخته در افزودن سرویس به کاربر');
+    throw new Error('خطای ناشناخته در حذف کنسلی');
   }
 };
 
-// تابع برای ایجاد سرویس جدید
-export const createService = async (serviceData: {
-  clinic_id: number;
-  thumbnail: string;
-  title: string;
-  description: string;
-  price: number;
-  discount_price: number;
-  time: number;
-  user_id: number;
-}): Promise<CreateServiceResponse> => {
+//ایجاد زمانبندی
+export const createSchedules = async (
+  payload: CreateSchedulesRequest
+): Promise<CreateSchedulesResponse> => {
   try {
-    const response = await api.post<CreateServiceResponse>('/api/services', serviceData);
-    if (!response.data || !response.data.data) {
-      throw new Error('پاسخ API داده‌ی معتبر ندارد');
-    }
+    const response = await api.post<CreateSchedulesResponse>('/api/panel/schedules', payload);
     return response.data;
   } catch (error) {
-    console.error('خطا در ایجاد سرویس:', error);
-    if (error instanceof Error) {
-      if ('response' in error) {
-        const axiosError = error as any;
-        if (axiosError.response) {
-          switch (axiosError.response.status) {
-            case 400:
-              throw new Error('درخواست نامعتبر است (400)');
-            case 401:
-              throw new Error('عدم احراز هویت (401)');
-            case 403:
-              throw new Error('دسترسی غیرمجاز (403)');
-            case 422:
-              throw new Error('داده‌های ورودی نامعتبر هستند (422)');
-            case 500:
-              throw new Error('خطای سرور (500)');
-            default:
-              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
-          }
-        } else if (axiosError.request) {
-          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
         }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
       }
-      throw new Error(`خطا در ایجاد سرویس: ${error.message}`);
     }
-    throw new Error('خطای ناشناخته در ایجاد سرویس');
+    throw new Error('خطای ناشناخته در ایجاد زمان‌بندی‌ها');
+  }
+};
+
+//دریافت زمان بندی های یوزر
+export const getUserTimes = async (userId: number): Promise<UserTimesResponse> => {
+  try {
+    const response = await api.get<UserTimesResponse>(`/api/user/times?user_id=${userId}`);
+    // بررسی اینکه پاسخ یک آرایه است
+    if (!Array.isArray(response.data)) {
+      throw new Error('پاسخ API آرایه نیست');
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('خطا در دریافت تایم‌های کاربر:', error);
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 404:
+            return []; // برای 404، آرایه خالی برگردان تا "بدون زمان‌بندی" نمایش داده شود
+          case 422:
+            return []; // برای 422، آرایه خالی برگردان تا "بدون زمان‌بندی" نمایش داده شود
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در دریافت تایم‌های کاربر');
   }
 };
 
@@ -332,6 +398,317 @@ export const createAndAssignOperator = async (
     throw new Error('خطای ناشناخته در ایجاد و اختصاص اوپراتور');
   }
 };
+
+
+
+// تابع برای به‌روزرسانی سرویس
+export const updateService = async (serviceId: number, serviceData: {
+  clinic_id: number;
+  thumbnail: string;
+  title: string;
+  description: string;
+  price: number;
+  discount_price: number;
+  time: number;
+}): Promise<CreateServiceResponse> => {
+  try {
+    const response = await api.put<CreateServiceResponse>(`/api/services/${serviceId}`, serviceData);
+    console.log('Service updated:', serviceData);
+    if (!response.data || !response.data.data) {
+      throw new Error('پاسخ API داده‌ی معتبر ندارد');
+    }
+    return response.data;
+  } catch (error) {
+    console.error('خطا در به‌روزرسانی سرویس:', error);
+    if (error instanceof Error) {
+      if ('response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response) {
+          switch (axiosError.response.status) {
+            case 400:
+              throw new Error('درخواست نامعتبر است (400)');
+            case 401:
+              throw new Error('عدم احراز هویت (401)');
+            case 403:
+              throw new Error('دسترسی غیرمجاز (403)');
+            case 404:
+              throw new Error('سرویس یافت نشد (404)');
+            case 422:
+              throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+            case 500:
+              throw new Error('خطای سرور (500)');
+            default:
+              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+          }
+        } else if (axiosError.request) {
+          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+        }
+      }
+      throw new Error(`خطا در به‌روزرسانی سرویس: ${error.message}`);
+    }
+    throw new Error('خطای ناشناخته در به‌روزرسانی سرویس');
+  }
+};
+
+// تابع برای ایجاد سرویس جدید
+export const createService = async (serviceData: {
+  clinic_id: number;
+  thumbnail: string;
+  title: string;
+  description: string;
+  price: number;
+  discount_price: number;
+  time: number;
+}): Promise<CreateServiceResponse> => {
+  try {
+    const response = await api.post<CreateServiceResponse>('/api/services', serviceData);
+    console.log('Service created:', serviceData);
+    if (!response.data || !response.data.data) {
+      throw new Error('پاسخ API داده‌ی معتبر ندارد');
+    }
+    return response.data;
+  } catch (error) {
+    console.error('خطا در ایجاد سرویس:', error);
+    if (error instanceof Error) {
+      if ('response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response) {
+          switch (axiosError.response.status) {
+            case 400:
+              throw new Error('درخواست نامعتبر است (400)');
+            case 401:
+              throw new Error('عدم احراز هویت (401)');
+            case 403:
+              throw new Error('دسترسی غیرمجاز (403)');
+            case 422:
+              throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+            case 500:
+              throw new Error('خطای سرور (500)');
+            default:
+              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+          }
+        } else if (axiosError.request) {
+          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+        }
+      }
+      throw new Error(`خطا در ایجاد سرویس: ${error.message}`);
+    }
+    throw new Error('خطای ناشناخته در ایجاد سرویس');
+  }
+};
+
+
+// تابع برای دریافت لیست سرویس‌ها
+export const getServices = async (): Promise<ServicesResponse> => {
+  try {
+    const response = await api.get<ServicesResponse>('/api/services');
+    if (!response.data || !response.data.data) {
+      throw new Error('پاسخ API داده‌ی معتبر ندارد');
+    }
+    return response.data;
+  } catch (error) {
+    console.error('خطا در دریافت لیست سرویس‌ها:', error);
+    if (error instanceof Error) {
+      if ('response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response) {
+          switch (axiosError.response.status) {
+            case 400:
+              throw new Error('درخواست نامعتبر است (400)');
+            case 401:
+              throw new Error('عدم احراز هویت (401)');
+            case 403:
+              throw new Error('دسترسی غیرمجاز (403)');
+            case 404:
+              throw new Error('سرویس‌ها یافت نشدند (404)');
+            case 500:
+              throw new Error('خطای سرور (500)');
+            default:
+              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+          }
+        } else if (axiosError.request) {
+          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+        }
+      }
+      throw new Error('خطا در دریافت لیست سرویس‌ها: ' + error.message);
+    }
+    throw new Error('خطای ناشناخته در دریافت لیست سرویس‌ها');
+  }
+};
+
+// Upload file
+export const uploadFile = async (file: File): Promise<FileUploadResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await api.post<FileUploadResponse>('/api/files/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    if (!response.data || !response.data.file_url) {
+      throw new Error('پاسخ API داده‌ی معتبر ندارد');
+    }
+    
+    // Construct display URL
+    response.data.file_url = `https://app.webu.ir/storage/app/public/${response.data.path}`;
+    
+    return response.data;
+  } catch (error) {
+    console.error('خطا در آپلود فایل:', error);
+    if (error instanceof Error) {
+      if ('response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response) {
+          switch (axiosError.response.status) {
+            case 400:
+              throw new Error('درخواست نامعتبر است (400)');
+            case 401:
+              throw new Error('عدم احراز هویت (401)');
+            case 403:
+              throw new Error('دسترسی غیرمجاز (403)');
+            case 500:
+              throw new Error('خطای سرور (500)');
+            default:
+              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+          }
+        } else if (axiosError.request) {
+          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+        }
+      }
+      throw new Error('خطا در آپلود فایل: ' + error.message);
+    }
+    throw new Error('خطای ناشناخته در آپلود فایل');
+  }
+};
+
+// Delete file
+export const deleteFile = async (fileUrl: string): Promise<FileDeleteResponse> => {
+  try {
+    const response = await api.delete<FileDeleteResponse>('/api/files/delete', {
+      data: { file_url: fileUrl },
+    });
+    
+    if (!response.data || !response.data.file_url) {
+      throw new Error('پاسخ API داده‌ی معتبر ندارد');
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error('خطا در حذف فایل:', error);
+    if (error instanceof Error) {
+      if ('response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response) {
+          switch (axiosError.response.status) {
+            case 400:
+              throw new Error('درخواست نامعتبر است (400)');
+            case 401:
+              throw new Error('عدم احراز هویت (401)');
+            case 403:
+              throw new Error('دسترسی غیرمجاز (403)');
+            case 404:
+              throw new Error('فایل یافت نشد (404)');
+            case 500:
+              throw new Error('خطای سرور (500)');
+            default:
+              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+          }
+        } else if (axiosError.request) {
+          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+        }
+      }
+      throw new Error('خطا در حذف فایل: ' + error.message);
+    }
+    throw new Error('خطای ناشناخته در حذف فایل');
+  }
+};
+
+
+// تابع برای حذف سرویس
+export const deleteService = async (serviceId: number): Promise<ServiceDeleteResponse> => {
+  try {
+    const response = await api.delete<ServiceDeleteResponse>(`/api/services/${serviceId}`);
+    if (!response.data) {
+      throw new Error('پاسخ API داده‌ی معتبر ندارد');
+    }
+    return response.data;
+  } catch (error) {
+    console.error(`خطا در حذف سرویس با شناسه ${serviceId}:`, error);
+    if (error instanceof Error) {
+      if ('response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response) {
+          switch (axiosError.response.status) {
+            case 400:
+              throw new Error('درخواست نامعتبر است (400)');
+            case 401:
+              throw new Error('عدم احراز هویت (401)');
+            case 403:
+              throw new Error('دسترسی غیرمجاز (403)');
+            case 404:
+              throw new Error('سرویس یافت نشد (404)');
+            case 500:
+              throw new Error('خطای سرور (500)');
+            default:
+              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+          }
+        } else if (axiosError.request) {
+          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+        }
+      }
+      throw new Error(`خطا در حذف سرویس: ${error.message}`);
+    }
+    throw new Error('خطای ناشناخته در حذف سرویس');
+  }
+};
+
+
+
+
+// تابع برای افزودن سرویس به کاربر
+export const addServiceToUser = async (userId: number, serviceId: number): Promise<AddServiceToUserResponse> => {
+  try {
+    const response = await api.post<AddServiceToUserResponse>('/api/user/add-service', {
+      user_id: userId,
+      service_id: serviceId,
+    });
+    if (!response.data) {
+      throw new Error('پاسخ API داده‌ی معتبر ندارد');
+    }
+    return response.data;
+  } catch (error) {
+    console.error(`خطا در افزودن سرویس به کاربر ${userId}:`, error);
+    if (error instanceof Error) {
+      if ('response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response) {
+          switch (axiosError.response.status) {
+            case 400:
+              throw new Error('درخواست نامعتبر است (400)');
+            case 401:
+              throw new Error('عدم احراز هویت (401)');
+            case 403:
+              throw new Error('دسترسی غیرمجاز (403)');
+            case 404:
+              throw new Error('کاربر یا سرویس یافت نشد (404)');
+            case 500:
+              throw new Error('خطای سرور (500)');
+            default:
+              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+          }
+        } else if (axiosError.request) {
+          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+        }
+      }
+      throw new Error(`خطا در افزودن سرویس به کاربر: ${error.message}`);
+    }
+    throw new Error('خطای ناشناخته در افزودن سرویس به کاربر');
+  }
+};
+
 
 export const getProvinces = async (): Promise<Province[]> => {
   try {

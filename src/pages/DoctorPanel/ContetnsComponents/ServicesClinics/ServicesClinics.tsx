@@ -7,7 +7,6 @@ import ErrorBoundary from '../ServicesClinics/Clinices/ErrorBoundary';
 import Services from './Services/Services'
 import { HiOutlineBuildingOffice2, HiOutlineUsers, HiOutlineCog6Tooth } from 'react-icons/hi2';
 
-
 const TabThree = lazy(() => Promise.resolve({ default: () => <p>خدمات</p> }));
 
 const ServicesClinics: React.FC<ProfileInfoProps> = ({ user, token }) => {
@@ -43,7 +42,7 @@ const ServicesClinics: React.FC<ProfileInfoProps> = ({ user, token }) => {
 
   return (
     <div className="">
-       {/*<Services user={user} token={token} />*/}
+
      <Tabs tabs={tabs} />
     </div>
   );
