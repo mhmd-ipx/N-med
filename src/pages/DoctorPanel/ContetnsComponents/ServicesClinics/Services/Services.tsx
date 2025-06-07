@@ -176,10 +176,7 @@ const Services: React.FC<ProfileInfoProps> = ({ user, token }) => {
                     </div>
                   </div>
                   <div className="flex mb-2">
-                    <div className="flex w-1/2 items-center justify-start gap-2">
-                      <HiOutlineUserGroup className={iconsstyle} />
-                      <span>{service.user.length} اوپراتور</span>
-                    </div>
+
                     <div className="flex w-1/2 items-center justify-start gap-2">
                       <HiOutlineClock className={iconsstyle} />
                       <span>{service.time} دقیقه</span>
@@ -238,20 +235,7 @@ const Services: React.FC<ProfileInfoProps> = ({ user, token }) => {
                     <HiOutlineInformationCircle className={iconsstyle} />
                     <span>شرح: {service.description || '—'}</span>
                   </div>
-                  {service.user.length > 0 && (
-                    <div className="flex items-center gap-2 mt-5">
-                      <HiOutlineUserGroup className={iconsstyle} />
-                      <div>
-                        {service.user.map((user) => (
-                          <div key={user.phone} className="flex items-center gap-2">
-                            <HiUser className="bg-light p-2 text-4xl rounded-full text-primary" />
-                            <span className="font-medium">{user.name}</span>
-                            <span className="text-gray-500">({user.phone})</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  
                 </div>
               </div>
             </div>

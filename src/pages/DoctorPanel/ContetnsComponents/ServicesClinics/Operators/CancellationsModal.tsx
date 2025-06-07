@@ -15,9 +15,9 @@ interface CancellationsModalProps {
   onClose: () => void;
   userId: number;
   clinicId: number;
-  
   onCancellationChange: () => void;
 }
+
 const CancellationsModal = ({ isOpen, onClose, userId, clinicId, onCancellationChange }: CancellationsModalProps) => {
   const [cancellations, setCancellations] = useState<Cancellation[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -128,7 +128,7 @@ const CancellationsModal = ({ isOpen, onClose, userId, clinicId, onCancellationC
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">مدیریت کنسلی‌ها</h2>
+            <h2 className="text-xl font-bold text-gray-800">مدیریت کنسلی‌ها </h2>
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700"
@@ -236,12 +236,12 @@ const CancellationsModal = ({ isOpen, onClose, userId, clinicId, onCancellationC
                 {cancellations.map((cancellation) => (
                   <div key={cancellation.id} className="border border-gray-200 rounded-lg overflow-hidden">
                     {editingId === cancellation.id ? (
-                      <div className="bg-yellow-50">
+                      <div className="bg-blue-50">
                         <button
                           onClick={() => setEditingId(null)}
-                          className="w-full flex justify-between items-center p-3 bg-yellow-100 hover:bg-yellow-200 transition-colors"
+                          className="w-full flex justify-between items-center p-3 bg-blue-100 hover:bg-blue-200 transition-colors"
                         >
-                          <span className="font-medium text-yellow-800">در حال ویرایش کنسلی</span>
+                          <span className="font-medium text-primary">در حال ویرایش کنسلی</span>
                           <HiOutlineChevronUp />
                         </button>
                         <div className="p-3">
@@ -296,17 +296,17 @@ const CancellationsModal = ({ isOpen, onClose, userId, clinicId, onCancellationC
                                 required
                               />
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 justify-center">
                               <button
                                 type="submit"
-                                className="bg-green-600 text-white px-3 py-1 text-sm rounded-md hover:bg-green-700 transition-colors flex items-center gap-1"
+                                className="bg-primary text-white px-4 py-2 text-sm rounded-md p-2 flex items-center gap-1"
                               >
                                 <HiOutlineCheckCircle size={16} /> ذخیره
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setEditingId(null)}
-                                className="bg-gray-500 text-white px-3 py-1 text-sm rounded-md hover:bg-gray-600 transition-colors flex items-center gap-1"
+                                className="bg-gray-100 text-gray-600 px-4 py-2 text-sm rounded-md  flex items-center gap-1"
                               >
                                 <HiOutlineXCircle size={16} /> لغو
                               </button>
@@ -316,9 +316,9 @@ const CancellationsModal = ({ isOpen, onClose, userId, clinicId, onCancellationC
                       </div>
                     ) : (
                       <div className="p-3">
-                        <div className="flex justify-between items-start">
+                        <div className="flex justify-between items-center">
                           <div>
-                            <p className="text-sm font-medium">
+                            <p className="text-sm ">
                               {formatJalaliDateTime(cancellation.start_date)} - {formatJalaliDateTime(cancellation.end_date)}
                             </p>
                             {cancellation.description && (
@@ -328,14 +328,15 @@ const CancellationsModal = ({ isOpen, onClose, userId, clinicId, onCancellationC
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleEdit(cancellation)}
-                              className="text-blue-600 hover:text-blue-800 p-1"
+                              className="text-primary bg-light p-2 rounded-lg flex justify-center items-center text-sm gap-2"
                               title="ویرایش"
                             >
-                              <HiOutlinePencil size={16} />
+                              <HiOutlinePencil  />
+                              ویرایش
                             </button>
                             <button
                               onClick={() => handleDelete(cancellation.id)}
-                              className="text-red-600 hover:text-red-800 p-1"
+                              className="text-red-600 bg-red-100 rounded-lg p-2"
                               title="حذف"
                             >
                               <HiOutlineTrash size={16} />

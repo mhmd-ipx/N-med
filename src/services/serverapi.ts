@@ -53,21 +53,15 @@ api.interceptors.request.use(
 export const createCancellation = async (
   payload: CancellationRequest
 ): Promise<CancellationResponse> => {
-  console.log('شروع تابع createCancellation با payload:', JSON.stringify(payload, null, 2));
 
   try {
-    console.log('ارسال درخواست POST به /api/cancellations');
     const response = await api.post<CancellationResponse>('/api/cancellations', payload);
-    console.log('پاسخ دریافت شد:', JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error) {
-    console.error('خطا در تابع createCancellation:', error);
 
     if (error instanceof Error && 'response' in error) {
       const axiosError = error as any;
       if (axiosError.response) {
-        console.error('وضعیت پاسخ سرور:', axiosError.response.status);
-        console.error('داده‌های پاسخ سرور:', JSON.stringify(axiosError.response.data, null, 2));
         switch (axiosError.response.status) {
           case 400:
             throw new Error('درخواست نامعتبر است (400)');
@@ -83,11 +77,9 @@ export const createCancellation = async (
             throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
         }
       } else if (axiosError.request) {
-        console.error('هیچ پاسخی از سرور دریافت نشد. جزئیات درخواست:', axiosError.request);
         throw new Error('هیچ پاسخی از سرور دریافت نشد');
       }
     }
-    console.error('خطای ناشناخته در ایجاد کنسلی:', error);
     throw new Error('خطای ناشناخته در ایجاد کنسلی');
   }
 };
@@ -96,13 +88,10 @@ export const createCancellation = async (
 export const getCancellations = async (
   userId: number
 ): Promise<CancellationsResponse> => {
-  console.debug('شروع درخواست getCancellations برای userId:', userId);
   try {
     const response = await api.get<CancellationsResponse>(`/api/cancellations?user_id=${userId}`);
-    console.debug('پاسخ getCancellations دریافت شد:', response.data);
     return response.data;
   } catch (error) {
-    console.error('خطا در getCancellations:', error);
     if (error instanceof Error && 'response' in error) {
       const axiosError = error as any;
       if (axiosError.response) {
@@ -125,7 +114,6 @@ export const getCancellations = async (
             throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
         }
       } else if (axiosError.request) {
-        console.debug('هیچ پاسخی از سرور دریافت نشد');
         throw new Error('هیچ پاسخی از سرور دریافت نشد');
       }
     }
@@ -235,6 +223,42 @@ export const createSchedules = async (
   }
 };
 
+// ویرایش زمانبندی
+export const updateSchedule = async (
+  id: string,
+  payload: CreateSchedulesRequest
+): Promise<CreateSchedulesResponse> => {
+  try {
+    const response = await api.put<CreateSchedulesResponse>(`/api/panel/schedules/${id}`, payload);
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 404:
+            throw new Error('زمانبندی مورد نظر یافت نشد (404)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در ویرایش زمان‌بندی');
+  }
+};
+
 //دریافت زمان بندی های یوزر
 export const getUserTimes = async (userId: number): Promise<UserTimesResponse> => {
   try {
@@ -246,7 +270,6 @@ export const getUserTimes = async (userId: number): Promise<UserTimesResponse> =
 
     return response.data;
   } catch (error) {
-    console.error('خطا در دریافت تایم‌های کاربر:', error);
     if (error instanceof Error && 'response' in error) {
       const axiosError = error as any;
       if (axiosError.response) {
@@ -283,7 +306,6 @@ export const getOperators = async (clinicId: number): Promise<OperatorsResponse>
     }
     return response.data;
   } catch (error) {
-    console.error('خطا در دریافت لیست اوپراتورها:', error);
     if (error instanceof Error) {
       if ('response' in error) {
         const axiosError = error as any;
@@ -324,7 +346,6 @@ export const detachOperator = async (clinicId: number, operatorId: number): Prom
     }
     return response.data;
   } catch (error) {
-    console.error('خطا در جدا کردن اوپراتور:', error);
     if (error instanceof Error) {
       if ('response' in error) {
         const axiosError = error as any;
@@ -370,7 +391,6 @@ export const createAndAssignOperator = async (
     }
     return response.data;
   } catch (error) {
-    console.error('خطا در ایجاد و اختصاص اوپراتور:', error);
     if (error instanceof Error) {
       if ('response' in error) {
         const axiosError = error as any;
@@ -413,13 +433,11 @@ export const updateService = async (serviceId: number, serviceData: {
 }): Promise<CreateServiceResponse> => {
   try {
     const response = await api.put<CreateServiceResponse>(`/api/services/${serviceId}`, serviceData);
-    console.log('Service updated:', serviceData);
     if (!response.data || !response.data.data) {
       throw new Error('پاسخ API داده‌ی معتبر ندارد');
     }
     return response.data;
   } catch (error) {
-    console.error('خطا در به‌روزرسانی سرویس:', error);
     if (error instanceof Error) {
       if ('response' in error) {
         const axiosError = error as any;
@@ -462,13 +480,11 @@ export const createService = async (serviceData: {
 }): Promise<CreateServiceResponse> => {
   try {
     const response = await api.post<CreateServiceResponse>('/api/services', serviceData);
-    console.log('Service created:', serviceData);
     if (!response.data || !response.data.data) {
       throw new Error('پاسخ API داده‌ی معتبر ندارد');
     }
     return response.data;
   } catch (error) {
-    console.error('خطا در ایجاد سرویس:', error);
     if (error instanceof Error) {
       if ('response' in error) {
         const axiosError = error as any;
@@ -507,7 +523,6 @@ export const getServices = async (): Promise<ServicesResponse> => {
     }
     return response.data;
   } catch (error) {
-    console.error('خطا در دریافت لیست سرویس‌ها:', error);
     if (error instanceof Error) {
       if ('response' in error) {
         const axiosError = error as any;
@@ -557,7 +572,6 @@ export const uploadFile = async (file: File): Promise<FileUploadResponse> => {
     
     return response.data;
   } catch (error) {
-    console.error('خطا در آپلود فایل:', error);
     if (error instanceof Error) {
       if ('response' in error) {
         const axiosError = error as any;
@@ -597,7 +611,6 @@ export const deleteFile = async (fileUrl: string): Promise<FileDeleteResponse> =
     
     return response.data;
   } catch (error) {
-    console.error('خطا در حذف فایل:', error);
     if (error instanceof Error) {
       if ('response' in error) {
         const axiosError = error as any;
@@ -636,7 +649,6 @@ export const deleteService = async (serviceId: number): Promise<ServiceDeleteRes
     }
     return response.data;
   } catch (error) {
-    console.error(`خطا در حذف سرویس با شناسه ${serviceId}:`, error);
     if (error instanceof Error) {
       if ('response' in error) {
         const axiosError = error as any;
@@ -680,7 +692,6 @@ export const addServiceToUser = async (userId: number, serviceId: number): Promi
     }
     return response.data;
   } catch (error) {
-    console.error(`خطا در افزودن سرویس به کاربر ${userId}:`, error);
     if (error instanceof Error) {
       if ('response' in error) {
         const axiosError = error as any;
@@ -715,7 +726,6 @@ export const getProvinces = async (): Promise<Province[]> => {
     const response = await api.get<Province[]>('/api/provinces');
     return response.data;
   } catch (error) {
-    console.error('خطا در دریافت لیست استان‌ها:', error);
     throw new Error('خطا در دریافت لیست استان‌ها');
   }
 };
@@ -739,7 +749,6 @@ export const getClinics = async (): Promise<ClinicResponse> => {
     }
     return response.data;
   } catch (error) {
-    console.error('خطا در دریافت لیست کلینیک‌ها:', error);
     if (error instanceof Error) {
       if ('response' in error) {
         const axiosError = error as any;
@@ -798,7 +807,6 @@ export const DeleteClinic = async (clinicId: number, token: string): Promise<del
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      console.error('Delete error:', error.response.data);
       throw new Error(error.response.data.message || 'خطا در حذف کلینیک');
     }
     throw new Error('خطا در ارتباط با سرور');

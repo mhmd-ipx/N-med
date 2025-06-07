@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { fetchClinicsData, getCachedClinics, getCachedOperators, cacheOperators, cacheUserTimes, getCachedUserTimes } from '../Clinices/ClinicDataManager.ts';
 import { getOperators, detachOperator, getUserTimes, getServices } from '../../../../../services/serverapi.ts';
 import type { Clinic, ProfileInfoProps, Operator, CreateAndAssignOperatorResponse, UserTime, ServicesResponse, Service } from '../../../../../types/types.ts';
-import { HiOutlineBuildingOffice2, HiOutlineCalendar ,  HiOutlineTrash, HiUser, HiOutlinePlusCircle, HiOutlineClock, HiChevronDown, HiChevronUp } from 'react-icons/hi2';
+import { HiOutlineXMark, HiOutlineDevicePhoneMobile, HiOutlineBuildingOffice2, HiOutlineCalendar ,  HiOutlineTrash, HiUser, HiOutlinePlusCircle, HiOutlineClock, HiChevronDown, HiChevronUp } from 'react-icons/hi2';
 import SuccessPopup from '../../../../../components/ui/SuccessPopup.tsx';
 import CreateOperatorModal from './CreateOperatorModal.tsx';
 import AddScheduleModal from './AddScheduleModal.tsx';
 import CancellationsModal from './CancellationsModal';
+import EditScheduleModal from './EditScheduleModal';
 
 const Operators = ({ token }: ProfileInfoProps) => {
   const [clinics, setClinics] = useState<Clinic[]>([]);
@@ -22,6 +23,7 @@ const Operators = ({ token }: ProfileInfoProps) => {
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState<{ clinicId: number; userId: number } | null>(null);
   const [isCancellationsModalOpen, setIsCancellationsModalOpen] = useState<{ clinicId: number; userId: number } | null>(null);
   const [expandedOperators, setExpandedOperators] = useState<{ [key: string]: boolean }>({});
+  const [isEditModalOpen, setIsEditModalOpen] = useState<{ clinicId: number; userId: number } | null>(null);
 
   const weekdays = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -243,20 +245,13 @@ const Operators = ({ token }: ProfileInfoProps) => {
           }
         `}
       </style>
-      <div className="mb-4">
-        <button
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          onClick={handleRefresh}
-        >
-          به‌روزرسانی داده‌ها
-        </button>
-      </div>
+      
       {clinics.map((clinic) => (
         <div key={clinic.id} className="mb-6 border-r-2 pr-2 border-primary">
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center">
               <HiOutlineBuildingOffice2 className="text-gray-500 text-xl" />
-              <h3 className="text-sm mr-2">{clinic.name}{clinic.id}</h3>
+              <h3 className="text-sm mr-2">{clinic.name}</h3>
             </div>
             <button
               className="text-primary flex gap-1 justify-center items-center"
@@ -281,9 +276,13 @@ const Operators = ({ token }: ProfileInfoProps) => {
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <HiUser className="bg-light p-2 text-4xl rounded-full text-primary" />
-                          <div>
-                            <span className="font-medium">{operator.nickname}{operator.user_id}</span>
-                            <span className="text-gray-500">({operator.phone})</span>
+                          <div className='flex gap-5'>
+                            <span className="font-medium">{operator.nickname}</span>
+                            <div className='flex gap-2'>
+                              <HiOutlineDevicePhoneMobile className="text-2xl  text-gray-400" />
+                              <span className="text-gray-500">{operator.phone}</span>
+                            </div>
+                            
                           </div>
                         </div>
                         <div className="flex gap-2">
@@ -295,7 +294,7 @@ const Operators = ({ token }: ProfileInfoProps) => {
                               {isExpanded ? (
                                 <HiChevronUp className="text-xl" />
                               ) : (
-                                <HiChevronDown className="text-xl" />
+                                <HiOutlineCalendar className="text-xl" />
                               )}
                               نمایش زمان‌بندی
                             </button>
@@ -305,14 +304,14 @@ const Operators = ({ token }: ProfileInfoProps) => {
                               onClick={() => setIsScheduleModalOpen({ clinicId: clinic.id, userId: operator.user_id })}
                             >
                               <HiOutlinePlusCircle className="text-xl" />
-                              درج زمان‌بندی
+                              افزودن زمان‌ بندی
                             </button>
                           )}
                           <button
-                            className="text-yellow-500 flex gap-1 p-2 text-xs justify-center items-center bg-yellow-100 rounded-md"
+                            className="text-orange-500 flex gap-1 p-2 text-xs justify-center items-center bg-orange-100 rounded-md"
                             onClick={() => setIsCancellationsModalOpen({ clinicId: clinic.id, userId: operator.user_id })}
                           >
-                            <HiOutlineCalendar className="text-xl" />
+                            <HiOutlineXMark className="text-xl" />
                             کنسلی‌ها
                           </button>
                           <button
@@ -382,7 +381,7 @@ const Operators = ({ token }: ProfileInfoProps) => {
                               <div className="mt-2 flex justify-center">
                                 <button
                                   className="text-primary flex gap-1 p-2 text-xs w-full justify-center items-center bg-light rounded-md"
-                                  onClick={() => setIsScheduleModalOpen({ clinicId: clinic.id, userId: operator.user_id })}
+                                  onClick={() => setIsEditModalOpen({ clinicId: clinic.id, userId: operator.user_id })}
                                 >
                                   <HiOutlinePlusCircle className="text-xl" />
                                   ویرایش زمان‌بندی
@@ -429,6 +428,16 @@ const Operators = ({ token }: ProfileInfoProps) => {
           isOpen={true}
           onClose={() => setIsCancellationsModalOpen(null)}
           onCancellationChange={() => handleCancellationChange(isCancellationsModalOpen.clinicId, isCancellationsModalOpen.userId , )}
+        />
+      )}
+      {isEditModalOpen && (
+        <EditScheduleModal
+          userId={isEditModalOpen.userId}
+          clinicId={isEditModalOpen.clinicId}
+          isOpen={true}
+          onClose={() => setIsEditModalOpen(null)}
+          onScheduleUpdate={handleScheduleCreate}
+          currentSchedules={userTimes[isEditModalOpen.userId] || []}
         />
       )}
       {successMessage && (
