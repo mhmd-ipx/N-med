@@ -10,7 +10,7 @@ interface FileUploadProps {
 const FileUpload: React.FC<FileUploadProps> = ({ onUrlChange, initialFileUrl, layout = 'vertical' }) => {
   const [fileUrl, setFileUrl] = useState<string | null>(initialFileUrl || null);
   const [originalFileUrl, setOriginalFileUrl] = useState<string | null>(
-    initialFileUrl ? initialFileUrl.replace('https://app.webu.ir/storage/app/public/', 'https://app.webu.ir/storage/') : null
+    initialFileUrl ? initialFileUrl.replace('https://api.niloudarman.ir/storage/app/public/', 'https://api.niloudarman.ir/storage/') : null
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +20,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUrlChange, initialFileUrl, la
   useEffect(() => {
     setFileUrl(initialFileUrl || null);
     setOriginalFileUrl(
-      initialFileUrl ? initialFileUrl.replace('https://app.webu.ir/storage/app/public/', 'https://app.webu.ir/storage/') : null
+      initialFileUrl ? initialFileUrl.replace('https://api.niloudarman.ir/storage/app/public/', 'https://api.niloudarman.ir/storage/') : null
     );
   }, [initialFileUrl]);
 
@@ -41,7 +41,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUrlChange, initialFileUrl, la
 
       const response = await uploadFile(file);
       const displayUrl = response.file_url;
-      const originalUrl = response.file_url.replace('https://app.webu.ir/storage/app/public/', 'https://app.webu.ir/storage/');
+      const originalUrl = response.file_url.replace('https://api.niloudarman.ir/storage/app/public/', 'https://api.niloudarman.ir/storage/');
       setFileUrl(displayUrl);
       setOriginalFileUrl(originalUrl);
       onUrlChange?.(displayUrl);

@@ -172,7 +172,8 @@ const Services: React.FC<ProfileInfoProps> = ({ user, token }) => {
                     </div>
                     <div className="flex w-1/2 items-center justify-start gap-2">
                       <HiOutlineMapPin className={iconsstyle} />
-                      <span>{service.clinic.name}</span>
+                      <span>{service.clinic?.name || '—'}</span>
+
                     </div>
                   </div>
                   <div className="flex mb-2">

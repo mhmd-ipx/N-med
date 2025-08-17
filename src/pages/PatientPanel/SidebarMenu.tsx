@@ -13,8 +13,7 @@ const menuItems = [
   { id: 'Dashboard', name: 'پیشخوان', icon: HiOutlineHome },
   { id: 'Edit-account', name: 'ویرایش حساب کاربری', icon: HiOutlineUserCircle },
   { id: 'Turns', name: 'نوبت ها', icon: HiOutlineCalendarDays },
-  { id: 'Accounting', name: 'حسابداری', icon: HiOutlineCalculator },
-  { id: 'Support', name: 'پشتیبانی', icon: HiOutlineLifebuoy },
+  { id: 'Support', name: 'ارجاعات', icon: HiOutlineLifebuoy },
   { id: 'Log-out', name: 'خروج از حساب', icon: HiOutlineArrowRightOnRectangle },
 ];
 

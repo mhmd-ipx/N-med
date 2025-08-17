@@ -15,8 +15,7 @@ const menuItems = [
   { id: 'Edit-account', name: 'ویرایش حساب کاربری', icon: HiOutlineUserCircle },
   { id: 'Turns', name: 'نوبت ها', icon: HiOutlineCalendarDays },
   { id: 'Services', name: 'خدمات و مطب ها', icon: HiOutlineBuildingOffice },
-  { id: 'Accounting', name: 'حسابداری', icon: HiOutlineCalculator },
-  { id: 'Support', name: 'پشتیبانی', icon: HiOutlineLifebuoy },
+  { id: 'Support', name: 'ارجاعات', icon: HiOutlineLifebuoy },
   { id: 'Log-out', name: 'خروج از حساب', icon: HiOutlineArrowRightOnRectangle },
 ];
 

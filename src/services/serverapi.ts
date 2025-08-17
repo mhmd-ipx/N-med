@@ -28,7 +28,7 @@ import type {
 
 // ایجاد نمونه axios با تنظیمات پایه
 const api = axios.create({
-  baseURL: 'https://app.webu.ir/public',
+  baseURL: 'http://api.niloudarman.ir',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -568,7 +568,7 @@ export const uploadFile = async (file: File): Promise<FileUploadResponse> => {
     }
     
     // Construct display URL
-    response.data.file_url = `https://app.webu.ir/storage/app/public/${response.data.path}`;
+    response.data.file_url = `https://api.niloudarman.ir/storage/${response.data.path}`;
     
     return response.data;
   } catch (error) {
@@ -902,6 +902,18 @@ export const getUserProfile = async (): Promise<User> => {
     throw error.response?.data?.message || error.message || 'خطایی در دریافت اطلاعات کاربر رخ داد';
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

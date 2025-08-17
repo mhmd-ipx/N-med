@@ -17,6 +17,7 @@
     "@tanstack/react-query": "^5.75.7",
     "axios": "^1.9.0",
     "date-fns-jalali": "^4.1.0-0",
+    "jalaali-react-date-picker": "^1.0.19",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.511.0",
     "path": "^0.12.7",
