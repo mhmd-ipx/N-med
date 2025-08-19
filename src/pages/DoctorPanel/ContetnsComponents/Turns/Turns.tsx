@@ -139,7 +139,7 @@ const Turns: React.FC = () => {
   const columns: ColumnDef<Appointment>[] = useMemo(
     () => [
       {
-        accessorFn: (row) => row.patient?.user?.name ?? `شناسه بیمار: ${row.patient_id}`,
+        accessorFn: (row) => row.patient?.user?.name ?? `-`,
         id: "patientName",
         header: "نام کاربر",
       },
@@ -220,7 +220,7 @@ const Turns: React.FC = () => {
         header: "عملیات",
         cell: ({ row }) => (
           <button
-            className="rounded-md bg-blue-500 px-4 py-2 text-white shadow transition-colors hover:bg-blue-600"
+            className="rounded-md bg-primary px-4 py-2 text-white "
             onClick={() => setSelectedAppointment(row.original)}
           >
             مشاهده
@@ -332,12 +332,12 @@ const Turns: React.FC = () => {
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr
                   key={headerGroup.id}
-                  className="bg-indigo-600 text-white"
+                  className="bg-primary text-white "
                 >
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="p-4 text-right font-semibold"
+                      className="p-3 text-right font-semibold"
                     >
                       {flexRender(
                         header.column.columnDef.header,
@@ -355,7 +355,7 @@ const Turns: React.FC = () => {
                   className="border-b border-gray-200 last:border-0 hover:bg-gray-50 transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="p-4 text-right">
+                    <td key={cell.id} className="p-3 text-right">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
