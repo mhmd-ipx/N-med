@@ -20,7 +20,8 @@ import type {
   FileUploadResponse ,
   UserTimesResponse ,
   CreateSchedulesResponse ,
-  CreateSchedulesRequest} from '../types/types'
+  CreateSchedulesRequest,
+  DoctorDashboardResponse} from '../types/types'
 
   import type {  CancellationRequest ,
   CancellationsResponse,
@@ -33,6 +34,42 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+
+
+
+// Get doctor dashboard data
+export const getDoctorDashboard = async (): Promise<DoctorDashboardResponse> => {
+  try {
+    const response = await api.get<DoctorDashboardResponse>('/api/doctors/dashboard');
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در دریافت اطلاعات داشبورد');
+  }
+};
+
+
 
 // اضافه کردن توکن به هدر تمام درخواست‌ها
 api.interceptors.request.use(
@@ -49,7 +86,7 @@ api.interceptors.request.use(
   }
 );
 
-
+//ایجاد کنسلی 
 export const createCancellation = async (
   payload: CancellationRequest
 ): Promise<CancellationResponse> => {
@@ -376,10 +413,7 @@ export const detachOperator = async (clinicId: number, operatorId: number): Prom
 
 // تابع برای ایجاد و اختصاص اوپراتور به کلینیک
 export const createAndAssignOperator = async (
-  clinicId: number,
-  name: string,
-  phone: string
-): Promise<CreateAndAssignOperatorResponse> => {
+clinicId: number, name: string, phone: string, token: string): Promise<CreateAndAssignOperatorResponse> => {
   try {
     const response = await api.post<CreateAndAssignOperatorResponse>('/api/operators/create-and-assign', {
       clinic_id: clinicId,

@@ -12,10 +12,10 @@ import {
 
 const menuItems = [
   { id: 'Dashboard', name: 'پیشخوان', icon: HiOutlineHome },
-  { id: 'Edit-account', name: 'ویرایش حساب کاربری', icon: HiOutlineUserCircle },
   { id: 'Turns', name: 'نوبت ها', icon: HiOutlineCalendarDays },
+  { id: 'References', name: 'ارجاعات', icon: HiOutlineLifebuoy },
   { id: 'Services', name: 'خدمات و مطب ها', icon: HiOutlineBuildingOffice },
-  { id: 'Support', name: 'ارجاعات', icon: HiOutlineLifebuoy },
+  { id: 'Edit-account', name: 'ویرایش حساب کاربری', icon: HiOutlineUserCircle },
   { id: 'Log-out', name: 'خروج از حساب', icon: HiOutlineArrowRightOnRectangle },
 ];
 

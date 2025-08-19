@@ -4,18 +4,21 @@ import UserDataProvider from '../../components/ui/login/UserDataProvider';
 import SidebarMenu from './SidebarMenu';
 import Loading from '../../components/ui/Loading/Loading';
 import { ProfileInfo, Appointments, MedicalRecords, Settings } from './MenuContentComponents';
-
-import ServicesClinics from './ContetnsComponents/ServicesClinics/ServicesClinics'
+import Dashboard from './ContetnsComponents/Dashboard/Dashboard';
+import EditAccount from './ContetnsComponents/EditAccount/EditAccount';
+import Turns from './ContetnsComponents/Turns/Turns';
+import References from './ContetnsComponents/References/References';
+import ServicesClinics from './ContetnsComponents/ServicesClinics/ServicesClinics';
 import LogOut from './LogOut';
 import { HiMiniPencilSquare } from 'react-icons/hi2';
 
 const menuItems = [
-  { id: 'Dashboard', name: 'پروفایل', component: ProfileInfo },
-  { id: 'Edit-account', name: 'ملاقات‌ها', component: Appointments },
-  { id: 'Turns', name: 'سوابق', component: MedicalRecords },
+  { id: 'Dashboard', name: 'پروفایل', component: Dashboard },
+  { id: 'Edit-account', name: 'ویرایش حساب کاربری', component: EditAccount },
+  { id: 'Turns', name: 'نوبت ها', component: Turns },
   { id: 'Services', name: 'خدمات و مطب ها', component: ServicesClinics },
-  { id: 'Support', name: 'تنظیمات', component: Settings },
-  { id: 'Log-out', name: 'تنظیمات', component: LogOut },
+  { id: 'References', name: 'ارجاعات', component: References },
+  { id: 'Log-out', name: 'خروج', component: LogOut },
 ];
 
 

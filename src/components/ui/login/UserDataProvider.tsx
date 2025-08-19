@@ -26,13 +26,13 @@ const UserDataProvider = ({ children, role, redirectPath }: UserDataProviderExte
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showPendingMessage, setShowPendingMessage] = useState(false);
   const navigate = useNavigate();
 
   // تابع برای به‌روزرسانی اطلاعات کاربر و ذخیره در localStorage
   const updateUser = (newUser: User) => {
     setUser(newUser);
     localStorage.setItem('userData', JSON.stringify(newUser));
-    // اعلان رویداد سفارشی برای اطلاع‌رسانی تغییرات
     window.dispatchEvent(new CustomEvent('userUpdated', { detail: newUser }));
   };
 
@@ -43,34 +43,52 @@ const UserDataProvider = ({ children, role, redirectPath }: UserDataProviderExte
 
       if (authData) {
         try {
-          const parsedData: { token: string; user?: User } = JSON.parse(authData);
-          setToken(parsedData.token);
+          const parsedData = JSON.parse(authData);
 
-          // اگر authData شامل user باشد، از آن استفاده کن
-          if (parsedData.user && parsedData.user.role) {
-            setUser(parsedData.user);
-            localStorage.setItem('userData', JSON.stringify(parsedData.user));
+          // بررسی حالت انتظار تأیید ادمین
+          if (parsedData.message === 'حساب شما ایجاد شد. منتظر تأیید ادمین بمانید.') {
+            setShowPendingMessage(true);
+            setIsLoading(false);
+            setTimeout(() => {
+              localStorage.removeItem('authData');
+              localStorage.removeItem('userData');
+              setShowPendingMessage(false);
+              navigate('/');
+            }, 10000); // 10 ثانیه
+            return;
+          }
+
+          // منطق قبلی برای زمانی که توکن وجود دارد
+          const parsedToken: { token?: string; user?: User } = parsedData;
+          if (!parsedToken.token) {
+            throw new Error('No token found');
+          }
+
+          setToken(parsedToken.token);
+
+          if (parsedToken.user && parsedToken.user.role) {
+            setUser(parsedToken.user);
+            localStorage.setItem('userData', JSON.stringify(parsedToken.user));
           } else if (storedUser) {
-            // اگر userData در localStorage بود، بررسی کن که role معتبر باشد
             const parsedUser: User = JSON.parse(storedUser);
             if (parsedUser.role) {
               setUser(parsedUser);
             } else {
-              // اگر role در userData null بود، از API بگیر
-              const userData = await getUser(parsedData.token);
+              const userData = await getUser(parsedToken.token);
               const finalUser = userData.user || userData;
               setUser(finalUser);
               localStorage.setItem('userData', JSON.stringify(finalUser));
             }
           } else {
-            // اگر هیچ داده‌ای در localStorage نبود، از API بگیر
-            const userData = await getUser(parsedData.token);
+            const userData = await getUser(parsedToken.token);
             const finalUser = userData.user || userData;
             setUser(finalUser);
             localStorage.setItem('userData', JSON.stringify(finalUser));
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
+          localStorage.removeItem('authData');
+          localStorage.removeItem('userData');
           navigate(redirectPath);
         }
       } else {
@@ -94,6 +112,21 @@ const UserDataProvider = ({ children, role, redirectPath }: UserDataProviderExte
 
   if (isLoading) {
     return <Loading />;
+  }
+
+  // نمایش پیام انتظار تأیید ادمین
+  if (showPendingMessage) {
+    return (
+      <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-md text-center">
+        <h2 className="text-2xl font-bold text-blue-600 mb-4">در انتظار تأیید</h2>
+        <p className="text-gray-600 mb-4">
+          حساب شما ایجاد شده است. لطفاً منتظر تأیید ادمین بمانید.
+        </p>
+        <Link to="/" className="text-indigo-600 hover:text-indigo-800 font-medium">
+          بازگشت به صفحه اصلی
+        </Link>
+      </div>
+    );
   }
 
   if (!user || !token) {

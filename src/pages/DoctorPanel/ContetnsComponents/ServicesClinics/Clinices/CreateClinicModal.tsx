@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import type { Clinic, City, Province , UpdateClinicData } from '../../../../../types/types.ts';
-import { CreateClinic, getProvinces, getCitiesByProvince } from '../../../../../services/serverapi.ts';
+import type { Clinic, City, Province, UpdateClinicData } from '../../../../../types/types.ts';
+import { CreateClinic, getProvinces, getCitiesByProvince, createAndAssignOperator } from '../../../../../services/serverapi.ts';
 import { HiOutlineX } from 'react-icons/hi';
 import { getCachedLocations, setCachedLocations, updateCachedCities } from './cache.ts';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
@@ -110,64 +110,96 @@ const CreateClinicModal = ({ isOpen, onClose, onClinicCreate, token }: CreateCli
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError(null);
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    // بررسی وجود استان و شهر
+    if (!selectedProvince || !selectedCity) {
+      setError('لطفاً استان و شهر را انتخاب کنید');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const clinicData: UpdateClinicData = {
+        name: formData.name,
+        address: formData.address,
+        phone: formData.phone,
+        description: formData.description,
+        geo: `${position.lat},${position.lng}`,
+        city_id: selectedCity?.id ?? null,
+        province_id: selectedProvince?.id ?? null,
+      };
+
+      const response = await CreateClinic(clinicData, token);
+
+      const newClinic: Clinic = {
+        id: response.id,
+        name: formData.name,
+        address: formData.address,
+        phone: formData.phone,
+        description: formData.description,
+        geo: `${position.lat},${position.lng}`,
+        city: selectedCity,
+        province: selectedProvince,
+        avatar: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
 
 
-  // بررسی وجود استان و شهر
-  if (!selectedProvince || !selectedCity) {
-    setError('لطفاً استان و شهر را انتخاب کنید');
-    setIsLoading(false);
-    return;
-  }
+      // به‌روزرسانی کش کلینیک‌ها
+      const cachedClinics = JSON.parse(localStorage.getItem('clinics_cache') || '{}').clinics || [];
+      const updatedClinics = [...cachedClinics, newClinic];
+      localStorage.setItem('clinics_cache', JSON.stringify({
+        clinics: updatedClinics,
+        timestamp: Date.now(),
+      }));
 
-  try {
-    const clinicData: UpdateClinicData = {
-      name: formData.name,
-      address: formData.address,
-      phone: formData.phone,
-      description: formData.description,
-      geo: `${position.lat},${position.lng}`,
-      city_id: selectedCity?.id ?? null,
-      province_id: selectedProvince?.id ?? null,
-    };
+      // دریافت اطلاعات کاربر از localStorage
+      const authData = localStorage.getItem('authData');
+      if (authData) {
+        const parsedData = JSON.parse(authData);
+        const user = parsedData.user;
+        if (user && user.name && user.phone) {
+          try {
+            // ایجاد اوپراتور با اطلاعات کاربر و clinicId
+            const operatorResponse = await createAndAssignOperator(
+              response.clinic.id,
+              user.name,
+              user.phone,
+              token 
+            );
+            console.log('اوپراتور با موفقیت ایجاد شد:', operatorResponse);
+          } catch (err) {
+            console.error('خطا در ایجاد اوپراتور:', err );
+            setError(`خطا در ایجاد اوپراتور `);
+            setIsLoading(false);
+            return;
+          }
+        } else {
+          console.error('اطلاعات کاربر در localStorage ناقص است');
+          setError('اطلاعات کاربر یافت نشد');
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        console.error('authData در localStorage یافت نشد');
+        setError('خطا در بارگذاری اطلاعات کاربر');
+        setIsLoading(false);
+        return;
+      }
 
-
-    const response = await CreateClinic(clinicData, token);
-
-    const newClinic: Clinic = {
-      id: response.id,
-      name: formData.name,
-      address: formData.address,
-      phone: formData.phone,
-      description: formData.description,
-      geo: `${position.lat},${position.lng}`,
-      city: selectedCity,
-      province: selectedProvince,
-      avatar: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    onClinicCreate(newClinic);
-
-    // به‌روزرسانی کش
-    const cachedClinics = JSON.parse(localStorage.getItem('clinics_cache') || '{}').clinics || [];
-    const updatedClinics = [...cachedClinics, newClinic];
-    localStorage.setItem('clinics_cache', JSON.stringify({
-      clinics: updatedClinics,
-      timestamp: Date.now(),
-    }));
-
-    onClose();
-  } catch (err) {
-    console.error('خطا در ایجاد کلینیک:', err);
-    setError('خطا در ایجاد کلینیک');
-  } finally {
-    setIsLoading(false);
-  }
-};
+      onClinicCreate(newClinic);
+      onClose();
+    } catch (err) {
+      console.error('خطا در ایجاد کلینیک:', err);
+      setError('خطا در ایجاد کلینیک');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const MapClickHandler = () => {
     useMapEvents({
@@ -193,29 +225,29 @@ const CreateClinicModal = ({ isOpen, onClose, onClinicCreate, token }: CreateCli
         <form onSubmit={handleSubmit} className="flex-col gap-4">
           <div className='flex flex-row gap-4'>
             <div className="w-1/2 space-y-4">
-            <div className='w-full flex gap-2'>
-              <div className='w-1/2'>
-                <label className="block text-sm font-medium">نام کلینیک</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                  required
-                />
+              <div className='w-full flex gap-2'>
+                <div className='w-1/2'>
+                  <label className="block text-sm font-medium">نام کلینیک</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full p-2 border rounded"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium">تلفن</label>
+                  <input
+                    type="text"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium">تلفن</label>
-                <input
-                  type="text"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-            </div>
               <div className='w-full flex gap-2'>
                 <div className='w-1/2'>
                   <label className="text-sm font-medium">استان</label>
@@ -264,7 +296,6 @@ const CreateClinicModal = ({ isOpen, onClose, onClinicCreate, token }: CreateCli
                   required
                 />
               </div>
-              
               <div>
                 <label className="block text-sm font-medium">توضیحات</label>
                 <textarea
@@ -274,8 +305,6 @@ const CreateClinicModal = ({ isOpen, onClose, onClinicCreate, token }: CreateCli
                   className="w-full p-2 border rounded"
                 />
               </div>
-
-              
               {error && <p className="text-red-500 text-sm">{error}</p>}
             </div>
             <div className="w-1/2">
@@ -310,7 +339,6 @@ const CreateClinicModal = ({ isOpen, onClose, onClinicCreate, token }: CreateCli
               </div>
             </div>
           </div>
-
           <div className="flex justify-center gap-2 mt-4 w-full">
             <button
               type="button"

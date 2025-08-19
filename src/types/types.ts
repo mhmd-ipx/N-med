@@ -400,3 +400,12 @@ export interface Cancellation {
 export interface CancellationsResponse {
   data: Cancellation[];
 }
+
+
+// Define the response type
+export interface DoctorDashboardResponse {
+  clinics_count: number;
+  services_count: number;
+  appointments_count: number;
+  referrals_count: number;
+}
