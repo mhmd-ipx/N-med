@@ -409,3 +409,38 @@ export interface DoctorDashboardResponse {
   appointments_count: number;
   referrals_count: number;
 }
+
+export interface Patient {
+  id: number;
+  user_id: number;
+  national_code: string | null;
+  birth_year: number | null;
+  gender: string;
+  created_at: string;
+  updated_at: string;
+  user: User;
+}
+
+export interface Appointment {
+  id: number;
+  patient_id: number;
+  user_id: number;
+  service_id: number;
+  start_date: string;
+  end_date: string;
+  status: "waiting" | "canceled" | "finished";
+  payment_status: string;
+  description: string;
+  attachments: string; // رشته JSON که باید پارس شود
+  doctor_description: string | null;
+  created_at: string;
+  updated_at: string;
+  payment_id: number | null;
+  referral_id: number | null;
+  patient: Patient | null;
+  service: Service;
+}
+
+
+// Define Appointment Response type
+export type AppointmentsResponse = Appointment[];

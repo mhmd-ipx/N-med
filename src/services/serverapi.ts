@@ -21,7 +21,9 @@ import type {
   UserTimesResponse ,
   CreateSchedulesResponse ,
   CreateSchedulesRequest,
-  DoctorDashboardResponse} from '../types/types'
+  DoctorDashboardResponse,
+  Appointment,
+  AppointmentsResponse} from '../types/types'
 
   import type {  CancellationRequest ,
   CancellationsResponse,
@@ -35,6 +37,60 @@ const api = axios.create({
   },
 });
 
+
+
+
+
+
+
+
+// اضافه کردن توکن به هدر تمام درخواست‌ها
+api.interceptors.request.use(
+  (config) => {
+    const authData = localStorage.getItem('authData');
+    if (authData) {
+      const parsedData: { token: string } = JSON.parse(authData);
+      config.headers.Authorization = `Bearer ${parsedData.token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+
+
+// Get doctor appointments
+export const getDoctorAppointments = async (): Promise<AppointmentsResponse> => {
+  try {
+    const response = await api.get<AppointmentsResponse>('/api/doctors/appointments');
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در دریافت اطلاعات نوبت‌ها');
+  }
+};
 
 
 
@@ -68,23 +124,6 @@ export const getDoctorDashboard = async (): Promise<DoctorDashboardResponse> => 
     throw new Error('خطای ناشناخته در دریافت اطلاعات داشبورد');
   }
 };
-
-
-
-// اضافه کردن توکن به هدر تمام درخواست‌ها
-api.interceptors.request.use(
-  (config) => {
-    const authData = localStorage.getItem('authData');
-    if (authData) {
-      const parsedData: { token: string } = JSON.parse(authData);
-      config.headers.Authorization = `Bearer ${parsedData.token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
 
 //ایجاد کنسلی 
 export const createCancellation = async (

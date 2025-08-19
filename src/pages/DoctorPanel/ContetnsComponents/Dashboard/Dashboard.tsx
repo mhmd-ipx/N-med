@@ -244,9 +244,7 @@ const Dashboard: React.FC = () => {
           <div>
             <h3 className="font-semibold mb-3 text-gray-700 flex items-center text-white">
               <FaUser className="text-primary bg-white p-2 rounded-3xl text-4xl ml-3" />
-              اطلاعات کاربر
-            </h3>
-            <p className="text-white">نام: {authData?.user.name || "نامشخص"}</p>
+              دکتر {authData?.user.name || "نامشخص"}            </h3>
             <p className="text-white">شماره موبایل: {authData?.user.phone || "نامشخص"}</p>
           </div>
           <div className="flex items-center gap-2">
