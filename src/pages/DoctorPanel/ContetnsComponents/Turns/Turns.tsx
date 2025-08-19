@@ -245,7 +245,7 @@ const Turns: React.FC = () => {
           لیست نوبت‌های درمانی
         </h1>
         <button
-          className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2 text-white shadow-md transition-colors hover:bg-primary"
+          className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2 text-white transition-colors hover:bg-primary"
           onClick={handleRefresh}
           disabled={loading}
         >
@@ -326,7 +326,7 @@ const Turns: React.FC = () => {
           هیچ نوبتی با فیلترهای اعمال شده یافت نشد.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg shadow-lg">
+        <div className="overflow-x-auto rounded-lg border">
           <table className="w-full min-w-[700px] border-collapse bg-white">
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
