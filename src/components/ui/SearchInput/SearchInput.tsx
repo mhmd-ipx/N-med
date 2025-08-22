@@ -1,15 +1,14 @@
-
 import { useEffect, useState } from "react";
 import { HiOutlineMap, HiOutlineSearch } from "react-icons/hi";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import { getprovinces, getDoctors, getSpecialties } from '../../../services/api';
-import type { provinces, Doctor, Specialty } from '../../../types/types';
+import { getProvinces, getDoctors, getSpecialties } from '../../../services/publicApi';
+import type { Province, Doctor, Specialty, DoctorsResponse } from '../../../services/publicApi';
 import { Link } from "react-router-dom";
 import Button from '../../ui/Button';
 
 const SearchInput = () => {
-  const [selectedLocation, setSelectedLocation] = useState<number>(1);
-  const [locations, setLocations] = useState<provinces[]>([]);
+  const [selectedProvince, setSelectedProvince] = useState<number>(0); // مقدار پیش‌فرض به 0 (همه استان‌ها) تغییر یافت
+  const [provinces, setProvinces] = useState<Province[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,81 +17,96 @@ const SearchInput = () => {
 
   // کش کردن و دریافت استان‌ها
   useEffect(() => {
-    const cachedLocations = localStorage.getItem("provinces");
-    if (cachedLocations) {
-      setLocations(JSON.parse(cachedLocations));
+    const cachedProvinces = localStorage.getItem("provinces");
+    if (cachedProvinces) {
+      try {
+        const parsedProvinces = JSON.parse(cachedProvinces);
+        // اضافه کردن گزینه "همه استان‌ها"
+        setProvinces([{ id: 0, enname: "All", faname: "همه استان‌ها", created_at: "", updated_at: "" }, ...parsedProvinces]);
+      } catch (error) {
+        console.error("homeapi: Error parsing cached provinces", error);
+      }
     } else {
-        getprovinces().then(data => {
-        setLocations(data);
-        localStorage.setItem("provinces", JSON.stringify(data));
-      });
+      getProvinces()
+        .then(data => {
+          // اضافه کردن گزینه "همه استان‌ها"
+          setProvinces([{ id: 0, enname: "All", faname: "همه استان‌ها", created_at: "", updated_at: "" }, ...data]);
+          localStorage.setItem("provinces", JSON.stringify(data));
+        })
+        .catch(error => {
+          console.error("homeapi: Error fetching provinces", error);
+        });
     }
   }, []);
 
+  // دریافت تخصص‌ها
   useEffect(() => {
     getSpecialties()
       .then(data => {
         setSpecialties(data);
       })
-      .catch(error => console.error("Error fetching specialties:", error));
+      .catch(error => console.error("homeapi: Error fetching specialties:", error));
   }, []);
-  
+
+  // دریافت پزشکان
   useEffect(() => {
     setIsLoadingDoctors(true);
     getDoctors()
-      .then(data => {
-        setDoctors(data);
+      .then((data: DoctorsResponse) => {
+        setDoctors(data.data);
         setIsLoadingDoctors(false);
       })
       .catch(error => {
-        console.error("Error fetching doctors:", error);
+        console.error("homeapi: Error fetching doctors:", error);
         setIsLoadingDoctors(false);
       });
   }, []);
-  
+
+  // فیلتر کردن نتایج جستجو
   useEffect(() => {
+    // اگر عبارتی برای جستجو وارد نشده باشد، نتایج را خالی کن.
     if (searchTerm.trim() === "") {
       setFilteredResults([]);
       return;
     }
-  
+
     const results = doctors.filter(doc => {
-      if (doc.cityId !== selectedLocation) return false;
-      if (doc.name.toLowerCase().includes(searchTerm.toLowerCase())) return true;
-      const doctorSpecialties = doc.specialtyIds
-        .map(id => specialties.find(spec => String(spec.id) === String(id))?.name || "")
-        .filter(name => name);
-      return doctorSpecialties.some(specName =>
-        specName.toLowerCase().includes(searchTerm.toLowerCase())
+      // فیلتر بر اساس استان (در صورت انتخاب همه استان‌ها، این شرط همیشه true است)
+      const hasMatchingClinic = selectedProvince === 0 || doc.clinics.some(clinic =>
+        clinic.province_id === selectedProvince
       );
+
+      if (!hasMatchingClinic) return false;
+
+      // جستجو بر اساس نام پزشک یا تخصص
+      const nameMatch = doc.user.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const specialtyMatch = doc.specialties?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      return nameMatch || specialtyMatch;
     });
-  
+
     setFilteredResults(results);
-  }, [searchTerm, selectedLocation, doctors, specialties]);
-  
-  const getSpecialtyNames = (specialtyIds: number[]): string => {
-    const names = specialtyIds
-      .map(id => specialties.find(spec => String(spec.id) === String(id))?.name || "")
-      .filter(name => name);
-    return names.length > 0 ? names.join(", ") : "بدون تخصص";
+  }, [searchTerm, selectedProvince, doctors]);
+
+  const getSpecialtyNames = (specialties: string | null): string => {
+    return specialties || "بدون تخصص";
   };
 
-
   return (
-    <div className="relative w-full mx-auto ">
+    <div className="relative w-full mx-auto">
       <div className="relative w-[80%] mx-auto">
         <div className="flex items-center bg-white border border-gray-300 rounded-full shadow-sm -mt-5">
-          {/* استان */}
+          {/* انتخاب استان */}
           <div className="flex items-center p-2 pr-4">
             <HiOutlineMap className="text-primary text-xl -ml-6 z-10" />
             <select
-              value={selectedLocation}
-              onChange={(e) => setSelectedLocation(Number(e.target.value))}
+              value={selectedProvince}
+              onChange={(e) => setSelectedProvince(Number(e.target.value))}
               className="text-primary p-2 outline-none rounded-full bg-light text-right appearance-none pr-10 pl-4 ml-2"
             >
-              {locations.map((loc) => (
-                <option key={loc.id} value={loc.id}>
-                  {loc.name}
+              {provinces.map((prov) => (
+                <option key={prov.id} value={prov.id}>
+                  {prov.faname}
                 </option>
               ))}
             </select>
@@ -125,9 +139,9 @@ const SearchInput = () => {
                 className="p-2 text-right hover:bg-gray-100 cursor-pointer"
               >
                 <Link to={`/doctors/${doc.id}`}>
-                  {doc.name} -{" "}
+                  {doc.user.name} -{" "}
                   <span className="text-sm text-gray-500">
-                    {getSpecialtyNames(doc.specialtyIds)}
+                    {getSpecialtyNames(doc.specialties)}
                   </span>
                 </Link>
               </li>
@@ -161,7 +175,7 @@ const SearchInput = () => {
       </div>
       <div className="w-[80%] mx-auto relative flex items-center justify-center mt-4">
         <div className="absolute top-1/2 w-full border-t border-white -translate-y-1/2"></div>
-        <div className="relative z-10 ">
+        <div className="relative z-10">
           <Button
             variant="solid"
             iconAlignment="start"
@@ -172,8 +186,6 @@ const SearchInput = () => {
           </Button>
         </div>
       </div>
-
-
     </div>
   );
 };

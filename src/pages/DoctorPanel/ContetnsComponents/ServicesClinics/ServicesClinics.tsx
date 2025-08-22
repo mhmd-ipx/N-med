@@ -35,7 +35,7 @@ const ServicesClinics: React.FC<ProfileInfoProps> = ({ user, token }) => {
     },
     {
       id: 'tab2',
-      label: 'اپراتورها',
+      label: 'زمانبندی',
       icon: <HiOutlineUsers className='text-xl' />,
             content: (
         <ErrorBoundary>

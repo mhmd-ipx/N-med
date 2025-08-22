@@ -56,4 +56,5 @@ export default tseslint.config({
   //npm run start:server
   //RUN SERVER
   //yarn vite build
+  //yarn start:server
 

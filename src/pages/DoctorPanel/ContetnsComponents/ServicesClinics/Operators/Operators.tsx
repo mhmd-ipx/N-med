@@ -253,14 +253,16 @@ const Operators = ({ token }: ProfileInfoProps) => {
               <HiOutlineBuildingOffice2 className="text-gray-500 text-xl" />
               <h3 className="text-sm mr-2">{clinic.name}</h3>
             </div>
-             {/*
+            {/*
             <button
               className="text-primary flex gap-1 justify-center items-center"
               onClick={() => handleAddOperator(clinic.id)}
             >
               <HiOutlinePlusCircle className="text-xl" />افزودن
             </button>
-            */}
+             */} 
+            
+            
           </div>
           <div className="mt-3">
             {loadingOperators[clinic.id] ? (
@@ -324,7 +326,9 @@ const Operators = ({ token }: ProfileInfoProps) => {
                           >
                             <HiOutlineTrash className="text-xl" />
                           </button>
-                          */}
+                           */}
+                          
+                          
                           
                         </div>
                       </div>
