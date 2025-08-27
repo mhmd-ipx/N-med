@@ -177,49 +177,49 @@ const ServiceDetail = () => {
   const discountPercentage = service.discount_price > 0 ? ((1 - service.discount_price / service.price) * 100).toFixed(0) : '0';
 
   return (
-    <div className="container mx-auto p-6 bg-gray-100 min-h-screen">
-      <div className="bg-white rounded-2xl shadow-lg p-8 mb-8 border border-gray-200">
-        <div className="flex flex-col md:flex-row gap-8">
-          <div className="md:w-1/3">
+    <div className="container mx-auto p-4 md:p-6 bg-gray-100 min-h-screen">
+      <div className="bg-white rounded-2xl shadow-lg p-4 md:p-8 mb-8 border border-gray-200">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          <div className="w-full lg:w-1/3">
             <img
               src={service.thumbnail}
               alt={service.title}
-              className="w-full h-64 object-cover rounded-xl shadow-md"
+              className="w-full h-48 md:h-64 object-cover rounded-xl shadow-md"
             />
           </div>
-          <div className="md:w-2/3">
-            <h1 className="text-3xl font-bold text-gray-800 mb-4">{service.title}</h1>
-            <p className="text-gray-600 mb-6">{service.description}</p>
+          <div className="w-full lg:w-2/3">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">{service.title}</h1>
+            <p className="text-gray-600 mb-6 text-sm md:text-base">{service.description}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
               <div className="flex items-center gap-2">
-                <HiOutlineLocationMarker className="text-2xl text-blue-500" />
-                <p className="text-gray-700">
+                <HiOutlineLocationMarker className="text-xl md:text-2xl text-blue-500" />
+                <p className="text-gray-700 text-sm md:text-base">
                   <span className="font-semibold">کلینیک:</span> {service.clinic.name}, {service.clinic.address}
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <HiOutlineLocationMarker className="text-2xl text-blue-500" />
-                <p className="text-gray-700">
+                <HiOutlineLocationMarker className="text-xl md:text-2xl text-blue-500" />
+                <p className="text-gray-700 text-sm md:text-base">
                   <span className="font-semibold">استان:</span> {province ? province.faname : 'نامشخص'}
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <HiOutlineClock className="text-2xl text-blue-500" />
-                <p className="text-gray-700">
+                <HiOutlineClock className="text-xl md:text-2xl text-blue-500" />
+                <p className="text-gray-700 text-sm md:text-base">
                   <span className="font-semibold">مدت زمان:</span> {service.time} دقیقه
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <HiOutlineCurrencyDollar className="text-2xl text-blue-500" />
+                <HiOutlineCurrencyDollar className="text-xl md:text-2xl text-blue-500" />
                 <div>
                   {service.discount_price > 0 && discountAmount > 0 ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-500 text-sm line-through">{service.price.toLocaleString()} تومان</span>
-                      <span className="text-xl font-bold text-blue-500">{service.discount_price.toLocaleString()} تومان</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="text-gray-500 text-xs sm:text-sm line-through">{service.price.toLocaleString()} تومان</span>
+                      <span className="text-lg sm:text-xl font-bold text-blue-500">{service.discount_price.toLocaleString()} تومان</span>
                       <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-1">{discountPercentage}% تخفیف</span>
                     </div>
                   ) : (
-                    <span className="text-xl font-bold text-gray-800">{service.price.toLocaleString()} تومان</span>
+                    <span className="text-lg sm:text-xl font-bold text-gray-800">{service.price.toLocaleString()} تومان</span>
                   )}
                 </div>
               </div>
@@ -229,11 +229,11 @@ const ServiceDetail = () => {
                 <img
                   src={doctor.avatar || '/default-avatar.png'}
                   alt={doctor.user.name}
-                  className="w-16 h-16 object-cover rounded-full shadow-sm"
+                  className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-full shadow-sm"
                 />
                 <div>
-                  <p className="text-gray-700 font-semibold">پزشک: {doctor.user.name}</p>
-                  <p className="text-gray-500 text-sm">تماس: {doctor.user.id}</p>
+                  <p className="text-gray-700 font-semibold text-sm md:text-base">پزشک: {doctor.user.name}</p>
+                  <p className="text-gray-500 text-xs md:text-sm">تماس: {doctor.user.id}</p>
                 </div>
               </div>
             )}

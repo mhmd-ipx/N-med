@@ -25,39 +25,45 @@ function Categories() {
       </Helmet>
       <div className='w-full'>
         {/* Categories Hero Section */}
-        <section className='bg-gray-100 py-16'>
+        <section className='bg-gray-100 py-8 md:py-16'>
           <div className='container mx-auto px-4 text-center'>
-            <h1 className='text-4xl font-bold mb-4'>دسته‌بندی‌های سلامت</h1>
-            <p className='text-lg text-gray-600'>
+            <h1 className='text-2xl md:text-4xl font-bold mb-4'>دسته‌بندی‌های سلامت</h1>
+            <p className='text-base md:text-lg text-gray-600'>
               دسته‌بندی‌های مختلف سلامت را کاوش کنید و منابع مرتبط را پیدا کنید.
             </p>
           </div>
         </section>
 
         {/* Search Section */}
-
+        <section className='py-8 md:py-16'>
+          <div className='container mx-auto px-4'>
+            <div className="max-w-md mx-auto">
+              <SearchInput />
+            </div>
+          </div>
+        </section>
 
         {/* Categories Grid Section */}
-        <section className='py-16'>
+        <section className='py-8 md:py-16'>
           <div className='container mx-auto px-4'>
-            <h2 className='text-2xl font-semibold mb-6'>همه دسته‌بندی‌ها</h2>
+            <h2 className='text-xl md:text-2xl font-semibold mb-6'>همه دسته‌بندی‌ها</h2>
             {filteredCategories.length === 0 ? (
               <div className='text-center text-gray-600'>هیچ دسته‌بندی‌ای یافت نشد</div>
             ) : (
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
+              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8'>
                 {filteredCategories.map((category) => (
-                  <div key={category.id} className='bg-white shadow-md rounded-md overflow-hidden'>
+                  <div key={category.id} className='bg-white shadow-md rounded-md overflow-hidden hover:shadow-lg transition-shadow'>
                     <img
                       src={category.image}
                       alt={category.name}
-                      className='w-full h-48 object-cover'
+                      className='w-full h-40 md:h-48 object-cover'
                     />
                     <div className='p-4'>
-                      <h3 className='text-xl font-semibold mb-2'>{category.name}</h3>
-                      <p className='text-gray-600 mb-4'>{category.description}</p>
+                      <h3 className='text-lg md:text-xl font-semibold mb-2'>{category.name}</h3>
+                      <p className='text-gray-600 mb-4 text-sm md:text-base'>{category.description}</p>
                       <a
                         href='#'
-                        className='text-blue-600 hover:underline'
+                        className='text-blue-600 hover:underline text-sm md:text-base'
                         onClick={() => alert(`مشاهده ${category.name}`)}
                       >
                         مشاهده جزئیات

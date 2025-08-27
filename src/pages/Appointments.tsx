@@ -58,27 +58,27 @@ function Appointments() {
       </Helmet>
       <div className='w-full'>
         {/* Appointments Hero Section */}
-        <section className='bg-gray-100 py-16'>
+        <section className='bg-gray-100 py-12 md:py-16'>
           <div className='container mx-auto px-4 text-center'>
-            <h1 className='text-4xl font-bold mb-4'>نوبت‌دهی آنلاین</h1>
-            <p className='text-lg text-gray-600'>
+            <h1 className='text-2xl md:text-4xl font-bold mb-4'>نوبت‌دهی آنلاین</h1>
+            <p className='text-base md:text-lg text-gray-600 max-w-2xl mx-auto'>
               به راحتی پزشک مورد نظر خود را پیدا کنید و نوبت خود را رزرو کنید.
             </p>
           </div>
         </section>
 
         {/* Search Section */}
-        <section className='max-w-[1300px] mx-auto -mt-20 mb-36'>
-          <div className='bg-light rounded-3xl items-center flex flex-col pb-4'>
+        <section className='max-w-[1300px] mx-auto -mt-16 md:-mt-20 mb-20 md:mb-36 px-4'>
+          <div className='bg-light rounded-2xl md:rounded-3xl items-center flex flex-col pb-4 shadow-lg'>
             <SearchInput />
           </div>
         </section>
 
         {/* Filters Section */}
-        <section className='py-16'>
+        <section className='py-12 md:py-16'>
           <div className='container mx-auto px-4'>
-            <h2 className='text-2xl font-semibold mb-6'>فیلتر نوبت‌ها</h2>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-8'>
+            <h2 className='text-xl md:text-2xl font-semibold mb-6'>فیلتر نوبت‌ها</h2>
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8'>
               <div>
                 <label htmlFor='date' className='block text-sm font-medium text-gray-700'>تاریخ</label>
                 <input
@@ -109,15 +109,15 @@ function Appointments() {
         </section>
 
         {/* Services Section */}
-        <section className='py-16 bg-gray-100'>
+        <section className='py-12 md:py-16 bg-gray-100'>
           <div className='container mx-auto px-4'>
-            <h2 className='text-2xl font-semibold mb-6'>خدمات موجود</h2>
+            <h2 className='text-xl md:text-2xl font-semibold mb-6'>خدمات موجود</h2>
             {loading ? (
-              <div>در حال بارگذاری...</div>
+              <div className="text-center py-8">در حال بارگذاری...</div>
             ) : filteredServices.length === 0 ? (
-              <div>داده‌ای برای نمایش وجود ندارد</div>
+              <div className="text-center py-8 text-gray-600">داده‌ای برای نمایش وجود ندارد</div>
             ) : (
-              <div className='gap-4 grid grid-cols-1 md:grid-cols-3'>
+              <div className='gap-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'>
                 {filteredServices.slice(0, 6).map((service) => {
                   const doctor = doctors.find((doc) => String(doc.id) === String(service.doctorId)) || {
                     id: 0,
@@ -148,11 +148,11 @@ function Appointments() {
         </section>
 
         {/* Booking Calendar Section */}
-        <section className='py-16'>
+        <section className='py-12 md:py-16'>
           <div className='container mx-auto px-4'>
-            <h2 className='text-2xl font-semibold mb-6 text-center'>تقویم نوبت‌دهی</h2>
-            <div className='bg-white shadow-md rounded-md p-4'>
-              <p className='text-gray-600 text-center'>
+            <h2 className='text-xl md:text-2xl font-semibold mb-6 text-center'>تقویم نوبت‌دهی</h2>
+            <div className='bg-white shadow-md rounded-lg p-4 md:p-6'>
+              <p className='text-gray-600 text-center text-sm md:text-base'>
                 تقویم تعاملی برای انتخاب تاریخ و زمان (به زودی اضافه خواهد شد)
               </p>
             </div>

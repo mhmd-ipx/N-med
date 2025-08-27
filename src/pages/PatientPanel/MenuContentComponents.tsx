@@ -1,39 +1,21 @@
-type ProfileInfoProps = {
-  user: {
-    name?: string;
-    email?: string;
-  };
-  token: string | null | undefined;
+// کامپوننت‌های پنل بیمار
+import Dashboard from './ContetnsComponents/Dashboard/Dashboard';
+import EditAccount from './ContetnsComponents/EditAccount/EditAccount';
+import Appointments from './ContetnsComponents/Appointments/Appointments';
+import References from './ContetnsComponents/References/References';
+import LogOut from './LogOut';
+
+// کامپوننت‌های اصلی پنل بیمار
+const PatientDashboard = () => <Dashboard />;
+const PatientEditAccount = () => <EditAccount />;
+const PatientAppointments = () => <Appointments />;
+const PatientReferences = () => <References />;
+const PatientLogOut = () => <LogOut />;
+
+export {
+  PatientDashboard as Dashboard,
+  PatientEditAccount as EditAccount,
+  PatientAppointments as Appointments,
+  PatientReferences as References,
+  PatientLogOut as LogOut
 };
-
-const ProfileInfo = ({ user, token }: ProfileInfoProps) => (
-  <div className="p-4">
-    <h2 className="text-xl font-semibold mb-4">اطلاعات پروفایل پزشک</h2>
-    <p>نام: {user.name || 'پزشک'}</p>
-    <p>ایمیل: {user.email || 'ایمیل'}</p>
-    <p>توکن: {token ? 'فعال' : 'غیرفعال'}</p>
-  </div>
-);
-
-const Appointments = () => (
-  <div className="p-4">
-    <h2 className="text-xl font-semibold mb-4">وقت‌های ملاقات</h2>
-    <p>لیست وقت‌های ملاقات پزشک...</p>
-  </div>
-);
-
-const MedicalRecords = () => (
-  <div className="p-4">
-    <h2 className="text-xl font-semibold mb-4">سوابق پزشکی</h2>
-    <p>سوابق پزشکی بیماران...</p>
-  </div>
-);
-
-const Settings = () => (
-  <div className="p-4">
-    <h2 className="text-xl font-semibold mb-4">تنظیمات</h2>
-    <p>تنظیمات حساب کاربری...</p>
-  </div>
-);
-
-export { ProfileInfo, Appointments, MedicalRecords, Settings };

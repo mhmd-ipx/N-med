@@ -4,20 +4,25 @@ import LoginForm from '../components/ui/login/Loginform';
 
 function PatientLoginPage() {
   return (
-    <div className='w-full h-[100vh] pt-20 bg-primary  flex '> 
+    <div className='w-full min-h-screen pt-16 md:pt-20 bg-primary flex'>
       <Helmet>
-        <title> ورود کاربران</title>
+        <title>ورود کاربران</title>
       </Helmet>
-      <div className='w-full flex flex-col max-w-[1300px] mx-auto  px-5 md:px-0 '  >
-        <div className='flex bg-white rounded-3xl w-full h-auto items-center justify-around p-10 md:flex-row flex-col md:gap-0 gap-20'>
-            <img src={Loginimage} alt="Logo" className="md:h-[350px] h-[150px] w-auto" />
-            <div className='flex flex-col gap-10 justify-center items-center'>
-              <h1 className=' text-xl'>
+      <div className='w-full flex flex-col max-w-[1300px] mx-auto px-4 md:px-0'>
+        <div className='flex bg-white rounded-2xl md:rounded-3xl w-full h-auto items-center justify-center p-6 md:p-10 md:flex-row flex-col gap-8 md:gap-0'>
+            <img
+              src={Loginimage}
+              alt="نوتاش - ورود کاربران"
+              className="md:h-[350px] h-[120px] md:h-[200px] lg:h-[350px] w-auto max-w-full"
+            />
+            <div className='flex flex-col gap-6 md:gap-10 justify-center items-center w-full md:w-auto'>
+              <h1 className='text-xl md:text-2xl font-semibold text-center'>
                 ورود کاربران
               </h1>
-              <LoginForm role="patient" redirectPath="/UserProfile" />
+              <div className='w-full max-w-sm'>
+                <LoginForm role="patient" redirectPath="/UserProfile" />
+              </div>
             </div>
-            
         </div>
       </div>
     </div>

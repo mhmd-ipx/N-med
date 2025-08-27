@@ -74,7 +74,7 @@ api.interceptors.request.use(
   }
 );
 
-// Get referrals
+// Get sent referrals (existing API)
 export const getReferrals = async (): Promise<ReferralsResponse> => {
   try {
     const response = await api.get<ReferralsResponse>('/api/referrals/');
@@ -101,6 +101,37 @@ export const getReferrals = async (): Promise<ReferralsResponse> => {
         throw new Error('هیچ پاسخی از سرور دریافت نشد');
       }
     }
-    throw new Error('خطای ناشناخته در دریافت اطلاعات ارجاعات');
+    throw new Error('خطای ناشناخته در دریافت اطلاعات ارجاعات ارسالی');
+  }
+};
+
+// Get received referrals (new API)
+export const getReceivedReferrals = async (): Promise<ReferralsResponse> => {
+  try {
+    const response = await api.get<ReferralsResponse>('/api/referrals/reffred');
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در دریافت اطلاعات ارجاعات دریافتی');
   }
 };

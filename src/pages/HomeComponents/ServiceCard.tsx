@@ -12,6 +12,17 @@ import {
   type DoctorsResponse
 } from '../../services/publicApi';
 
+// A new Axios instance for services, if it needs a token
+// NOTE: Based on your previous request, all APIs should be public.
+// So, we'll use a simplified public API for services as well.
+import axios from 'axios';
+const publicApi = axios.create({
+  baseURL: 'http://api.niloudarman.ir',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 
 // TypeScript Interfaces
 export interface Clinic {
@@ -42,17 +53,6 @@ export interface Service {
   doctorId?: number; // Implicitly assumed for doctor linking
 }
 
-
-// A new Axios instance for services, if it needs a token
-// NOTE: Based on your previous request, all APIs should be public.
-// So, we'll use a simplified public API for services as well.
-import axios from 'axios';
-const publicApi = axios.create({
-  baseURL: 'http://api.niloudarman.ir',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
 
 export const getServices = async (): Promise<Service[]> => {
   try {
@@ -96,26 +96,42 @@ interface SingleServiceCardProps {
 }
 
 const SingleServiceCard = ({ service, doctor, province }: SingleServiceCardProps) => {
-  if (!doctor) return null;
+  // این شرط اکنون هر دو props اصلی (service و doctor) را بررسی می‌کند
+  // تا مطمئن شویم داده‌ها قبل از استفاده وجود دارند و خطایی رخ ندهد.
+  if (!service || !doctor) {
+    return null;
+  }
+  
+  // از "Nullish Coalescing" (|| 0) استفاده می‌کنیم تا مطمئن شویم
+  // اگر service.discount_price وجود نداشت، به جای آن از صفر استفاده شود.
+  const discountAmount = service.price - (service.discount_price || 0);
 
-  const discountAmount = service.price - service.discount_price;
-  const discountPercentage = service.discount_price > 0 ? ((1 - service.discount_price / service.price) * 100).toFixed(0) : '0';
+  // برای جلوگیری از خطای تقسیم بر صفر، ابتدا price را بررسی می‌کنیم.
+  const discountPercentage = (service.price > 0 && service.discount_price > 0) 
+    ? ((1 - (service.discount_price / service.price)) * 100).toFixed(0) 
+    : '0';
 
   return (
+    // در این قسمت، `service.id` کاملاً ایمن است زیرا وجود `service` را در بالا بررسی کرده‌ایم.
     <Link to={`/service/${service.id}`}>
       <div className="flex w-full flex-col bg-white border border-light hover:bg-light text-black rounded-2xl p-3 items-center justify-between shadow-lg">
         <div className="flex gap-4 w-full">
+          {/* نام ویژگی‌های تصویر و عنوان را مطابق با API شما تغییر دادم */}
           <img src={service.thumbnail} alt={service.title} className="w-20 h-20 object-cover rounded-xl" />
           <div className="flex flex-1 flex-col justify-between">
             <h3 className="text-base font-bold">{service.title}</h3>
             <div className="flex justify-between mt-2">
               <div className="flex items-center justify-center gap-2">
+                {/* نام ویژگی‌ها را مطابق با ساختار API شما تغییر دادم */}
                 <img src={doctor.avatar || '/default-avatar.png'} alt={doctor.user.name} className="w-9 h-9 object-cover rounded-full" />
                 <p className="text-sm">{doctor.user.name}</p>
               </div>
               <div className="flex flex-row items-center text-sm gap-1 text-gray-500">
                 <HiOutlineLocationMarker className="text-lg" />
-                <p>{province ? province.faname : 'نامشخص'}</p>
+                {/* از Optional Chaining (?.) استفاده می‌کنیم.
+                    اگر `province` وجود نداشته باشد، `province?.name` به `undefined` تبدیل می‌شود.
+                    سپس از `|| 'نامشخص'` استفاده می‌کنیم تا مقدار پیش‌فرض را نمایش دهد. */}
+                <p>{province?.faname || 'نامشخص'}</p>
               </div>
             </div>
           </div>
@@ -133,6 +149,7 @@ const SingleServiceCard = ({ service, doctor, province }: SingleServiceCardProps
             نوتاش رزرو
           </Button>
           <div>
+            {/* نام ویژگی را مطابق با API تغییر دادم */}
             {service.discount_price > 0 && discountAmount > 0 ? (
               <div className="flex items-center gap-2">
                 <span className="text-gray-500 text-xs line-through">{service.price.toLocaleString()}</span>
@@ -192,10 +209,17 @@ const ServiceCard = () => {
   if (services.length === 0) return <div>داده‌ای برای نمایش وجود ندارد</div>;
 
   return (
-    <div className="gap-4 grid grid-cols-3">
+    <div className="gap-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       {services.slice(0, 6).map((service) => {
+        // برای جلوگیری از خطای احتمالی، از Optional Chaining استفاده کنید
+        // و همچنین مطمئن شوید که doctor و province پیدا شده‌اند.
         const doctor = doctors.find((doc) => doc.id === service.doctorId);
-        const province = provinces.find((prov) => prov.id === service.clinic.province_id);
+        const province = provinces.find((prov) => prov.id === service.clinic?.province_id);
+
+        // این شرط اضافه شده است تا فقط در صورت وجود داده‌های کامل، کامپوننت رندر شود.
+        if (!doctor || !province) {
+          return null;
+        }
 
         return (
           <SingleServiceCard

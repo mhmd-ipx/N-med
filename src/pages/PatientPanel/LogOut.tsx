@@ -12,10 +12,10 @@ const LogOut = () => {
       // حذف داده‌های احراز هویت از localStorage
       localStorage.removeItem('authData');
       // هدایت به صفحه لاگین
-      navigate('/Doctor-Login');
+      navigate('/Patient-Login');
     } else {
       // اگر کاربر لغو کرد، به صفحه‌ای مثل داشبورد برگرده
-      navigate('/doctor-Profile/Dashboard');
+      navigate('/UserProfile/');
     }
   }, [navigate]); 
 

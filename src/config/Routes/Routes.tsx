@@ -24,6 +24,7 @@ const AppRoutes = () => {
         <Route key="contact" path="/contact" element={<Contact />} />
         <Route key="PatientPanel" path="/Patient-Login" element={<PatientLoginPage />} />
         <Route key="UserProfile" path="/UserProfile" element={<UserProfile />} />
+        <Route key="UserProfileSub" path="/UserProfile/:subPath" element={<UserProfile />} />
         <Route key="DoctorLogin" path="/doctor-login" element={<DoctorLoginPage />} />
         <Route key="DoctorProfile" path="/doctor-Profile" element={<DoctorProfile />} />
         <Route key="DoctorProfileSub" path="/doctor-Profile/:subPath" element={<DoctorProfile />} />

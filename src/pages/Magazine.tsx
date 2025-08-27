@@ -8,20 +8,20 @@ function Magazine() {
       </Helmet>
       <div className='w-full'>
         {/* Magazine Hero Section */}
-        <section className='bg-gray-100 py-16'>
+        <section className='bg-gray-100 py-12 md:py-16'>
           <div className='container mx-auto px-4 text-center'>
-            <h1 className='text-4xl font-bold mb-4'>مجله سلامت و تندرستی</h1>
-            <p className='text-lg text-gray-600'>
+            <h1 className='text-2xl md:text-4xl font-bold mb-4'>مجله سلامت و تندرستی</h1>
+            <p className='text-base md:text-lg text-gray-600 max-w-2xl mx-auto'>
               جدیدترین مقالات و تست‌های سلامت را در مجله ما بخوانید و کشف کنید.
             </p>
           </div>
         </section>
 
         {/* Articles Section */}
-        <section className='py-16'>
+        <section className='py-12 md:py-16'>
           <div className='container mx-auto px-4'>
-            <h2 className='text-2xl font-semibold mb-6'>مقالات برجسته</h2>
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
+            <h2 className='text-xl md:text-2xl font-semibold mb-6'>مقالات برجسته</h2>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8'>
               {/* Article 1 */}
               <div className='bg-white shadow-md rounded-md overflow-hidden'>
                 <img
@@ -87,10 +87,10 @@ function Magazine() {
         </section>
 
         {/* Test Categories Section */}
-        <section className='py-16 bg-gray-100'>
+        <section className='py-12 md:py-16 bg-gray-100'>
           <div className='container mx-auto px-4'>
-            <h2 className='text-2xl font-semibold mb-6 text-center'>دسته‌بندی‌های تست سلامت</h2>
-            <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
+            <h2 className='text-xl md:text-2xl font-semibold mb-6 text-center'>دسته‌بندی‌های تست سلامت</h2>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6'>
               {/* Test Category 1 */}
               <div className='bg-white shadow-md rounded-md p-4 text-center'>
                 <h3 className='text-lg font-semibold mb-2'>تست سلامت روان</h3>

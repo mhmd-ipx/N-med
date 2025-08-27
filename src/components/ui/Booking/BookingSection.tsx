@@ -157,33 +157,33 @@ const handleDateSelect = async (date: any) => {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">رزرو نوبت</h2>
-      <div className="flex flex-col md:flex-row gap-8">
-        <div className="md:w-1/2">
+    <div className="bg-white rounded-2xl shadow-lg p-4 md:p-8 border border-gray-200">
+      <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">رزرو نوبت</h2>
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        <div className="w-full lg:w-1/2">
           <DatePicker
             value={selectedDate}
             onChange={handleDateSelect}
-            inputClassName="w-full p-3 rounded-lg border border-gray-300"
+            inputClassName="w-full p-3 rounded-lg border border-gray-300 text-sm md:text-base"
             wrapperClassName="custom-calendar"
             locale="fa"
             color="#ef4444"
             disabled={isDateDisabled}
           />
         </div>
-        <div className="md:w-1/2">
+        <div className="w-full lg:w-1/2">
           {selectedDate ? (
             availableTimes.length > 0 ? (
               <>
                 <h3 className="text-lg font-semibold text-gray-700 mb-4">
                   نوبت‌های موجود
                 </h3>
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 gap-3 md:gap-4 mb-6">
                   {availableTimes.map((time, index) => (
                     <button
                       key={index}
                       onClick={() => handleTimeSelect(time)}
-                      className={`p-3 rounded-lg text-center ${
+                      className={`p-2 md:p-3 rounded-lg text-center text-sm md:text-base ${
                         selectedTime?.start_time === time.start_time
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
@@ -197,36 +197,34 @@ const handleDateSelect = async (date: any) => {
                 {showForm && (
                   <form onSubmit={handleBooking} className="space-y-4">
                     <div>
-                      <label className="block text-gray-700 mb-2">توضیحات</label>
+                      <label className="block text-gray-700 mb-2 text-sm md:text-base">توضیحات</label>
                       <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        className="w-full p-3 rounded-lg border border-gray-300"
-                        rows={4}
+                        className="w-full p-3 rounded-lg border border-gray-300 text-sm md:text-base"
+                        rows={3}
                         placeholder="توضیحات خود را وارد کنید"
                       />
                     </div>
-                    <Button
+                    <button
                       type="submit"
-                      variant="solid"
-                      size="lg"
-                      className="w-full bg-blue-500 text-white hover:bg-blue-600"
+                      className="w-full bg-blue-500 text-white hover:bg-blue-600 px-6 py-3 rounded-3xl font-medium transition-colors"
                     >
                       ثبت نوبت
-                    </Button>
+                    </button>
                   </form>
                 )}
                 {bookingStatus && (
-                  <p className={`mt-4 text-center ${bookingStatus.includes('موفقیت') ? 'text-green-500' : 'text-blue-500'}`}>
+                  <p className={`mt-4 text-center text-sm md:text-base ${bookingStatus.includes('موفقیت') ? 'text-green-500' : 'text-blue-500'}`}>
                     {bookingStatus}
                   </p>
                 )}
               </>
             ) : (
-              <p className="text-gray-600">برای این تاریخ نوبتی موجود نیست</p>
+              <p className="text-gray-600 text-center py-8">برای این تاریخ نوبتی موجود نیست</p>
             )
           ) : (
-            <p className="text-gray-600">لطفاً یک تاریخ انتخاب کنید</p>
+            <p className="text-gray-600 text-center py-8">لطفاً یک تاریخ انتخاب کنید</p>
           )}
         </div>
       </div>

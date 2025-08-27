@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { Appointment } from '../../../../services/Turnapi';
 import { createReferral, getDoctors } from '../../../../services/referralApi';
 import type { DoctorsResponse, Doctor } from '../../../../services/referralApi';
+import { updateAppointmentStatus } from '../../../../services/Turnapi';
 
 // Define CreateReferralRequest type locally if not exported from referralApi
 type CreateReferralRequest = {
@@ -27,18 +28,26 @@ const paymentStatusTranslations: Record<string, string> = {
 const AppointmentModal: React.FC<{
   appointment: Appointment;
   onClose: () => void;
-}> = ({ appointment, onClose }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [formData, setFormData] = useState<CreateReferralRequest>({
-    patient_id: appointment.patient_id,
-    referred_doctor_id: 0,
-    appointment_id: appointment.id,
-    notes: '',
-  });
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  onStatusUpdate?: () => void;
+}> = ({ appointment, onClose, onStatusUpdate }) => {
+   const [isOpen, setIsOpen] = useState(false);
+   const [doctors, setDoctors] = useState<Doctor[]>([]);
+   const [formData, setFormData] = useState<CreateReferralRequest>({
+     patient_id: appointment.patient_id,
+     referred_doctor_id: 0,
+     appointment_id: appointment.id,
+     notes: '',
+   });
+   const [error, setError] = useState<string | null>(null);
+   const [success, setSuccess] = useState<string | null>(null);
+   const [loading, setLoading] = useState(false);
+
+   // Status change states
+   const [isStatusOpen, setIsStatusOpen] = useState(false);
+   const [selectedStatus, setSelectedStatus] = useState<string>(appointment.status);
+   const [statusError, setStatusError] = useState<string | null>(null);
+   const [statusSuccess, setStatusSuccess] = useState<string | null>(null);
+   const [statusLoading, setStatusLoading] = useState(false);
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -82,6 +91,27 @@ const AppointmentModal: React.FC<{
       ...prev,
       [name]: name === 'notes' ? value : parseInt(value) || value,
     }));
+  };
+
+  const handleStatusChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatusError(null);
+    setStatusSuccess(null);
+    setStatusLoading(true);
+
+    try {
+      const response = await updateAppointmentStatus(appointment.id, {
+        status: selectedStatus as "waiting" | "canceled" | "finished"
+      });
+      setStatusSuccess(response.message || 'وضعیت نوبت با موفقیت بروزرسانی شد');
+      if (onStatusUpdate) {
+        onStatusUpdate();
+      }
+    } catch (err) {
+      setStatusError(err instanceof Error ? err.message : 'خطای ناشناخته');
+    } finally {
+      setStatusLoading(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -274,6 +304,50 @@ const AppointmentModal: React.FC<{
                     className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
                   >
                     {loading ? 'در حال ارسال...' : 'ثبت ارجاع'}
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+
+          <div className="mb-6">
+            <button
+              className="w-full p-4 bg-green-600 text-white rounded-lg flex justify-between items-center hover:bg-green-700 transition-colors"
+              onClick={() => setIsStatusOpen(!isStatusOpen)}
+            >
+              <div className="flex items-center gap-2">
+                <HiArrowPath className="h-5 w-5" />
+                <span>تغییر وضعیت نوبت</span>
+              </div>
+              <span>{isStatusOpen ? '▲' : '▼'}</span>
+            </button>
+            {isStatusOpen && (
+              <div className="p-4 border border-t-0 rounded-b-lg bg-gray-50">
+                <form onSubmit={handleStatusChange} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <HiCheckCircle className="h-5 w-5 text-green-500" />
+                      وضعیت جدید نوبت
+                    </label>
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50"
+                      required
+                    >
+                      <option value="waiting">در انتظار</option>
+                      <option value="canceled">لغو شده</option>
+                      <option value="finished">پایان یافته</option>
+                    </select>
+                  </div>
+                  {statusError && <div className="text-red-500 text-sm">{statusError}</div>}
+                  {statusSuccess && <div className="text-green-500 text-sm">{statusSuccess}</div>}
+                  <button
+                    type="submit"
+                    disabled={statusLoading}
+                    className="w-full py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-green-300 transition-colors"
+                  >
+                    {statusLoading ? 'در حال بروزرسانی...' : 'بروزرسانی وضعیت'}
                   </button>
                 </form>
               </div>
