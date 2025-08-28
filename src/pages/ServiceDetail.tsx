@@ -27,44 +27,35 @@ interface Clinic {
 }
 
 interface Service {
-  id: number;
-  clinic: Clinic;
-  user: any[];
-  thumbnail: string;
-  title: string;
-  description: string;
-  time: number;
-  price: number;
-  discount_price: number;
-  created_at: string;
-  updated_at: string;
-  doctorId?: number;
-}
+   id: number;
+   clinic: Clinic;
+   user: any[];
+   doctor: {
+     id: number;
+     user_id: number;
+     specialties: string | null;
+     address: string | null;
+     bio: string | null;
+     avatar: string | null;
+     code: string | null;
+     status: string;
+     created_at: string;
+     updated_at: string;
+     pivot: {
+       clinic_id: number;
+       doctor_id: number;
+     };
+   };
+   thumbnail: string;
+   title: string;
+   description: string;
+   time: number;
+   price: number;
+   discount_price: number;
+   created_at: string;
+   updated_at: string;
+ }
 
-interface Doctor {
-  id: number;
-  user: {
-    id: number;
-    name: string;
-    phone: string;
-    role: string | null;
-  };
-  specialties: string | null;
-  address: string | null;
-  bio: string | null;
-  avatar: string | null;
-  code: string | null;
-  status: string;
-  clinics: Clinic[];
-  created_at: string;
-  updated_at: string;
-}
-
-interface DoctorsResponse {
-  data: Doctor[];
-  links: any;
-  meta: any;
-}
 
 interface Province {
   id: number;
@@ -80,7 +71,7 @@ const getServiceById = async (id: number): Promise<Service> => {
     const response = await publicApi.get<{ data: Service[] }>('/api/services');
     const service = response.data.data.find(s => s.id === id);
     if (!service) throw new Error('Service not found');
-    return { ...service, doctorId: 2 };
+    return service;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       switch (error.response.status) {
@@ -104,32 +95,6 @@ const getServiceById = async (id: number): Promise<Service> => {
   }
 };
 
-const getDoctors = async (): Promise<Doctor[]> => {
-  try {
-    const response = await publicApi.get<DoctorsResponse>('/api/doctors');
-    return response.data.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      switch (error.response.status) {
-        case 400:
-          throw new Error('درخواست نامعتبر است (400)');
-        case 401:
-          throw new Error('عدم احراز هویت (401)');
-        case 403:
-          throw new Error('دسترسی غیرمجاز (403)');
-        case 422:
-          throw new Error('داده‌های ورودی نامعتبر هستند (422)');
-        case 500:
-          throw new Error('خطای سرور (500)');
-        default:
-          throw new Error(`خطای ناشناخته API: ${error.response.status}`);
-      }
-    } else if (axios.isAxiosError(error) && error.request) {
-      throw new Error('هیچ پاسخی از سرور دریافت نشد');
-    }
-    throw new Error('خطای ناشناخته در دریافت لیست پزشکان');
-  }
-};
 
 const getProvinces = async (): Promise<Province[]> => {
   try {
@@ -142,33 +107,30 @@ const getProvinces = async (): Promise<Province[]> => {
 
 // Service Detail Component
 const ServiceDetail = () => {
-  const { id } = useParams<{ id: string }>();
-  const [service, setService] = useState<Service | null>(null);
-  const [doctor, setDoctor] = useState<Doctor | null>(null);
-  const [province, setProvince] = useState<Province | null>(null);
-  const [loading, setLoading] = useState(true);
+   const { id } = useParams<{ id: string }>();
+   const [service, setService] = useState<Service | null>(null);
+   const [province, setProvince] = useState<Province | null>(null);
+   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [serviceData, doctorsData, provincesData] = await Promise.all([
-          getServiceById(Number(id)),
-          getDoctors(),
-          getProvinces(),
-        ]);
+   useEffect(() => {
+     const fetchData = async () => {
+       try {
+         setLoading(true);
+         const [serviceData, provincesData] = await Promise.all([
+           getServiceById(Number(id)),
+           getProvinces(),
+         ]);
 
-        setService(serviceData);
-        setDoctor(doctorsData.find(doc => doc.id === serviceData.doctorId) || null);
-        setProvince(provincesData.find(prov => prov.id === serviceData.clinic.province_id) || null);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [id]);
+         setService(serviceData);
+         setProvince(provincesData.find(prov => prov.id === serviceData.clinic.province_id) || null);
+       } catch (err) {
+         console.error('Error fetching data:', err);
+       } finally {
+         setLoading(false);
+       }
+     };
+     fetchData();
+   }, [id]);
 
   if (loading) return <div className="text-center text-xl font-bold text-gray-600 py-10">در حال بارگذاری...</div>;
   if (!service) return <div className="text-center text-xl font-bold text-blue-500 py-10">سرویس یافت نشد</div>;
@@ -224,16 +186,19 @@ const ServiceDetail = () => {
                 </div>
               </div>
             </div>
-            {doctor && (
+            {service.doctor && (
               <div className="flex items-center gap-4 mb-6">
                 <img
-                  src={doctor.avatar || '/default-avatar.png'}
-                  alt={doctor.user.name}
+                  src={service.doctor.avatar || '/default-avatar.png'}
+                  alt={`Doctor ${service.doctor.id}`}
                   className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-full shadow-sm"
                 />
                 <div>
-                  <p className="text-gray-700 font-semibold text-sm md:text-base">پزشک: {doctor.user.name}</p>
-                  <p className="text-gray-500 text-xs md:text-sm">تماس: {doctor.user.id}</p>
+                  <p className="text-gray-700 font-semibold text-sm md:text-base">پزشک: دکتر {service.doctor.id}</p>
+                  <p className="text-gray-500 text-xs md:text-sm">شناسه پزشک: {service.doctor.id}</p>
+                  {service.doctor.specialties && (
+                    <p className="text-gray-500 text-xs md:text-sm">تخصص: {service.doctor.specialties}</p>
+                  )}
                 </div>
               </div>
             )}
@@ -241,7 +206,7 @@ const ServiceDetail = () => {
         </div>
       </div>
 
-      <BookingSection doctorId={service.doctorId} serviceId={service.id} />
+      <BookingSection doctorId={service.doctor?.id} serviceId={service.id} />
     </div>
   );
 };

@@ -4,7 +4,6 @@ import 'jalaali-react-date-picker/lib/styles/index.css';
 import { getAvailableTimes, registerAppointment } from '../../../services/scheduleApi';
 import Button from '../Button';
 import LoginForm from '../login/Loginform';
-import moment from "moment";
 
 
 interface BookingSectionProps {
@@ -13,17 +12,99 @@ interface BookingSectionProps {
 }
 
 interface TimeSlot {
-  start_time: string;
-  end_time: string;
+   start_time: string;
+   end_time: string;
+}
+
+interface AppointmentSlot {
+   start_time: string;
+   end_time: string;
+   display_time: string;
 }
 
 const BookingSection = ({ doctorId, serviceId }: BookingSectionProps) => {
-  const [selectedDate, setSelectedDate] = useState<{ year: number; month: number; day: number } | null>(null);
-  const [availableTimes, setAvailableTimes] = useState<TimeSlot[]>([]);
-  const [selectedTime, setSelectedTime] = useState<TimeSlot | null>(null);
-  const [bookingStatus, setBookingStatus] = useState<string | null>(null);
-  const [description, setDescription] = useState('');
-  const [showForm, setShowForm] = useState(false);
+   const [selectedDate, setSelectedDate] = useState<any>(null);
+   const [availableTimes, setAvailableTimes] = useState<AppointmentSlot[]>([]);
+   const [selectedTime, setSelectedTime] = useState<AppointmentSlot | null>(null);
+   const [bookingStatus, setBookingStatus] = useState<string | null>(null);
+   const [description, setDescription] = useState('');
+   const [showForm, setShowForm] = useState(false);
+
+   // Function to disable past dates
+   const isDateDisabled = (date: any) => {
+     const today = new Date();
+     today.setHours(0, 0, 0, 0); // Reset time to start of day
+
+     // Convert Persian date to Gregorian for comparison
+     if (date && date.year && date.month && date.day) {
+       // For Persian calendar, we need to convert to Gregorian
+       // For simplicity, we'll use a basic check
+       const selectedDate = new Date(date.year, date.month - 1, date.day);
+       return selectedDate < today;
+     }
+
+     return false;
+   };
+
+   // Function to break down time slots into appointment slots
+   const generateAppointmentSlots = (timeSlots: TimeSlot[], serviceTime: number = 60, selectedDate?: string): AppointmentSlot[] => {
+     const appointmentSlots: AppointmentSlot[] = [];
+
+     timeSlots.forEach(slot => {
+       // Extract time part from API response (format: "2025-08-29 09:30:00")
+       const startTimeParts = slot.start_time.split(' ');
+       const endTimeParts = slot.end_time.split(' ');
+
+       if (startTimeParts.length === 2 && endTimeParts.length === 2) {
+         const startTimeStr = startTimeParts[1]; // "09:30:00"
+         const endTimeStr = endTimeParts[1]; // "17:00:00"
+
+         // Create Date objects with selected date and API times
+         const startDateTime = new Date(`${selectedDate}T${startTimeStr}`);
+         const endDateTime = new Date(`${selectedDate}T${endTimeStr}`);
+
+         // Calculate how many full appointment slots fit in this time range
+         const timeDiff = endDateTime.getTime() - startDateTime.getTime(); // in milliseconds
+         const serviceTimeMs = serviceTime * 60000; // convert minutes to milliseconds
+
+         // Only generate slots if there's enough time for at least one full appointment
+         if (timeDiff >= serviceTimeMs) {
+           const maxSlots = Math.floor(timeDiff / serviceTimeMs);
+
+           for (let i = 0; i < maxSlots; i++) {
+             const slotStartTime = new Date(startDateTime.getTime() + (i * serviceTimeMs));
+             const slotEndTime = new Date(slotStartTime.getTime() + serviceTimeMs);
+
+             // Only add if the slot end time doesn't exceed the available time slot
+             if (slotEndTime <= endDateTime) {
+               // Format as expected by API: "YYYY-MM-DD HH:mm:ss"
+               const startTimeFormatted = slotStartTime.getFullYear() + '-' +
+                 String(slotStartTime.getMonth() + 1).padStart(2, '0') + '-' +
+                 String(slotStartTime.getDate()).padStart(2, '0') + ' ' +
+                 String(slotStartTime.getHours()).padStart(2, '0') + ':' +
+                 String(slotStartTime.getMinutes()).padStart(2, '0') + ':' +
+                 String(slotStartTime.getSeconds()).padStart(2, '0');
+
+               const endTimeFormatted = slotEndTime.getFullYear() + '-' +
+                 String(slotEndTime.getMonth() + 1).padStart(2, '0') + '-' +
+                 String(slotEndTime.getDate()).padStart(2, '0') + ' ' +
+                 String(slotEndTime.getHours()).padStart(2, '0') + ':' +
+                 String(slotEndTime.getMinutes()).padStart(2, '0') + ':' +
+                 String(slotEndTime.getSeconds()).padStart(2, '0');
+
+               appointmentSlots.push({
+                 start_time: startTimeFormatted,
+                 end_time: endTimeFormatted,
+                 display_time: `${slotStartTime.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })} - ${slotEndTime.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}`
+               });
+             }
+           }
+         }
+       }
+     });
+
+     return appointmentSlots;
+   };
 
   // Check login status
   const authData = localStorage.getItem('authData');
@@ -45,30 +126,53 @@ const BookingSection = ({ doctorId, serviceId }: BookingSectionProps) => {
   }
 
 const handleDateSelect = async (date: any) => {
-  console.log("Clicked date raw:", date);
+   console.log("Clicked date raw:", date);
 
-  setSelectedDate(date);
-  setSelectedTime(null);
-  setShowForm(false);
+   // Check if selected date is in the past
+   const today = new Date();
+   today.setHours(0, 0, 0, 0);
 
-  if (date && doctorId) {
-    try {
-      // گرفتن مقدار اولیه مثل "2025-08-21---"
-      const rawDate = date._i;
+   let selectedDateObj: Date;
+   if (date._i) {
+     const rawDate = date._i;
+     const cleanDate = rawDate.replace(/-+$/, "");
+     selectedDateObj = new Date(cleanDate);
+   } else if (date.year && date.month && date.day) {
+     selectedDateObj = new Date(date.year, date.month - 1, date.day);
+   } else {
+     setBookingStatus("فرمت تاریخ نامعتبر است");
+     setTimeout(() => setBookingStatus(null), 3000);
+     return;
+   }
 
-      // حذف --- اضافی → خروجی "2025-08-21"
-      const cleanDate = rawDate.replace(/-+$/, "");
+   if (selectedDateObj < today) {
+     setBookingStatus("نمی‌توانید تاریخ گذشته را انتخاب کنید");
+     setTimeout(() => setBookingStatus(null), 3000);
+     return;
+   }
 
-      // ساختن آبجکت Date
-      const jsDate = new Date(cleanDate);
+   setSelectedDate(date);
+   setSelectedTime(null);
+   setShowForm(false);
 
-      // اضافه کردن 3 روز
-      jsDate.setDate(jsDate.getDate() + 3);
+   if (date && doctorId) {
+     try {
+       // Get the date in YYYY-MM-DD format from the Persian date picker
+       let finalDate: string;
 
-      // تبدیل به فرمت YYYY-MM-DD
-      const finalDate = jsDate.toISOString().split("T")[0]; // "2025-08-24"
+       if (date._i) {
+         // If _i exists, use it (Persian date picker format)
+         const rawDate = date._i;
+         const cleanDate = rawDate.replace(/-+$/, "");
+         finalDate = cleanDate;
+       } else if (date.year && date.month && date.day) {
+         // Fallback: construct date from year, month, day
+         finalDate = `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
+       } else {
+         throw new Error("Invalid date format");
+       }
 
-      console.log("Converted date:", finalDate);
+       console.log("Converted date:", finalDate);
 
       // ارسال درخواست با تاریخ جدید
       console.log("Sending request to getAvailableTimes with:", {
@@ -77,7 +181,7 @@ const handleDateSelect = async (date: any) => {
         date: finalDate,
       });
 
-      const response = await getAvailableTimes(1, serviceId, finalDate);
+      const response = await getAvailableTimes(doctorId, serviceId, finalDate);
       console.log("getAvailableTimes response:", response);
 
       if (response.data.length === 0) {
@@ -85,7 +189,12 @@ const handleDateSelect = async (date: any) => {
         setAvailableTimes([]);
         setTimeout(() => setBookingStatus(null), 3000);
       } else {
-        setAvailableTimes(response.data);
+        // Extract service time from the first service (assuming all services in the slot have the same time)
+        const serviceTime = response.data[0]?.services[0]?.time || 60;
+
+        // Break down time slots into appointment slots using the actual service time and selected date
+        const appointmentSlots = generateAppointmentSlots(response.data, serviceTime, finalDate);
+        setAvailableTimes(appointmentSlots);
       }
     } catch (error: any) {
       console.error("Error in handleDateSelect:", error.message, error);
@@ -103,7 +212,10 @@ const handleDateSelect = async (date: any) => {
 
 
 
-  const handleTimeSelect = (time: TimeSlot) => {
+  const handleTimeSelect = (time: AppointmentSlot) => {
+    console.log("Selected time:", time);
+    console.log("Start time:", time.start_time);
+    console.log("End time:", time.end_time);
     setSelectedTime(time);
     setShowForm(true);
   };
@@ -111,6 +223,17 @@ const handleDateSelect = async (date: any) => {
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedDate && selectedTime && doctorId && user?.id) {
+      console.log("Booking with time:", selectedTime);
+      console.log("Sending to API:", {
+        user_id: doctorId,
+        service_id: serviceId,
+        patient_id: user.id,
+        start_date: selectedTime.start_time,
+        end_date: selectedTime.end_time,
+        description,
+        attachments: []
+      });
+
       try {
         const response = await registerAppointment({
           user_id: doctorId,
@@ -119,9 +242,9 @@ const handleDateSelect = async (date: any) => {
           start_date: selectedTime.start_time,
           end_date: selectedTime.end_time,
           description,
-          attachments: null,
+          attachments: [], // ارسال آرایه خالی به جای null
         });
-        
+
         setBookingStatus(response.message);
         setShowForm(false);
         setDescription('');
@@ -137,12 +260,6 @@ const handleDateSelect = async (date: any) => {
     }
   };
 
-  // Disable past dates
-  const isDateDisabled = (date: { year: number; month: number; day: number }) => {
-    const today = new Date();
-    const selected = new Date(date.year, date.month - 1, date.day);
-    return selected < today;
-  };
 
   if (!isLoggedIn) {
     return (
@@ -164,11 +281,7 @@ const handleDateSelect = async (date: any) => {
           <DatePicker
             value={selectedDate}
             onChange={handleDateSelect}
-            inputClassName="w-full p-3 rounded-lg border border-gray-300 text-sm md:text-base"
-            wrapperClassName="custom-calendar"
             locale="fa"
-            color="#ef4444"
-            disabled={isDateDisabled}
           />
         </div>
         <div className="w-full lg:w-1/2">
@@ -189,8 +302,7 @@ const handleDateSelect = async (date: any) => {
                           : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
                       }`}
                     >
-                      {time.start_time.split(' ')[1].slice(0, 5)} -{' '}
-                      {time.end_time.split(' ')[1].slice(0, 5)}
+                      {time.display_time}
                     </button>
                   ))}
                 </div>

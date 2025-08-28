@@ -11,7 +11,7 @@ type CreateReferralRequest = {
   appointment_id: number;
   notes: string;
 };
-import { HiXMark, HiUser, HiClipboardDocument, HiBuildingOffice, HiClock, HiCheckCircle, HiCreditCard, HiDocumentText, HiPaperClip, HiArrowPath } from 'react-icons/hi2';
+import { HiXMark, HiUser, HiClipboardDocument, HiBuildingOffice, HiClock, HiCheckCircle, HiCreditCard, HiDocumentText, HiPaperClip, HiArrowPath, HiChevronDown } from 'react-icons/hi2';
 
 const statusTranslations: Record<string, string> = {
   waiting: "در انتظار",
@@ -23,6 +23,86 @@ const paymentStatusTranslations: Record<string, string> = {
   waiting: "در انتظار پرداخت",
   paid: "پرداخت شده",
   failed: "ناموفق",
+};
+
+interface DoctorSelectorProps {
+  doctors: Doctor[];
+  selectedDoctorId: number;
+  onDoctorSelect: (doctorId: number) => void;
+}
+
+const DoctorSelector: React.FC<DoctorSelectorProps> = ({ doctors, selectedDoctorId, onDoctorSelect }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full p-3 text-right bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
+      >
+        <div className="flex items-center gap-3">
+          {selectedDoctor ? (
+            <>
+              {selectedDoctor.avatar ? (
+                <img
+                  src={selectedDoctor.avatar}
+                  alt={selectedDoctor.user.name}
+                  className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center">
+                  <HiUser className="w-4 h-4 text-blue-600" />
+                </div>
+              )}
+              <div>
+                <div className="font-medium text-gray-900">{selectedDoctor.user.name}</div>
+                <div className="text-sm text-gray-500">{selectedDoctor.specialties || 'تخصص نامشخص'}</div>
+              </div>
+            </>
+          ) : (
+            <span className="text-gray-500">انتخاب پزشک</span>
+          )}
+        </div>
+        <HiChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+          <div className="py-1">
+            {doctors.map((doctor) => (
+              <button
+                key={doctor.id}
+                type="button"
+                onClick={() => {
+                  onDoctorSelect(doctor.id);
+                  setIsOpen(false);
+                }}
+                className="w-full px-3 py-2 text-right hover:bg-gray-50 flex items-center gap-3 focus:outline-none focus:bg-gray-50"
+              >
+                {doctor.avatar ? (
+                  <img
+                    src={doctor.avatar}
+                    alt={doctor.user.name}
+                    className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center">
+                    <HiUser className="w-4 h-4 text-blue-600" />
+                  </div>
+                )}
+                <div>
+                  <div className="font-medium text-gray-900">{doctor.user.name}</div>
+                  <div className="text-sm text-gray-500">{doctor.specialties || 'تخصص نامشخص'}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 const AppointmentModal: React.FC<{
@@ -264,24 +344,15 @@ const AppointmentModal: React.FC<{
               <div className="p-4 border border-t-0 rounded-b-lg bg-gray-50">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <label className="block text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
                       <HiUser className="h-5 w-5 text-blue-500" />
                       پزشک ارجاع گیرنده
                     </label>
-                    <select
-                      name="referred_doctor_id"
-                      value={formData.referred_doctor_id}
-                      onChange={handleChange}
-                      className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
-                      required
-                    >
-                      <option value="">انتخاب پزشک</option>
-                      {doctors.map((doctor) => (
-                        <option key={doctor.id} value={doctor.id}>
-                          {doctor.user.name} ({doctor.user.phone})
-                        </option>
-                      ))}
-                    </select>
+                    <DoctorSelector
+                      doctors={doctors}
+                      selectedDoctorId={formData.referred_doctor_id}
+                      onDoctorSelect={(doctorId) => setFormData(prev => ({ ...prev, referred_doctor_id: doctorId }))}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaCalendarCheck, FaClock, FaMapMarkerAlt, FaUserMd, FaEye, FaTimes, FaCheck, FaHourglassHalf } from 'react-icons/fa';
+import { getPatientAppointments, cancelPatientAppointment } from '../../../../services/serverapi';
+import type { Appointment } from '../../../../types/types';
 
 // تعریف نوع برای نوبت بیمار
 interface PatientAppointment {
@@ -17,85 +19,80 @@ interface PatientAppointment {
   paymentStatus: 'paid' | 'pending' | 'refunded';
 }
 
-// داده‌های تستی برای نوبت‌های بیمار
-const mockAppointments: PatientAppointment[] = [
-  {
-    id: 1,
-    doctorName: 'دکتر علی رضایی',
-    specialty: 'قلب و عروق',
-    clinicName: 'کلینیک قلب تهران',
-    clinicAddress: 'تهران، خیابان ولیعصر، پلاک ۱۵۶',
-    date: '۱۴۰۳/۰۶/۱۵',
-    time: '۱۴:۳۰',
-    service: 'معاینه قلب و نوار قلب',
-    status: 'confirmed',
-    notes: 'لطفاً نتیجه آزمایشات قبلی را همراه داشته باشید',
-    price: 150000,
-    paymentStatus: 'paid'
-  },
-  {
-    id: 2,
-    doctorName: 'دکتر مریم احمدی',
-    specialty: 'داخلی',
-    clinicName: 'بیمارستان روزبه',
-    clinicAddress: 'تهران، خیابان شهید بهشتی',
-    date: '۱۴۰۳/۰۶/۱۸',
-    time: '۱۰:۰۰',
-    service: 'مشاوره و معاینه',
-    status: 'pending',
-    notes: 'نیاز به آزمایش خون دارید',
-    price: 120000,
-    paymentStatus: 'pending'
-  },
-  {
-    id: 3,
-    doctorName: 'دکتر رضا کرمی',
-    specialty: 'ارتوپدی',
-    clinicName: 'کلینیک ارتوپدی اصفهان',
-    clinicAddress: 'اصفهان، خیابان چهارباغ',
-    date: '۱۴۰۳/۰۶/۲۰',
-    time: '۱۶:۰۰',
-    service: 'معاینه مفصل زانو',
-    status: 'confirmed',
-    notes: 'تصویر رادیولوژی را همراه داشته باشید',
-    price: 180000,
-    paymentStatus: 'paid'
-  },
-  {
-    id: 4,
-    doctorName: 'دکتر سارا حسینی',
-    specialty: 'زنان و زایمان',
-    clinicName: 'کلینیک زنان تهران',
-    clinicAddress: 'تهران، خیابان انقلاب',
-    date: '۱۴۰۳/۰۵/۲۵',
-    time: '۰۹:۰۰',
-    service: 'معاینه دوره‌ای',
-    status: 'completed',
-    notes: 'پیگیری در نوبت بعدی',
-    price: 100000,
-    paymentStatus: 'paid'
-  },
-  {
-    id: 5,
-    doctorName: 'دکتر علی رضایی',
-    specialty: 'قلب و عروق',
-    clinicName: 'کلینیک قلب تهران',
-    clinicAddress: 'تهران، خیابان ولیعصر، پلاک ۱۵۶',
-    date: '۱۴۰۳/۰۵/۱۰',
-    time: '۱۱:۰۰',
-    service: 'معاینه پیگیری',
-    status: 'cancelled',
-    notes: 'لغو شده توسط بیمار',
-    price: 150000,
-    paymentStatus: 'refunded'
-  }
-];
+// تابع تبدیل داده‌های API به فرمت کامپوننت
+const transformApiAppointmentToPatientAppointment = (apiAppointment: any): PatientAppointment => {
+  // تبدیل تاریخ و زمان
+  const startDate = new Date(apiAppointment.start_date);
+  const endDate = new Date(apiAppointment.end_date);
+
+  // تبدیل به تاریخ شمسی (تقریبی)
+  const persianDate = startDate.toLocaleDateString('fa-IR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+
+  const startTime = startDate.toLocaleTimeString('fa-IR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  // تبدیل وضعیت
+  const statusMap: { [key: string]: 'confirmed' | 'pending' | 'completed' | 'cancelled' } = {
+    'waiting': 'pending',
+    'finished': 'completed',
+    'canceled': 'cancelled'
+  };
+
+  const paymentStatusMap: { [key: string]: 'paid' | 'pending' | 'refunded' } = {
+    'paid': 'paid',
+    'waiting': 'pending',
+    'refunded': 'refunded'
+  };
+
+  return {
+    id: apiAppointment.id,
+    doctorName: apiAppointment.doctor?.name || 'پزشک نامشخص',
+    specialty: 'پزشک', // در API اطلاعات تخصص موجود نیست
+    clinicName: apiAppointment.service?.clinic?.name || 'کلینیک نامشخص',
+    clinicAddress: apiAppointment.service?.clinic?.address || 'آدرس نامشخص',
+    date: persianDate,
+    time: startTime,
+    service: apiAppointment.service?.title || 'خدمات نامشخص',
+    status: statusMap[apiAppointment.status] || 'pending',
+    notes: apiAppointment.description || apiAppointment.doctor_description || undefined,
+    price: apiAppointment.service?.price || 0,
+    paymentStatus: paymentStatusMap[apiAppointment.payment_status] || 'pending'
+  };
+};
 
 const Appointments: React.FC = () => {
-  const [appointments, setAppointments] = useState<PatientAppointment[]>(mockAppointments);
+  const [appointments, setAppointments] = useState<PatientAppointment[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<PatientAppointment | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [cancelLoading, setCancelLoading] = useState<number | null>(null);
+
+  // بارگذاری داده‌های نوبت‌ها از API
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const apiAppointments = await getPatientAppointments();
+        const transformedAppointments = apiAppointments.map(transformApiAppointmentToPatientAppointment);
+        setAppointments(transformedAppointments);
+      } catch (err) {
+        console.error('Error fetching appointments:', err);
+        setError(err instanceof Error ? err.message : 'خطا در بارگذاری نوبت‌ها');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAppointments();
+  }, []);
 
   // فیلتر کردن نوبت‌ها بر اساس وضعیت
   const filteredAppointments = appointments.filter(appointment => {
@@ -105,30 +102,37 @@ const Appointments: React.FC = () => {
 
   // گروه‌بندی نوبت‌ها به آینده و گذشته
   const upcomingAppointments = filteredAppointments.filter(app =>
-    app.status === 'confirmed' || app.status === 'pending'
+    app.status === 'pending'
   );
   const pastAppointments = filteredAppointments.filter(app =>
     app.status === 'completed' || app.status === 'cancelled'
   );
 
   // هندلر لغو نوبت
-  const handleCancelAppointment = (appointmentId: number) => {
+  const handleCancelAppointment = async (appointmentId: number) => {
     if (window.confirm('آیا مطمئن هستید که می‌خواهید این نوبت را لغو کنید؟')) {
-      setAppointments(prev =>
-        prev.map(app =>
-          app.id === appointmentId
-            ? { ...app, status: 'cancelled' as const, paymentStatus: 'refunded' as const }
-            : app
-        )
-      );
+      try {
+        setCancelLoading(appointmentId);
+        await cancelPatientAppointment(appointmentId);
+
+        // بروزرسانی لیست نوبت‌ها بعد از لغو موفق
+        const updatedAppointments = await getPatientAppointments();
+        const transformedAppointments = updatedAppointments.map(transformApiAppointmentToPatientAppointment);
+        setAppointments(transformedAppointments);
+
+        alert('نوبت با موفقیت لغو شد');
+      } catch (err) {
+        console.error('Error canceling appointment:', err);
+        alert(err instanceof Error ? err.message : 'خطا در لغو نوبت');
+      } finally {
+        setCancelLoading(null);
+      }
     }
   };
 
   // آیکون و رنگ وضعیت نوبت
   const getStatusInfo = (status: string) => {
     switch (status) {
-      case 'confirmed':
-        return { icon: <FaCheck />, color: 'text-green-600', text: 'تایید شده' };
       case 'pending':
         return { icon: <FaHourglassHalf />, color: 'text-yellow-600', text: 'در انتظار' };
       case 'completed':
@@ -165,9 +169,9 @@ const Appointments: React.FC = () => {
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              disabled={loading}
             >
               <option value="all">همه نوبت‌ها</option>
-              <option value="confirmed">تایید شده</option>
               <option value="pending">در انتظار</option>
               <option value="completed">انجام شده</option>
               <option value="cancelled">لغو شده</option>
@@ -175,8 +179,31 @@ const Appointments: React.FC = () => {
           </div>
         </div>
 
+        {/* نمایش خطا */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600">{error}</p>
+          </div>
+        )}
+
+        {/* نمایش لودینگ */}
+        {loading && (
+          <div className="mb-6 flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        )}
+
+        {/* نمایش پیام خالی بودن لیست */}
+        {!loading && !error && appointments.length === 0 && (
+          <div className="text-center py-12">
+            <FaCalendarCheck className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">هیچ نوبت‌ای یافت نشد</h3>
+            <p className="mt-1 text-sm text-gray-500">شما هنوز هیچ نوبت پزشکی رزرو نکرده‌اید.</p>
+          </div>
+        )}
+
         {/* نوبت‌های آینده */}
-        {upcomingAppointments.length > 0 && (
+        {!loading && !error && upcomingAppointments.length > 0 && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold mb-4 text-gray-700">نوبت‌های آینده</h3>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -228,11 +255,15 @@ const Appointments: React.FC = () => {
                         <FaEye />
                         مشاهده جزئیات
                       </button>
-                      {appointment.status === 'confirmed' && (
+                      {appointment.status === 'pending' && (
                         <button
                           onClick={() => handleCancelAppointment(appointment.id)}
-                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                          disabled={cancelLoading === appointment.id}
+                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
+                          {cancelLoading === appointment.id && (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          )}
                           لغو نوبت
                         </button>
                       )}
@@ -245,7 +276,7 @@ const Appointments: React.FC = () => {
         )}
 
         {/* نوبت‌های گذشته */}
-        {pastAppointments.length > 0 && (
+        {!loading && !error && pastAppointments.length > 0 && (
           <div>
             <h3 className="text-lg font-semibold mb-4 text-gray-700">تاریخچه نوبت‌ها</h3>
             <div className="bg-white rounded-lg shadow-md overflow-hidden">

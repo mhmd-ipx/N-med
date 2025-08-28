@@ -1,389 +1,222 @@
-import React, { useState, useEffect } from "react";
-import { FaUser, FaPhone, FaMapMarkerAlt, FaFileMedical, FaHeart, FaSave, FaTimes } from 'react-icons/fa';
-import Button from '../../../../components/ui/Button';
+import React, { useState, useEffect } from 'react';
+import { useUser } from '../../../../components/ui/login/UserDataProvider';
+import { updatePatientProfile } from '../../../../services/serverapi';
+import type { PatientProfileUpdateRequest } from '../../../../types/types';
 
-// تعریف نوع برای اطلاعات بیمار
-interface PatientInfo {
-  name: string;
-  phone: string;
-  email: string;
-  address: string;
-  birthDate: string;
-  gender: string;
-  bloodType: string;
-  allergies: string;
-  medicalConditions: string;
-  emergencyContact: {
-    name: string;
-    phone: string;
-    relationship: string;
-  };
-  insurance: {
-    provider: string;
-    policyNumber: string;
-  };
-}
-
-// داده‌های تستی اولیه
-const initialPatientInfo: PatientInfo = {
-  name: "احمد رضایی",
-  phone: "09123456789",
-  email: "ahmad@example.com",
-  address: "تهران، خیابان ولیعصر",
-  birthDate: "1365/01/15",
-  gender: "مرد",
-  bloodType: "O+",
-  allergies: "ندارد",
-  medicalConditions: "فشار خون بالا",
-  emergencyContact: {
-    name: "فاطمه رضایی",
-    phone: "09198765432",
-    relationship: "همسر"
-  },
-  insurance: {
-    provider: "بیمه ایران",
-    policyNumber: "IR123456789"
-  }
-};
-
-const EditAccount: React.FC = () => {
-  const [patientInfo, setPatientInfo] = useState<PatientInfo>(initialPatientInfo);
-  const [isEditing, setIsEditing] = useState(false);
+const EditAccount = () => {
+  const { user, updateUser } = useUser();
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  // لود اطلاعات از localStorage یا API
+  // Form state
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    gender: '',
+    national_code: '',
+    birth_year: 0
+  });
+
+  // Fill form with current user data
   useEffect(() => {
-    const loadPatientInfo = () => {
-      try {
-        const storedInfo = localStorage.getItem('patientInfo');
-        if (storedInfo) {
-          setPatientInfo(JSON.parse(storedInfo));
-        }
-      } catch (err) {
-        console.error('خطا در لود اطلاعات بیمار:', err);
-      }
-    };
-    loadPatientInfo();
-  }, []);
-
-  // هندلر تغییرات فرم
-  const handleInputChange = (field: string, value: string | object) => {
-    if (typeof value === 'object') {
-      setPatientInfo(prev => ({
-        ...prev,
-        [field]: { ...prev[field as keyof PatientInfo] as object, ...value }
-      }));
-    } else {
-      setPatientInfo(prev => ({
-        ...prev,
-        [field]: value
-      }));
+    if (user) {
+      const userData = user as any;
+      setFormData({
+        name: userData.name || '',
+        phone: userData.phone || '',
+        gender: userData.related_data?.gender || '',
+        national_code: userData.related_data?.national_code || '',
+        birth_year: userData.related_data?.birth_year || 0
+      });
     }
+  }, [user]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'birth_year' ? parseInt(value) || 0 : value
+    }));
   };
 
-  // هندلر ذخیره تغییرات
-  const handleSave = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+
     try {
-      // در واقعیت اینجا API call می‌کنیم
-      localStorage.setItem('patientInfo', JSON.stringify(patientInfo));
-      setMessage('اطلاعات با موفقیت ذخیره شد');
-      setIsEditing(false);
-      setTimeout(() => setMessage(null), 3000);
-    } catch (err) {
-      setMessage('خطا در ذخیره اطلاعات');
-      setTimeout(() => setMessage(null), 3000);
+      const updateData: PatientProfileUpdateRequest = {
+        name: formData.name,
+        phone: formData.phone,
+        gender: formData.gender,
+        national_code: formData.national_code,
+        birth_year: formData.birth_year
+      };
+
+      const response = await updatePatientProfile(updateData);
+
+      // Update user data in context and localStorage
+      if (response.data && response.data.user && user) {
+        // Create a proper User object from the API response
+        const userData = user as any;
+        const updatedUser: any = {
+          ...user,
+          name: response.data.user.name,
+          phone: response.data.user.phone,
+          related_data: {
+            ...userData.related_data,
+            national_code: response.data.national_code,
+            birth_year: response.data.birth_year,
+            gender: response.data.gender
+          }
+        };
+
+        // Update user in context
+        updateUser(updatedUser);
+
+        // Update authData in localStorage
+        const authData = localStorage.getItem('authData');
+        if (authData) {
+          try {
+            const parsedAuthData = JSON.parse(authData);
+            parsedAuthData.user = updatedUser;
+            localStorage.setItem('authData', JSON.stringify(parsedAuthData));
+          } catch (error) {
+            console.error('Error updating authData in localStorage:', error);
+          }
+        }
+      }
+
+      setSuccessMessage(response.message || 'اطلاعات شما با موفقیت به‌روزرسانی شد.');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'خطا در به‌روزرسانی اطلاعات');
     } finally {
       setLoading(false);
     }
   };
 
-  // هندلر لغو ویرایش
-  const handleCancel = () => {
-    // بازنشانی به آخرین اطلاعات ذخیره شده
-    const storedInfo = localStorage.getItem('patientInfo');
-    if (storedInfo) {
-      setPatientInfo(JSON.parse(storedInfo));
-    } else {
-      setPatientInfo(initialPatientInfo);
-    }
-    setIsEditing(false);
-    setMessage(null);
-  };
-
   return (
-    <div className="px-4 min-h-screen" dir="rtl">
-      <div className="max-w-4xl mx-auto">
-        {/* هدر */}
-        <div className="mb-6 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-800">ویرایش اطلاعات حساب کاربری</h2>
-          <div className="flex gap-2">
-            {!isEditing ? (
-              <Button
-                variant="solid"
-                size="sm"
-                className="bg-primary text-white"
-                onClick={() => setIsEditing(true)}
-              >
-                ویرایش اطلاعات
-              </Button>
+    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">ویرایش حساب کاربری</h2>
+
+      {successMessage && (
+        <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+          {successMessage}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {errorMessage}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            نام و نام خانوادگی *
+          </label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="نام و نام خانوادگی خود را وارد کنید"
+          />
+        </div>
+
+        {/* Phone - Disabled */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            شماره موبایل
+          </label>
+          <input
+            type="text"
+            name="phone"
+            value={formData.phone}
+            disabled
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
+            placeholder="شماره موبایل قابل ویرایش نیست"
+          />
+          <p className="text-xs text-gray-500 mt-1">شماره موبایل قابل ویرایش نیست</p>
+        </div>
+
+        {/* Gender */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            جنسیت *
+          </label>
+          <select
+            name="gender"
+            value={formData.gender}
+            onChange={handleInputChange}
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">جنسیت خود را انتخاب کنید</option>
+            <option value="male">مرد</option>
+            <option value="female">زن</option>
+          </select>
+        </div>
+
+        {/* National Code */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            کد ملی *
+          </label>
+          <input
+            type="text"
+            name="national_code"
+            value={formData.national_code}
+            onChange={handleInputChange}
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="کد ملی خود را وارد کنید"
+          />
+        </div>
+
+        {/* Birth Year */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            سال تولد *
+          </label>
+          <input
+            type="number"
+            name="birth_year"
+            value={formData.birth_year || ''}
+            onChange={handleInputChange}
+            required
+            min="1300"
+            max="1405"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="مثال: ۱۳۸۰"
+          />
+        </div>
+
+        {/* Submit Button */}
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white ml-2"></div>
+                در حال ذخیره...
+              </div>
             ) : (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-red-500 text-red-500 hover:bg-red-50"
-                  onClick={handleCancel}
-                >
-                  <FaTimes className="ml-2" />
-                  لغو
-                </Button>
-                <Button
-                  variant="solid"
-                  size="sm"
-                  className="bg-green-500 text-white hover:bg-green-600"
-                  onClick={handleSave}
-                  disabled={loading}
-                >
-                  <FaSave className="ml-2" />
-                  {loading ? 'در حال ذخیره...' : 'ذخیره'}
-                </Button>
-              </>
+              'ذخیره تغییرات'
             )}
-          </div>
+          </button>
         </div>
-
-        {/* پیام وضعیت */}
-        {message && (
-          <div className={`mb-4 p-3 rounded-lg ${
-            message.includes('خطا')
-              ? 'bg-red-100 text-red-700 border border-red-300'
-              : 'bg-green-100 text-green-700 border border-green-300'
-          }`}>
-            {message}
-          </div>
-        )}
-
-        {/* فرم اطلاعات شخصی */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <FaUser className="text-primary ml-2" />
-            اطلاعات شخصی
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                نام و نام خانوادگی
-              </label>
-              <input
-                type="text"
-                value={patientInfo.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                disabled={!isEditing}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                شماره موبایل
-              </label>
-              <input
-                type="tel"
-                value={patientInfo.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                disabled={!isEditing}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                ایمیل
-              </label>
-              <input
-                type="email"
-                value={patientInfo.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                disabled={!isEditing}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                تاریخ تولد
-              </label>
-              <input
-                type="text"
-                value={patientInfo.birthDate}
-                onChange={(e) => handleInputChange('birthDate', e.target.value)}
-                disabled={!isEditing}
-                placeholder="مثال: ۱۳۶۵/۰۱/۱۵"
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                جنسیت
-              </label>
-              <select
-                value={patientInfo.gender}
-                onChange={(e) => handleInputChange('gender', e.target.value)}
-                disabled={!isEditing}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
-              >
-                <option value="مرد">مرد</option>
-                <option value="زن">زن</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                گروه خونی
-              </label>
-              <select
-                value={patientInfo.bloodType}
-                onChange={(e) => handleInputChange('bloodType', e.target.value)}
-                disabled={!isEditing}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
-              >
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
-              </select>
-            </div>
-          </div>
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              آدرس
-            </label>
-            <textarea
-              value={patientInfo.address}
-              onChange={(e) => handleInputChange('address', e.target.value)}
-              disabled={!isEditing}
-              rows={3}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
-            />
-          </div>
-        </div>
-
-        {/* فرم اطلاعات پزشکی */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <FaFileMedical className="text-primary ml-2" />
-            اطلاعات پزشکی
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                آلرژی‌ها
-              </label>
-              <textarea
-                value={patientInfo.allergies}
-                onChange={(e) => handleInputChange('allergies', e.target.value)}
-                disabled={!isEditing}
-                rows={3}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                بیماری‌های زمینه‌ای
-              </label>
-              <textarea
-                value={patientInfo.medicalConditions}
-                onChange={(e) => handleInputChange('medicalConditions', e.target.value)}
-                disabled={!isEditing}
-                rows={3}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* فرم اطلاعات تماس اضطراری */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <FaPhone className="text-primary ml-2" />
-            اطلاعات تماس اضطراری
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                نام و نام خانوادگی
-              </label>
-              <input
-                type="text"
-                value={patientInfo.emergencyContact.name}
-                onChange={(e) => handleInputChange('emergencyContact', { name: e.target.value })}
-                disabled={!isEditing}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                شماره تماس
-              </label>
-              <input
-                type="tel"
-                value={patientInfo.emergencyContact.phone}
-                onChange={(e) => handleInputChange('emergencyContact', { phone: e.target.value })}
-                disabled={!isEditing}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                نسبت
-              </label>
-              <input
-                type="text"
-                value={patientInfo.emergencyContact.relationship}
-                onChange={(e) => handleInputChange('emergencyContact', { relationship: e.target.value })}
-                disabled={!isEditing}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* فرم اطلاعات بیمه */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <FaHeart className="text-primary ml-2" />
-            اطلاعات بیمه
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                شرکت بیمه
-              </label>
-              <input
-                type="text"
-                value={patientInfo.insurance.provider}
-                onChange={(e) => handleInputChange('insurance', { provider: e.target.value })}
-                disabled={!isEditing}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                شماره بیمه
-              </label>
-              <input
-                type="text"
-                value={patientInfo.insurance.policyNumber}
-                onChange={(e) => handleInputChange('insurance', { policyNumber: e.target.value })}
-                disabled={!isEditing}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      </form>
     </div>
   );
 };

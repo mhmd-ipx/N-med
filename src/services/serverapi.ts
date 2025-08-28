@@ -4,11 +4,11 @@ import type {
   Province ,
   OtpResponse ,
   User ,
-  VerifyOtpResponse , 
-  ClinicResponse , 
-  UpdateClinicData , 
-  updateClinicResponse , 
-  deleteClinicResponse , 
+  VerifyOtpResponse ,
+  ClinicResponse ,
+  UpdateClinicData ,
+  updateClinicResponse ,
+  deleteClinicResponse ,
   OperatorsResponse ,
   DetachOperatorResponse ,
   CreateAndAssignOperatorResponse ,
@@ -23,7 +23,13 @@ import type {
   CreateSchedulesRequest,
   DoctorDashboardResponse,
   Appointment,
-  AppointmentsResponse} from '../types/types'
+  AppointmentsResponse,
+  Specialty,
+  SpecialtiesResponse,
+  DoctorProfileUpdateRequest,
+  DoctorProfileUpdateResponse,
+  PatientProfileUpdateRequest,
+  PatientProfileUpdateResponse} from '../types/types'
 
   import type {  CancellationRequest ,
   CancellationsResponse,
@@ -89,6 +95,72 @@ export const getDoctorAppointments = async (): Promise<AppointmentsResponse> => 
       }
     }
     throw new Error('خطای ناشناخته در دریافت اطلاعات نوبت‌ها');
+  }
+};
+
+// Get patient appointments
+export const getPatientAppointments = async (): Promise<AppointmentsResponse> => {
+  try {
+    const response = await api.get<AppointmentsResponse>('/api/patient/appointments');
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در دریافت اطلاعات نوبت‌های بیمار');
+  }
+};
+
+// Cancel patient appointment
+export const cancelPatientAppointment = async (appointmentId: number): Promise<any> => {
+  try {
+    const response = await api.put(`/api/panel/appointments/${appointmentId}`, {
+      status: 'canceled'
+    });
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 404:
+            throw new Error('نوبت یافت نشد (404)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در لغو نوبت');
   }
 };
 
@@ -989,5 +1061,96 @@ export const getUserProfile = async (): Promise<User> => {
 
 
 
+
+// Get specialties list
+export const getSpecialties = async (): Promise<SpecialtiesResponse> => {
+  try {
+    const response = await api.get<SpecialtiesResponse>('/api/specialties');
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در دریافت تخصص‌ها');
+  }
+};
+
+// Update doctor profile
+export const updateDoctorProfile = async (profileData: DoctorProfileUpdateRequest): Promise<DoctorProfileUpdateResponse> => {
+  try {
+    const response = await api.put<DoctorProfileUpdateResponse>('/api/doctors/profile', profileData);
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در به‌روزرسانی پروفایل');
+  }
+};
+
+// Update patient profile
+export const updatePatientProfile = async (profileData: PatientProfileUpdateRequest): Promise<PatientProfileUpdateResponse> => {
+  try {
+    const response = await api.put<PatientProfileUpdateResponse>('/api/patient/profile', profileData);
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در به‌روزرسانی پروفایل بیمار');
+  }
+};
 
 export default api;

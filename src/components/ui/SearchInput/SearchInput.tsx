@@ -71,16 +71,32 @@ const SearchInput = () => {
     }
 
     const results = doctors.filter(doc => {
-      // فیلتر بر اساس استان (در صورت انتخاب همه استان‌ها، این شرط همیشه true است)
-      const hasMatchingClinic = selectedProvince === 0 || doc.clinics.some(clinic =>
-        clinic.province_id === selectedProvince
-      );
+      // فیلتر بر اساس استان - فعلاً این قسمت را غیرفعال می‌کنیم چون ساختار API تغییر کرده
+      const hasMatchingClinic = true; // selectedProvince === 0 || doc.clinics.some(clinic => true);
 
       if (!hasMatchingClinic) return false;
 
       // جستجو بر اساس نام پزشک یا تخصص
       const nameMatch = doc.user.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const specialtyMatch = doc.specialties?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // جستجو بر اساس تخصص - بررسی انواع مختلف داده
+      let specialtyMatch = false;
+      if (doc.specialties) {
+        if (typeof doc.specialties === 'string') {
+          // اگر رشته است
+          specialtyMatch = doc.specialties.toLowerCase().includes(searchTerm.toLowerCase());
+        } else if (Array.isArray(doc.specialties)) {
+          // اگر آرایه است، بررسی هر عنصر
+          specialtyMatch = (doc.specialties as any[]).some((specialty: any) => {
+            if (typeof specialty === 'string') {
+              return specialty.toLowerCase().includes(searchTerm.toLowerCase());
+            } else if (typeof specialty === 'object' && specialty?.name) {
+              return specialty.name.toLowerCase().includes(searchTerm.toLowerCase());
+            }
+            return false;
+          });
+        }
+      }
 
       return nameMatch || specialtyMatch;
     });
@@ -88,8 +104,31 @@ const SearchInput = () => {
     setFilteredResults(results);
   }, [searchTerm, selectedProvince, doctors]);
 
-  const getSpecialtyNames = (specialties: string | null): string => {
-    return specialties || "بدون تخصص";
+  const getSpecialtyNames = (specialties: string | null | any[]): string => {
+    if (!specialties) return "بدون تخصص";
+
+    if (typeof specialties === 'string') {
+      return specialties;
+    }
+
+    if (Array.isArray(specialties)) {
+      // اگر آرایه است، نام تخصص‌ها را استخراج کن
+      const names = specialties.map((specialty: any) => {
+        if (typeof specialty === 'string') {
+          return specialty;
+        } else if (typeof specialty === 'object' && specialty?.name) {
+          return specialty.name;
+        } else if (typeof specialty === 'number') {
+          // اگر ID عددی است، بعداً می‌توانیم نام را از لیست تخصص‌ها پیدا کنیم
+          return `تخصص ${specialty}`;
+        }
+        return '';
+      }).filter(name => name !== '');
+
+      return names.length > 0 ? names.join(', ') : "بدون تخصص";
+    }
+
+    return "بدون تخصص";
   };
 
   return (
@@ -131,22 +170,101 @@ const SearchInput = () => {
           </div>
         </div>
 
-        {filteredResults.length > 0 && (
-          <ul className="absolute z-20 bg-white shadow-lg left-0 right-0 mt-2 rounded-lg border border-gray-200 max-h-60 overflow-y-auto">
-            {filteredResults.map((doc) => (
-              <li
-                key={doc.id}
-                className="p-2 text-right hover:bg-gray-100 cursor-pointer"
-              >
-                <Link to={`/doctors/${doc.id}`}>
-                  {doc.user.name} -{" "}
-                  <span className="text-sm text-gray-500">
-                    {getSpecialtyNames(doc.specialties)}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+        {/* Search Results */}
+        {searchTerm.trim() !== "" && (
+          <div className="absolute z-20 bg-white shadow-xl left-0 right-0 mt-2 rounded-xl border border-gray-200 max-h-80 overflow-y-auto">
+            {filteredResults.length > 0 ? (
+              <>
+                <div className="p-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+                  <h3 className="text-sm font-medium text-gray-700 text-right flex items-center justify-between">
+                    <span>نتایج جستجو</span>
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                      {filteredResults.length} نتیجه
+                    </span>
+                  </h3>
+                </div>
+                {filteredResults.map((doc) => (
+                  <Link
+                    key={doc.id}
+                    to={`/doctors/${doc.id}`}
+                    className="block p-4 hover:bg-gradient-to-l hover:from-blue-50 hover:to-transparent transition-all duration-200 border-b border-gray-50 last:border-b-0 group"
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Doctor Avatar */}
+                      <div className="flex-shrink-0 relative">
+                        {doc.avatar ? (
+                          <img
+                            src={doc.avatar}
+                            alt={doc.user.name}
+                            className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 group-hover:border-blue-300 transition-colors"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-medium text-lg shadow-md">
+                            {doc.user.name.charAt(0)}
+                          </div>
+                        )}
+                        {doc.status === 'active' && (
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                        )}
+                      </div>
+
+                      {/* Doctor Info */}
+                      <div className="flex-1 min-w-0 text-right">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-base font-semibold text-gray-900 truncate group-hover:text-blue-700 transition-colors">
+                            {doc.user.name}
+                          </h4>
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            doc.status === 'active'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {doc.status === 'active' ? 'فعال' : 'غیرفعال'}
+                          </span>
+                        </div>
+
+                        <p className="text-sm text-blue-600 font-medium mt-1 group-hover:text-blue-800 transition-colors">
+                          {getSpecialtyNames(doc.specialties)}
+                        </p>
+
+                        {doc.bio && (
+                          <p className="text-xs text-gray-500 mt-1 overflow-hidden"
+                             style={{
+                               display: '-webkit-box',
+                               WebkitLineClamp: 2,
+                               WebkitBoxOrient: 'vertical' as const,
+                             }}>
+                            {doc.bio}
+                          </p>
+                        )}
+
+                        {/* Clinic Info */}
+                        {doc.clinics && doc.clinics.length > 0 && (
+                          <div className="flex items-center gap-1 mt-2">
+                            <HiOutlineMap className="w-3 h-3 text-gray-400" />
+                            <span className="text-xs text-gray-500">
+                              {doc.clinics[0].title || 'مطب'}
+                              {doc.clinics.length > 1 && ` و ${doc.clinics.length - 1} مطب دیگر`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </>
+            ) : (
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                  <HiOutlineSearch className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-sm font-medium text-gray-900 mb-1">نتیجه‌ای یافت نشد</h3>
+                <p className="text-xs text-gray-500">
+                  برای "{searchTerm}" نتیجه‌ای پیدا نکردیم. لطفاً عبارت دیگری جستجو کنید.
+                </p>
+              </div>
+            )}
+          </div>
         )}
       </div>
 

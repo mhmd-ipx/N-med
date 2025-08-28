@@ -11,6 +11,7 @@ import {
   HiOutlineLifebuoy,
   HiOutlineArrowRightOnRectangle
 } from 'react-icons/hi2';
+import { useUser } from '../../components/ui/login/UserDataProvider';
 
 const menuItems = [
   { id: 'Dashboard', name: 'پیشخوان', icon: HiOutlineHome },
@@ -41,6 +42,10 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useUser();
+
+  // Get user profile image or fallback to default
+  const profileImage = (user as any)?.related_data?.avatar || Userimage;
 
   const handleItemClick = (itemId: string) => {
     if (itemId === 'Log-out') {
@@ -83,8 +88,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
 
       {/* Sidebar */}
       <div className={`
-        fixed lg:static inset-y-0 right-0 z-50 w-64 bg-white transform transition-transform duration-300 ease-in-out
-        ${isMobileOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+        fixed lg:static inset-y-0 right-0 z-40 w-64  transform transition-transform duration-300 ease-in-out
+        ${isMobileOpen ? 'translate-x-0 bg-white ' : 'translate-x-full lg:translate-x-0 '}
         lg:w-64 -mt-32 p-4 flex flex-col gap-3 shadow-lg lg:shadow-none
       `}>
         {/* Mobile Close Button */}
@@ -97,7 +102,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
 
         <div className="relative aspect-square">
           <img
-            src={Userimage}
+            src={profileImage}
             alt="پروفایل کاربر"
             className="absolute inset-0 w-full h-full object-contain rounded-2xl"
           />

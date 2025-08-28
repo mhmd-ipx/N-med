@@ -54,19 +54,22 @@ export interface Doctor {
 
 // Extended User interface with additional fields
 // رابط برای اطلاعات مرتبط با پزشک
-// رابط برای اطلاعات مرتبط با پزشک
 export type DoctorRelatedData = {
   id: number;
-  user: {
+  user_id: number;
+  specialties: number[];
+  address: string | null;
+  bio: string | null;
+  avatar: string | null;
+  code: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  user?: {
     id: number;
     name: string;
     phone: string;
   };
-  address: string | null;
-  bio: string | null;
-  avatar: string | null;
-  created_at: string;
-  updated_at: string;
 };
 
 
@@ -444,3 +447,89 @@ export interface Appointment {
 
 // Define Appointment Response type
 export type AppointmentsResponse = Appointment[];
+
+// تایپ برای تخصص‌ها
+export interface Specialty {
+  id: number;
+  thumbnail: string | null;
+  title: string;
+  description: string;
+  slug: string;
+  seo_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// تایپ برای درخواست ویرایش پروفایل دکتر
+export interface DoctorProfileUpdateRequest {
+  name: string;
+  phone: string;
+  specialties: number[];
+  address: string;
+  bio: string;
+  avatar: string;
+  code: string;
+}
+
+// تایپ برای پاسخ ویرایش پروفایل دکتر
+export interface DoctorProfileUpdateResponse {
+  message: string;
+  data: {
+    id: number;
+    user_id: number;
+    specialties: number[];
+    address: string;
+    bio: string;
+    avatar: string;
+    code: string;
+    status: string;
+    created_at: string;
+    updated_at: string;
+    user: {
+      id: number;
+      name: string;
+      phone: string;
+      role: string | null;
+      is_active: number;
+      created_at: string;
+      updated_at: string;
+      related_data: any | null;
+    };
+  };
+}
+
+// تایپ برای پاسخ API تخصص‌ها
+export type SpecialtiesResponse = Specialty[];
+
+// تایپ برای درخواست ویرایش پروفایل بیمار
+export interface PatientProfileUpdateRequest {
+  name: string;
+  phone: string;
+  gender: string;
+  national_code: string;
+  birth_year: number;
+}
+
+// تایپ برای پاسخ ویرایش پروفایل بیمار
+export interface PatientProfileUpdateResponse {
+  message: string;
+  data: {
+    id: number;
+    user_id: number;
+    national_code: string;
+    birth_year: number;
+    gender: string;
+    created_at: string;
+    updated_at: string;
+    user: {
+      id: number;
+      name: string;
+      phone: string;
+      role: string | null;
+      is_active: number;
+      created_at: string;
+      updated_at: string;
+      related_data: any | null;
+    };
+  };
+}

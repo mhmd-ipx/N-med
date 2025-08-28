@@ -6,18 +6,24 @@ export interface Pivot {
   clinic_id: number;
 }
 
-export interface Clinic {
+export interface Service {
   id: number;
-  name: string;
-  address: string;
-  phone: string;
-  description: string | null;
-  geo: string;
-  province_id: number;
-  city_id: number;
+  clinic_id: number;
+  thumbnail: string | null;
+  title: string;
+  description: string;
+  price: number;
+  time: number;
   created_at: string;
   updated_at: string;
-  pivot: Pivot;
+  discount_price: number;
+}
+
+export interface Clinic {
+  id: number;
+  title: string | null;
+  address: string;
+  services: Service[];
 }
 
 export interface User {
@@ -155,5 +161,36 @@ export const getSpecialties = async (): Promise<Specialty[]> => {
     return response.data;
   } catch (error) {
     throw new Error('خطا در دریافت لیست تخصص‌ها');
+  }
+};
+
+// دریافت اطلاعات یک پزشک بر اساس ID
+export interface DoctorResponse {
+  data: Doctor;
+}
+
+export const getDoctorById = async (id: number): Promise<DoctorResponse> => {
+  try {
+    const response = await publicApi.get<DoctorResponse>(`/api/doctors/${id}`);
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 404:
+            throw new Error('دکتر مورد نظر یافت نشد');
+          case 400:
+            throw new Error('درخواست نامعتبر است');
+          case 500:
+            throw new Error('خطای سرور');
+          default:
+            throw new Error(`خطای ناشناخته: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در دریافت اطلاعات پزشک');
   }
 };

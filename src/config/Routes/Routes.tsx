@@ -11,6 +11,7 @@ import Magazine from '../../pages/Magazine';
 import Appointments from '../../pages/Appointments';
 import Categories from '../../pages/Categories';
 import ServiceDetail from '../../pages/ServiceDetail';
+import DoctorDetail from '../../pages/DoctorDetail';
 
 const NotFound = () => <div className="text-center items-center h-full text-red-500 text-2xl mt-10">صفحه مورد نظر یافت نشد :(</div>;
 
@@ -19,6 +20,7 @@ const AppRoutes = () => {
     <MainLayout>
       <Routes>
         <Route key="home" path="/" element={<Home />} />
+        <Route key="doctorDetail" path="/doctors/:id" element={<DoctorDetail />} />
         <Route key="serviceDetail" path="/service/:id" element={<ServiceDetail />} />
         <Route key="about" path="/about" element={<About />} />
         <Route key="contact" path="/contact" element={<Contact />} />
