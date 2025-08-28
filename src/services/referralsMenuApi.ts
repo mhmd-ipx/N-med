@@ -53,7 +53,7 @@ export interface ReferralsResponse {
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: 'http://api.niloudarman.ir',
+  baseURL: 'https://api.niloudarman.ir',
   headers: {
     'Content-Type': 'application/json',
   },

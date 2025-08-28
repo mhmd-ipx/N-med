@@ -6,7 +6,7 @@ import BookingSection from '../components/ui/Booking/BookingSection';
 
 // Create a new public Axios instance with base configuration
 const publicApi = axios.create({
-  baseURL: 'http://api.niloudarman.ir',
+  baseURL: 'https://api.niloudarman.ir',
   headers: {
     'Content-Type': 'application/json',
   },

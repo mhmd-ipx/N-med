@@ -17,7 +17,7 @@ import {
 // So, we'll use a simplified public API for services as well.
 import axios from 'axios';
 const publicApi = axios.create({
-  baseURL: 'http://api.niloudarman.ir',
+  baseURL: 'https://api.niloudarman.ir',
   headers: {
     'Content-Type': 'application/json',
   },

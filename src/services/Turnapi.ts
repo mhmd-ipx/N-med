@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // ایجاد نمونه axios با تنظیمات پایه
 const api = axios.create({
-  baseURL: 'http://api.niloudarman.ir',
+  baseURL: 'https://api.niloudarman.ir',
   headers: {
     'Content-Type': 'application/json',
   },

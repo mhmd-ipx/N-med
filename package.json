@@ -43,7 +43,7 @@
     "lint": "eslint src/**/*.{ts,tsx}",
     "dev": "vite",
     "start:server": "vite",
-    "build": "tailwindcss -i ./input.css -o ./output.css",
+    "build": "vite build",
     "watch": "tailwindcss -i ./input.css -o ./output.css --watch"
   }
 }
