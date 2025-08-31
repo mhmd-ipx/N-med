@@ -24,12 +24,12 @@ const DoctorDetail = () => {
 
       try {
         setLoading(true);
-        console.log('Fetching doctor with ID:', id);
+        // console.log('Fetching doctor with ID:', id);
         const doctorId = parseInt(id);
 
         // Get individual doctor data
         const response: DoctorResponse = await getDoctorById(doctorId);
-        console.log('Doctor data received:', response);
+        // console.log('Doctor data received:', response);
 
         // The API returns { data: Doctor } structure
         if (response && response.data) {

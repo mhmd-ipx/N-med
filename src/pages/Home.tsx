@@ -1,7 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import Herosection from './HomeComponents/Herosection'
 import SearchSection from './HomeComponents/SearchSection'
-import SymptomsSection from './HomeComponents/Symptoms'
+import BestDoctors from './HomeComponents/BestDoctors'
 import ServicesSection from './HomeComponents/ServicesSection'
 function Home() {
   return (
@@ -12,7 +12,7 @@ function Home() {
       <div className='w-full '  >
         <Herosection />
         <SearchSection />
-        <SymptomsSection />
+        <BestDoctors />
         <ServicesSection />
       </div>
     </div>

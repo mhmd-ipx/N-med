@@ -93,8 +93,11 @@ export interface City {
 
 export interface Specialty {
   id: number;
-  name: string;
-  imageUrl: string | null;
+  title: string;
+  description: string;
+  slug: string;
+  thumbnail: string | null;
+  seo_id: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -192,5 +195,39 @@ export const getDoctorById = async (id: number): Promise<DoctorResponse> => {
       }
     }
     throw new Error('خطای ناشناخته در دریافت اطلاعات پزشک');
+  }
+};
+
+// تایپ پاسخ کال‌بک پرداخت
+export interface PaymentCallbackResponse {
+  success: boolean;
+  message: string;
+  ref_id?: string;
+}
+
+// تابع کال‌بک پرداخت زرین‌پال
+export const paymentCallback = async (authority: string, status: string): Promise<PaymentCallbackResponse> => {
+  try {
+    const response = await publicApi.get<PaymentCallbackResponse>(`/api/payment/callback`, {
+      params: { Authority: authority, Status: status }
+    });
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است');
+          case 500:
+            throw new Error('خطای سرور');
+          default:
+            throw new Error(`خطای ناشناخته: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در پردازش پرداخت');
   }
 };

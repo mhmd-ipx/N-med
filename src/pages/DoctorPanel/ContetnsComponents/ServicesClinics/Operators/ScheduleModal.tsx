@@ -46,7 +46,7 @@ const ScheduleModal: React.FC = () => {
         }))
       };
       const response = await createUserSchedules(formattedData);
-      console.log('Success:', response);
+      // console.log('Success:', response);
       setIsOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'خطا در ارسال');

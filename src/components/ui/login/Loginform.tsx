@@ -6,6 +6,7 @@ import PhoneInputForm from './PhoneInputForm';
 import OtpInputForm from './OtpInputForm';
 import ResendButton from './ResendButton';
 import TimerDisplay from './TimerDisplay';
+import OtpModal from './OtpModal';
 
 interface LoginFormProps {
   role: string;
@@ -21,6 +22,8 @@ const LoginForm = ({ role, redirectPath }: LoginFormProps) => {
   const [timer, setTimer] = useState(120);
   const [canResend, setCanResend] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,6 +50,27 @@ const LoginForm = ({ role, redirectPath }: LoginFormProps) => {
         setIsLoading(true);
         await requestOtp(phoneNumber);
         const response = await requestOtp(phoneNumber);
+
+        // Extract OTP code from the actual response
+        let extractedOtp = '';
+
+        // Check if the response contains OTP data in the expected format
+        if (response && typeof response === 'object') {
+          const resp = response as any; // Type assertion to access dynamic properties
+
+          // Extract from the specific API response format: response.data.code
+          if (resp.data && resp.data.code) {
+            extractedOtp = resp.data.code.toString();
+          }
+        }
+
+        // If no OTP found in response, generate a test code for development
+        if (!extractedOtp) {
+          extractedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        setOtpCode(extractedOtp);
+        setShowOtpModal(true);
         console.log('Server Response:', response);
         setIsOtpSent(true);
         setError('');
@@ -159,6 +183,14 @@ const LoginForm = ({ role, redirectPath }: LoginFormProps) => {
           <TimerDisplay timer={timer} />
         </>
       )}
+
+      {/* OTP Modal */}
+      <OtpModal
+        isOpen={showOtpModal}
+        onClose={() => setShowOtpModal(false)}
+        otpCode={otpCode}
+        phoneNumber={phoneNumber}
+      />
     </div>
   );
 };

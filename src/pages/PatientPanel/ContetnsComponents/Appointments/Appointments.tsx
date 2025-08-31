@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaCalendarCheck, FaClock, FaMapMarkerAlt, FaUserMd, FaEye, FaTimes, FaCheck, FaHourglassHalf } from 'react-icons/fa';
 import { getPatientAppointments, cancelPatientAppointment } from '../../../../services/serverapi';
 import type { Appointment } from '../../../../types/types';
+import PaymentModal from '../../../../components/ui/PaymentModal';
 
 // تعریف نوع برای نوبت بیمار
 interface PatientAppointment {
@@ -73,6 +74,8 @@ const Appointments: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelLoading, setCancelLoading] = useState<number | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedAppointmentForPayment, setSelectedAppointmentForPayment] = useState<PatientAppointment | null>(null);
 
   // بارگذاری داده‌های نوبت‌ها از API
   useEffect(() => {
@@ -130,6 +133,18 @@ const Appointments: React.FC = () => {
     }
   };
 
+  // هندلر باز کردن مودال پرداخت
+  const handleOpenPaymentModal = (appointment: PatientAppointment) => {
+    setSelectedAppointmentForPayment(appointment);
+    setIsPaymentModalOpen(true);
+  };
+
+  // هندلر بستن مودال پرداخت
+  const handleClosePaymentModal = () => {
+    setIsPaymentModalOpen(false);
+    setSelectedAppointmentForPayment(null);
+  };
+
   // آیکون و رنگ وضعیت نوبت
   const getStatusInfo = (status: string) => {
     switch (status) {
@@ -162,20 +177,22 @@ const Appointments: React.FC = () => {
     <div className="px-4 min-h-screen" dir="rtl">
       <div className="max-w-6xl mx-auto">
         {/* هدر */}
-        <div className="mb-6 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-800">نوبت‌های من</h2>
-          <div className="flex gap-2">
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              disabled={loading}
-            >
-              <option value="all">همه نوبت‌ها</option>
-              <option value="pending">در انتظار</option>
-              <option value="completed">انجام شده</option>
-              <option value="cancelled">لغو شده</option>
-            </select>
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">نوبت‌های من</h2>
+            <div className="flex gap-2">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                disabled={loading}
+              >
+                <option value="all">همه نوبت‌ها</option>
+                <option value="pending">در انتظار</option>
+                <option value="completed">انجام شده</option>
+                <option value="cancelled">لغو شده</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -206,13 +223,13 @@ const Appointments: React.FC = () => {
         {!loading && !error && upcomingAppointments.length > 0 && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold mb-4 text-gray-700">نوبت‌های آینده</h3>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {upcomingAppointments.map((appointment) => {
                 const statusInfo = getStatusInfo(appointment.status);
                 const paymentInfo = getPaymentStatusInfo(appointment.paymentStatus);
 
                 return (
-                  <div key={appointment.id} className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
+                  <div key={appointment.id} className="bg-white rounded-lg shadow-md p-4 sm:p-5 border border-gray-200 hover:shadow-lg transition-shadow">
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h4 className="font-semibold text-gray-800">{appointment.doctorName}</h4>
@@ -247,26 +264,39 @@ const Appointments: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex gap-2 mt-4">
+                    <div className="mt-4 space-y-2">
+                      {/* دکمه مشاهده جزئیات - همیشه نمایش داده می‌شود */}
                       <button
                         onClick={() => setSelectedAppointment(appointment)}
-                        className="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                        className="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                       >
                         <FaEye />
                         مشاهده جزئیات
                       </button>
-                      {appointment.status === 'pending' && (
-                        <button
-                          onClick={() => handleCancelAppointment(appointment.id)}
-                          disabled={cancelLoading === appointment.id}
-                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                        >
-                          {cancelLoading === appointment.id && (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          )}
-                          لغو نوبت
-                        </button>
-                      )}
+
+                      {/* دکمه‌های اکشن در یک ردیف */}
+                      <div className="flex gap-2">
+                        {appointment.paymentStatus === 'pending' && (
+                          <button
+                            onClick={() => handleOpenPaymentModal(appointment)}
+                            className="flex-1 bg-green-500 text-white py-2.5 px-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-1.5 text-sm font-medium"
+                          >
+                            پرداخت
+                          </button>
+                        )}
+                        {appointment.status === 'pending' && (
+                          <button
+                            onClick={() => handleCancelAppointment(appointment.id)}
+                            disabled={cancelLoading === appointment.id}
+                            className="flex-1 bg-red-500 text-white py-2.5 px-3 rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 text-sm font-medium"
+                          >
+                            {cancelLoading === appointment.id && (
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                            )}
+                            لغو نوبت
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -280,8 +310,9 @@ const Appointments: React.FC = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4 text-gray-700">تاریخچه نوبت‌ها</h3>
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="inline-block min-w-full align-middle">
+                  <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="p-3 text-right font-semibold text-gray-700">پزشک</th>
@@ -336,6 +367,7 @@ const Appointments: React.FC = () => {
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           </div>
@@ -343,8 +375,8 @@ const Appointments: React.FC = () => {
 
         {/* مودال جزئیات نوبت */}
         {selectedAppointment && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold">جزئیات نوبت</h3>
                 <button
@@ -361,7 +393,7 @@ const Appointments: React.FC = () => {
                   <p className="text-sm text-gray-600">{selectedAppointment.specialty}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-500">کلینیک:</p>
                     <p className="font-medium">{selectedAppointment.clinicName}</p>
@@ -413,6 +445,20 @@ const Appointments: React.FC = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {/* مودال پرداخت */}
+        {selectedAppointmentForPayment && (
+          <PaymentModal
+            isOpen={isPaymentModalOpen}
+            onClose={handleClosePaymentModal}
+            appointmentId={selectedAppointmentForPayment.id}
+            amount={selectedAppointmentForPayment.price}
+            serviceTitle={selectedAppointmentForPayment.service}
+            doctorName={selectedAppointmentForPayment.doctorName}
+            appointmentDate={selectedAppointmentForPayment.date}
+            appointmentTime={selectedAppointmentForPayment.time}
+          />
         )}
       </div>
     </div>

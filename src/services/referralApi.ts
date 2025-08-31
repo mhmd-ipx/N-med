@@ -153,3 +153,40 @@ export const getDoctors = async (): Promise<DoctorsResponse> => {
     throw new Error('خطای ناشناخته در دریافت اطلاعات پزشکان');
   }
 };
+
+// Get doctor by ID API
+export interface DoctorResponse {
+  data: Doctor;
+}
+
+export const getDoctorById = async (id: number): Promise<DoctorResponse> => {
+  try {
+    const response = await api.get<DoctorResponse>(`/api/doctors/${id}`);
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 404:
+            throw new Error('پزشک یافت نشد (404)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در دریافت اطلاعات پزشک');
+  }
+};

@@ -12,6 +12,11 @@ import Appointments from '../../pages/Appointments';
 import Categories from '../../pages/Categories';
 import ServiceDetail from '../../pages/ServiceDetail';
 import DoctorDetail from '../../pages/DoctorDetail';
+import PaymentCallback from '../../pages/PaymentCallback';
+import PaymentSuccess from '../../pages/PaymentSuccess';
+import PaymentFailed from '../../pages/PaymentFailed';
+import ServiceCategories from '../../pages/ServiceCategories';
+import Doctors from '../../pages/Doctors';
 
 const NotFound = () => <div className="text-center items-center h-full text-red-500 text-2xl mt-10">صفحه مورد نظر یافت نشد :(</div>;
 
@@ -20,6 +25,7 @@ const AppRoutes = () => {
     <MainLayout>
       <Routes>
         <Route key="home" path="/" element={<Home />} />
+        <Route key="doctors" path="/doctors" element={<Doctors />} />
         <Route key="doctorDetail" path="/doctors/:id" element={<DoctorDetail />} />
         <Route key="serviceDetail" path="/service/:id" element={<ServiceDetail />} />
         <Route key="about" path="/about" element={<About />} />
@@ -33,6 +39,10 @@ const AppRoutes = () => {
         <Route key="magazine" path="/magazine" element={<Magazine />} />
         <Route key="appointments" path="/appointments" element={<Appointments />} />
         <Route key="categories" path="/categories" element={<Categories />} />
+        <Route key="serviceCategories" path="/service-categories" element={<ServiceCategories />} />
+        <Route key="paymentCallback" path="/payment/callback" element={<PaymentCallback />} />
+        <Route key="paymentSuccess" path="/payment/success" element={<PaymentSuccess />} />
+        <Route key="paymentFailed" path="/payment/failed" element={<PaymentFailed />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </MainLayout>

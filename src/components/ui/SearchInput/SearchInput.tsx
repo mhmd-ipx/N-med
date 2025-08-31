@@ -5,6 +5,7 @@ import { getProvinces, getDoctors, getSpecialties } from '../../../services/publ
 import type { Province, Doctor, Specialty, DoctorsResponse } from '../../../services/publicApi';
 import { Link } from "react-router-dom";
 import Button from '../../ui/Button';
+import defaultSpecialtyImage from '../../../assets/images/specialty/Heart.svg';
 
 const SearchInput = () => {
   const [selectedProvince, setSelectedProvince] = useState<number>(0); // مقدار پیش‌فرض به 0 (همه استان‌ها) تغییر یافت
@@ -133,15 +134,15 @@ const SearchInput = () => {
 
   return (
     <div className="relative w-full mx-auto">
-      <div className="relative w-[80%] mx-auto">
+      <div className="relative w-full sm:w-[80%] mx-auto px-4 sm:px-0">
         <div className="flex items-center bg-white border border-gray-300 rounded-full shadow-sm -mt-5">
           {/* انتخاب استان */}
           <div className="flex items-center p-2 pr-4">
-            <HiOutlineMap className="text-primary text-xl -ml-6 z-10" />
+            <HiOutlineMap className="text-primary text-lg sm:text-xl -ml-6 z-10" />
             <select
               value={selectedProvince}
               onChange={(e) => setSelectedProvince(Number(e.target.value))}
-              className="text-primary p-2 outline-none rounded-full bg-light text-right appearance-none pr-10 pl-4 ml-2"
+              className="text-primary p-1 sm:p-2 outline-none rounded-full bg-light text-right appearance-none pr-8 sm:pr-10 pl-3 sm:pl-4 ml-2 text-sm sm:text-base"
             >
               {provinces.map((prov) => (
                 <option key={prov.id} value={prov.id}>
@@ -155,17 +156,17 @@ const SearchInput = () => {
           <input
             type="text"
             placeholder="نام پزشک، تخصص یا بیماری..."
-            className="flex-1 p-2 text-gray-700 outline-none rounded-full text-right"
+            className="flex-1 p-1 sm:p-2 text-gray-700 outline-none rounded-full text-right text-sm sm:text-base"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
 
           {/* آیکن سرچ یا لودینگ */}
-          <div className="p-2 pl-4 pr-6">
+          <div className="hidden sm:flex p-1 sm:p-2 pl-2 sm:pl-4 pr-3 sm:pr-6 flex-shrink-0">
             {isLoadingDoctors ? (
-              <AiOutlineLoading3Quarters className="h-6 w-6 text-primary animate-spin" />
+              <AiOutlineLoading3Quarters className="h-5 w-5 sm:h-6 sm:w-6 text-primary animate-spin" />
             ) : (
-              <HiOutlineSearch className="h-6 w-6 text-primary" />
+              <HiOutlineSearch className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             )}
           </div>
         </div>
@@ -269,29 +270,27 @@ const SearchInput = () => {
       </div>
 
       {/* نمایش تخصص‌ها */}
-      <div className="w-[80%] mx-auto mt-4">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+      <div className="w-full sm:w-[80%] mx-auto mt-4 px-4 sm:px-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-2">
           {specialties.map((spec) => (
             <Link
               key={spec.id}
               to={`/specialties/${spec.id}`}
               className="flex flex-col items-center gap-4 justify-center p-3 bg-white border border-gray-200 rounded-2xl hover:shadow-md transition-shadow"
             >
-              {spec.imageUrl && (
-                <img
-                  src={spec.imageUrl}
-                  alt={spec.name}
-                  className="w-8 h-8 ml-2"
-                />
-              )}
+              <img
+                src={spec.thumbnail || defaultSpecialtyImage}
+                alt={spec.title}
+                className="w-8 h-8 ml-2"
+              />
               <span className="text-sm font-medium text-primary">
-                {spec.name}
+                {spec.title}
               </span>
             </Link>
           ))}
         </div>
       </div>
-      <div className="w-[80%] mx-auto relative flex items-center justify-center mt-4">
+      <div className="w-full sm:w-[80%] mx-auto relative flex items-center justify-center mt-4 px-4 sm:px-0">
         <div className="absolute top-1/2 w-full border-t border-white -translate-y-1/2"></div>
         <div className="relative z-10">
           <Button

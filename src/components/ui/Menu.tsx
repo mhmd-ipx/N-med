@@ -5,10 +5,10 @@ interface MenuProps {
 }
 
 const Menu = ({ onItemClick }: MenuProps) => {
-  const linkBaseClass = 'transition-colors px-2 text-white p-2 text-sm';
+  const linkBaseClass = 'transition-colors px-2 text-white p-2 text-sm rounded-md';
 
   const getLinkClass = (isActive: boolean) =>
-    `${linkBaseClass} ${isActive ? ' underline  ' : 'text-black hover:text-primary-light'}`;
+    `${linkBaseClass} ${isActive ? ' text-blue font-bold shadow-md border border-white' : 'text-black hover:text-primary-light hover:bg-primary-light'}`;
 
   const handleLinkClick = () => {
     if (onItemClick) {
@@ -24,18 +24,23 @@ const Menu = ({ onItemClick }: MenuProps) => {
         </NavLink>
       </li>
       <li>
-        <NavLink to="/categories" className={({ isActive }) => getLinkClass(isActive)} onClick={handleLinkClick}>
-          دسته‌بندی‌ها
+        <NavLink to="/service-categories" className={({ isActive }) => getLinkClass(isActive)} onClick={handleLinkClick}>
+          دسته‌بندی خدمات
         </NavLink>
       </li>
       <li>
-        <NavLink to="/appointments" className={({ isActive }) => getLinkClass(isActive)} onClick={handleLinkClick}>
-          نوبت‌دهی آنلاین
+        <NavLink to="/doctors" className={({ isActive }) => getLinkClass(isActive)} onClick={handleLinkClick}>
+          پزشکان
         </NavLink>
       </li>
       <li>
         <NavLink to="/magazine" className={({ isActive }) => getLinkClass(isActive)} onClick={handleLinkClick}>
           مجله سلامتی نوتاش
+        </NavLink>
+      </li>
+      <li>
+        <NavLink to="/about" className={({ isActive }) => getLinkClass(isActive)} onClick={handleLinkClick}>
+          درباره ما
         </NavLink>
       </li>
       <li>

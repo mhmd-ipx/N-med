@@ -107,7 +107,7 @@ const Dashboard: React.FC = () => {
   // هندلر دکمه بروزرسانی
   const handleRefresh = () => {
     // در واقعیت اینجا API call می‌کنیم
-    console.log("بروزرسانی داشبورد...");
+    // console.log("بروزرسانی داشبورد...");
   };
 
   if (loading) {
