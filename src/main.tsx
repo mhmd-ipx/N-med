@@ -6,6 +6,7 @@ import { HelmetProvider } from 'react-helmet-async';
 
 import App from './App';
 import './index.css';
+import './assets/fonts/Yekan-Bakh-FaNum-05-Medium.woff';
 
 const queryClient = new QueryClient();
 

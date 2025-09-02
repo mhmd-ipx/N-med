@@ -3,11 +3,13 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: 'IRANSans';
-  src: url('../assets/fonts/IRANSansWeb_Medium.woff2') format('woff2');
-  font-weight: 400;
+  font-family: 'Yekan-Bakh';
+  src: url('./assets/fonts/Yekan-Bakh-FaNum-05-Medium.woff') format('woff');
+  font-weight: 500;
   font-style: normal;
+  font-display: swap;
 }
+
 
 
 :root {
@@ -27,7 +29,7 @@ body {
   direction: rtl;
   padding: 0;
 
-  font-family: 'IRANSans' !important;
+  font-family: 'Yekan-Bakh' !important;
   color: #000000;
 }
 
