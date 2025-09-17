@@ -10,12 +10,14 @@ import {
   HiOutlineLifebuoy,
   HiOutlineArrowRightOnRectangle
 } from 'react-icons/hi2';
+import { FaWallet } from 'react-icons/fa';
 
 const menuItems = [
   { id: 'Dashboard', name: 'پیشخوان', icon: HiOutlineHome },
   { id: 'Edit-account', name: 'ویرایش حساب کاربری', icon: HiOutlineUserCircle },
   { id: 'Turns', name: 'نوبت ها', icon: HiOutlineCalendarDays },
   { id: 'Support', name: 'ارجاعات', icon: HiOutlineLifebuoy },
+  { id: 'Wallet', name: 'کیف پول', icon: FaWallet },
   { id: 'Log-out', name: 'خروج از حساب', icon: HiOutlineArrowRightOnRectangle },
 ];
 

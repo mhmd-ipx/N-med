@@ -1,312 +1,669 @@
-import React, { useState } from "react";
-import { FaUserMd, FaHeart, FaStar, FaPhone, FaMapMarkerAlt, FaCalendarAlt } from 'react-icons/fa';
+import React, { useEffect, useState } from 'react';
+import { getReferrals, createReferralByMobile, type ReferralsResponse } from '../../../../services/referralsMenuApi';
+import { getDoctors, type Doctor } from '../../../../services/publicApi';
+import Button from '../../../../components/ui/Button/Button';
+import Tabs from '../../../../components/ui/Tabs/Tabs';
+import {
+  HiEye,
+  HiUser,
+  HiUserGroup,
+  HiDocumentText,
+  HiClock,
+  HiCurrencyDollar,
+  HiCheckCircle,
+  HiXCircle,
+  HiArrowRight,
+  HiArrowLeft,
+  HiExclamationTriangle,
+  HiCheck
+} from 'react-icons/hi2';
 
-// تعریف نوع برای ارجاعات دریافتی بیمار
-interface PatientReferral {
-  id: number;
-  referringDoctorName: string;
-  referringDoctorSpecialty: string;
-  referringDoctorClinic: string;
-  reason: string;
-  date: string;
-  status: 'active' | 'used' | 'expired';
-  notes?: string;
+interface AuthData {
+  message: string;
+  token: string;
+  user: {
+    id: number;
+    name: string;
+    phone: string;
+    role: string;
+    related_data: {
+      id: number;
+      specialties: string | null;
+      address: string | null;
+      bio: string | null;
+      avatar: string | null;
+      code: string | null;
+      status: string;
+      clinics: Array<{
+        id: number;
+        name: string;
+        address: string;
+        phone: string;
+        description: string | null;
+        geo: string;
+        province_id: number;
+        city_id: number;
+        created_at: string;
+        updated_at: string;
+        pivot: {
+          doctor_id: number;
+          clinic_id: number;
+        };
+      }>;
+      created_at: string;
+      updated_at: string;
+    };
+  };
 }
-
-// تعریف نوع برای پزشکان مورد علاقه
-interface FavoriteDoctor {
-  id: number;
-  name: string;
-  specialty: string;
-  clinicName: string;
-  clinicAddress: string;
-  phone: string;
-  rating: number;
-  reviewCount: number;
-  isFavorite: boolean;
-}
-
-// داده‌های تستی برای ارجاعات دریافتی
-const mockReferrals: PatientReferral[] = [
-  {
-    id: 1,
-    referringDoctorName: 'دکتر علی رضایی',
-    referringDoctorSpecialty: 'قلب و عروق',
-    referringDoctorClinic: 'کلینیک قلب تهران',
-    reason: 'نیاز به مشاوره متخصص قلب',
-    date: '۱۴۰۳/۰۶/۱۰',
-    status: 'active',
-    notes: 'لطفاً نتیجه آزمایشات قبلی را همراه داشته باشید'
-  },
-  {
-    id: 2,
-    referringDoctorName: 'دکتر مریم احمدی',
-    referringDoctorSpecialty: 'داخلی',
-    referringDoctorClinic: 'بیمارستان روزبه',
-    reason: 'پیگیری بیماری زمینه‌ای',
-    date: '۱۴۰۳/۰۵/۲۰',
-    status: 'used',
-    notes: 'پیگیری در نوبت بعدی'
-  },
-  {
-    id: 3,
-    referringDoctorName: 'دکتر رضا کرمی',
-    referringDoctorSpecialty: 'ارتوپدی',
-    referringDoctorClinic: 'کلینیک ارتوپدی اصفهان',
-    reason: 'معاینه مفصل زانو',
-    date: '۱۴۰۳/۰۴/۱۵',
-    status: 'expired',
-    notes: 'ارجاع منقضی شده'
-  }
-];
-
-// داده‌های تستی برای پزشکان مورد علاقه
-const mockFavoriteDoctors: FavoriteDoctor[] = [
-  {
-    id: 1,
-    name: 'دکتر علی رضایی',
-    specialty: 'قلب و عروق',
-    clinicName: 'کلینیک قلب تهران',
-    clinicAddress: 'تهران، خیابان ولیعصر، پلاک ۱۵۶',
-    phone: '021-12345678',
-    rating: 4.8,
-    reviewCount: 127,
-    isFavorite: true
-  },
-  {
-    id: 2,
-    name: 'دکتر مریم احمدی',
-    specialty: 'داخلی',
-    clinicName: 'بیمارستان روزبه',
-    clinicAddress: 'تهران، خیابان شهید بهشتی',
-    phone: '021-87654321',
-    rating: 4.9,
-    reviewCount: 89,
-    isFavorite: true
-  },
-  {
-    id: 3,
-    name: 'دکتر رضا کرمی',
-    specialty: 'ارتوپدی',
-    clinicName: 'کلینیک ارتوپدی اصفهان',
-    clinicAddress: 'اصفهان، خیابان چهارباغ',
-    phone: '031-12345678',
-    rating: 4.7,
-    reviewCount: 156,
-    isFavorite: true
-  },
-  {
-    id: 4,
-    name: 'دکتر سارا حسینی',
-    specialty: 'زنان و زایمان',
-    clinicName: 'کلینیک زنان تهران',
-    clinicAddress: 'تهران، خیابان انقلاب',
-    phone: '021-11223344',
-    rating: 4.6,
-    reviewCount: 94,
-    isFavorite: true
-  }
-];
 
 const References: React.FC = () => {
-  const [referrals, setReferrals] = useState<PatientReferral[]>(mockReferrals);
-  const [favoriteDoctors, setFavoriteDoctors] = useState<FavoriteDoctor[]>(mockFavoriteDoctors);
-  const [activeTab, setActiveTab] = useState<'referrals' | 'favorites'>('referrals');
+  const [sentReferrals, setSentReferrals] = useState<ReferralsResponse['referrals']>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [selectedReferral, setSelectedReferral] = useState<ReferralsResponse['referrals'][0] | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [selectedDoctor, setSelectedDoctor] = useState<number | null>(null);
+  const [patientMobile, setPatientMobile] = useState('');
+  const [referralNotes, setReferralNotes] = useState('');
+  const [createLoading, setCreateLoading] = useState(false);
 
-  // هندلر حذف از پزشکان مورد علاقه
-  const handleRemoveFavorite = (doctorId: number) => {
-    setFavoriteDoctors(prev =>
-      prev.map(doctor =>
-        doctor.id === doctorId
-          ? { ...doctor, isFavorite: false }
-          : doctor
-      ).filter(doctor => doctor.isFavorite)
-    );
-  };
+  // Filter states for sent referrals
+  const [sentSearch, setSentSearch] = useState('');
+  const [sentDoctorFilter, setSentDoctorFilter] = useState('');
+  const [sentStatusFilter, setSentStatusFilter] = useState('');
 
-  // آیکون و رنگ وضعیت ارجاع
-  const getReferralStatusInfo = (status: string) => {
+  useEffect(() => {
+    // Get current user ID from localStorage
+    const authData = localStorage.getItem('authData');
+    if (authData) {
+      const parsedData: AuthData = JSON.parse(authData);
+      setCurrentUserId(parsedData.user.id);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Fetch doctors list
+    const fetchDoctors = async () => {
+      try {
+        const doctorsResponse = await getDoctors();
+        setDoctors(doctorsResponse.data);
+      } catch (err) {
+        console.error('Error fetching doctors:', err);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
+
+  useEffect(() => {
+    if (currentUserId === null) return;
+
+    // Fetch sent referrals (referrals sent by current patient)
+    const fetchReferrals = async () => {
+      setLoading(true);
+      try {
+        const sentResponse = await getReferrals();
+        const sent = sentResponse.referrals.filter(
+          (referral) => referral.patient_id === currentUserId
+        );
+        setSentReferrals(sent);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'خطایی رخ داده است');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReferrals();
+  }, [currentUserId]);
+
+  const translateStatus = (status: string) => {
     switch (status) {
-      case 'active':
-        return { icon: <FaCalendarAlt />, color: 'text-green-600', text: 'فعال' };
-      case 'used':
-        return { icon: <FaCalendarAlt />, color: 'text-blue-600', text: 'استفاده شده' };
-      case 'expired':
-        return { icon: <FaCalendarAlt />, color: 'text-red-600', text: 'منقضی شده' };
+      case 'pending':
+        return 'در حال انتظار';
+      case 'paid':
+        return 'پرداخت شده';
+      case 'failed':
+        return 'لغو شده';
       default:
-        return { icon: <FaCalendarAlt />, color: 'text-gray-600', text: 'نامشخص' };
+        return status;
     }
   };
 
-  // رندر ستاره‌های امتیاز
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, index) => (
-      <FaStar
-        key={index}
-        className={`text-sm ${index < Math.floor(rating) ? 'text-yellow-400' : 'text-gray-300'}`}
-      />
-    ));
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-green-100 text-green-800 border border-green-300';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border border-yellow-300';
+      case 'failed':
+        return 'bg-red-100 text-red-800 border border-red-300';
+      default:
+        return 'bg-gray-100 text-gray-800 border border-gray-300';
+    }
   };
 
-  return (
-    <div className="px-4 min-h-screen" dir="rtl">
-      <div className="max-w-6xl mx-auto">
-        {/* هدر */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">ارجاعات و پزشکان مورد علاقه</h2>
-        </div>
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return <HiCheckCircle className="h-4 w-4" />;
+      case 'pending':
+        return <HiExclamationTriangle className="h-4 w-4" />;
+      case 'failed':
+        return <HiXCircle className="h-4 w-4" />;
+      default:
+        return <HiXCircle className="h-4 w-4" />;
+    }
+  };
 
-        {/* تب‌ها */}
-        <div className="mb-6">
-          <div className="flex border-b border-gray-200">
-            <button
-              onClick={() => setActiveTab('referrals')}
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === 'referrals'
-                  ? 'border-b-2 border-primary text-primary'
-                  : 'text-gray-600 hover:text-primary'
-              }`}
-            >
-              ارجاعات دریافتی
-            </button>
-            <button
-              onClick={() => setActiveTab('favorites')}
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === 'favorites'
-                  ? 'border-b-2 border-primary text-primary'
-                  : 'text-gray-600 hover:text-primary'
-              }`}
-            >
-              پزشکان مورد علاقه
-            </button>
+  const openModal = (referral: ReferralsResponse['referrals'][0]) => {
+    setSelectedReferral(referral);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedReferral(null);
+  };
+
+  const handleCreateReferral = async () => {
+    if (!selectedDoctor || !patientMobile.trim() || !referralNotes.trim()) {
+      setError('لطفا تمام فیلدهای ضروری را پر کنید');
+      return;
+    }
+
+    setCreateLoading(true);
+    try {
+      setError(null);
+      await createReferralByMobile({
+        patient_mobile: patientMobile,
+        to_doctor_id: selectedDoctor,
+        notes: referralNotes
+      });
+
+      setSuccess('ارجاع با موفقیت ثبت شد');
+
+      // Reset form
+      setSelectedDoctor(null);
+      setPatientMobile('');
+      setReferralNotes('');
+      setIsCreateModalOpen(false);
+
+      // Refresh referrals list
+      if (currentUserId) {
+        const sentResponse = await getReferrals();
+        const sent = sentResponse.referrals.filter(
+          (referral) => referral.patient_id === currentUserId
+        );
+        setSentReferrals(sent);
+      }
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطایی رخ داده است');
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const closeCreateModal = () => {
+    setIsCreateModalOpen(false);
+    setSelectedDoctor(null);
+    setPatientMobile('');
+    setReferralNotes('');
+    setError(null);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString("fa-IR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const renderTable = (referrals: ReferralsResponse['referrals']) => {
+    // Apply filters
+    let filteredReferrals = [...referrals].reverse(); // Reverse to show newest first
+
+    const searchTerm = sentSearch;
+    const doctorFilter = sentDoctorFilter;
+    const statusFilter = sentStatusFilter;
+
+    if (searchTerm) {
+      filteredReferrals = filteredReferrals.filter(ref =>
+        ref.patient_id.toString().includes(searchTerm) ||
+        (ref.patient?.user?.name && ref.patient.user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (ref.notes && ref.notes.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    if (doctorFilter) {
+      filteredReferrals = filteredReferrals.filter(ref =>
+        ref.referred_doctor?.name === doctorFilter || ref.referred_doctor_id.toString() === doctorFilter
+      );
+    }
+
+    if (statusFilter) {
+      filteredReferrals = filteredReferrals.filter(ref => ref.commission_status === statusFilter);
+    }
+
+    // Get unique doctors for filter
+    const uniqueDoctors = [...new Set(filteredReferrals.map(r => r.referred_doctor?.name || r.referred_doctor_id.toString()))].map(name => ({
+      id: name,
+      name: name.startsWith('دکتر ') ? name : `دکتر ${name}`
+    }));
+
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      );
+    }
+
+    if (referrals.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <HiDocumentText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+          <p className="text-gray-500 text-lg">هیچ ارجاعی یافت نشد</p>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        {/* Filters */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">جستجو</label>
+              <input
+                type="text"
+                placeholder="بر اساس بیمار یا توضیحات"
+                value={searchTerm}
+                onChange={(e) => setSentSearch(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">دکتر</label>
+              <select
+                value={doctorFilter}
+                onChange={(e) => setSentDoctorFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">همه دکترها</option>
+                {uniqueDoctors.map(doctor => (
+                  <option key={doctor.id} value={doctor.id}>{doctor.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">وضعیت</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setSentStatusFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">همه وضعیت‌ها</option>
+                <option value="pending">در حال انتظار</option>
+                <option value="paid">پرداخت شده</option>
+                <option value="failed">لغو شده</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* محتوای تب‌ها */}
-        {activeTab === 'referrals' && (
-          <div>
-            <h3 className="text-lg font-semibold mb-4 text-gray-700">ارجاعات دریافتی از پزشکان</h3>
-            {referrals.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                هیچ ارجاعی دریافت نکرده‌اید
-              </div>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {referrals.map((referral) => {
-                  const statusInfo = getReferralStatusInfo(referral.status);
-
-                  return (
-                    <div key={referral.id} className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h4 className="font-semibold text-gray-800">{referral.referringDoctorName}</h4>
-                          <p className="text-sm text-gray-600">{referral.referringDoctorSpecialty}</p>
-                        </div>
-                        <div className={`flex items-center gap-1 ${statusInfo.color}`}>
-                          {statusInfo.icon}
-                          <span className="text-sm">{statusInfo.text}</span>
-                        </div>
+        {/* Table */}
+        {filteredReferrals.length === 0 ? (
+          <div className="text-center py-12">
+            <HiDocumentText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+            <p className="text-gray-500 text-lg">هیچ ارجاعی مطابق فیلترها یافت نشد</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-right font-medium text-gray-700">دکتر ارجاع گیرنده</th>
+                  <th className="px-6 py-3 text-right font-medium text-gray-700">وضعیت</th>
+                  <th className="px-6 py-3 text-right font-medium text-gray-700">تاریخ</th>
+                  <th className="px-6 py-3 text-right font-medium text-gray-700">عملیات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredReferrals.map((referral, index) => (
+                  <tr key={referral.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                    <td className="px-6 py-4">
+                      <span className="font-medium text-gray-800">
+                        {referral.referred_doctor?.name || `دکتر ${referral.referred_doctor_id}`}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${getStatusColor(referral.commission_status)}`}>
+                        {getStatusIcon(referral.commission_status)}
+                        {translateStatus(referral.commission_status)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-gray-600 text-sm">
+                        {formatDate(referral.referral_date)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          icon={<HiEye />}
+                          onClick={() => openModal(referral)}
+                          className="hover:bg-blue-50 hover:border-blue-300"
+                        >
+                          مشاهده
+                        </Button>
                       </div>
-
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          <FaMapMarkerAlt className="text-gray-500" />
-                          <span>{referral.referringDoctorClinic}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <FaCalendarAlt className="text-gray-500" />
-                          <span>تاریخ ارجاع: {referral.date}</span>
-                        </div>
-                        <div>
-                          <p className="text-gray-500">دلیل ارجاع:</p>
-                          <p className="font-medium">{referral.reason}</p>
-                        </div>
-                        {referral.notes && (
-                          <div>
-                            <p className="text-gray-500">یادداشت:</p>
-                            <p className="text-sm bg-gray-50 p-2 rounded">{referral.notes}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
-        {activeTab === 'favorites' && (
-          <div>
-            <h3 className="text-lg font-semibold mb-4 text-gray-700">پزشکان مورد علاقه شما</h3>
-            {favoriteDoctors.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                هیچ پزشکی به عنوان مورد علاقه انتخاب نکرده‌اید
-              </div>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2">
-                {favoriteDoctors.map((doctor) => (
-                  <div key={doctor.id} className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-800 flex items-center gap-2">
-                          <FaUserMd className="text-primary" />
-                          {doctor.name}
-                        </h4>
-                        <p className="text-sm text-gray-600 mb-2">{doctor.specialty}</p>
+        {/* Create Referral Modal */}
+        {isCreateModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+            <div className="w-full max-w-2xl rounded-xl bg-white shadow-2xl relative max-h-[90vh] overflow-hidden">
+              <button
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10"
+                onClick={closeCreateModal}
+              >
+                <HiXCircle className="h-6 w-6" />
+              </button>
+              <div className="max-h-[90vh] overflow-y-auto p-8">
+                <h2 className="text-2xl font-bold text-gray-800 text-center mb-6 flex items-center justify-center gap-2">
+                  <HiArrowLeft className="h-6 w-6 text-blue-600" />
+                  ثبت ارجاع جدید
+                </h2>
 
-                        {/* امتیاز و تعداد نظرات */}
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="flex items-center gap-1">
-                            {renderStars(doctor.rating)}
-                            <span className="text-sm text-gray-600">({doctor.rating})</span>
-                          </div>
-                          <span className="text-sm text-gray-500">
-                            {doctor.reviewCount} نظر
-                          </span>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => handleRemoveFavorite(doctor.id)}
-                        className="text-red-500 hover:text-red-700 p-2"
-                        title="حذف از مورد علاقه"
-                      >
-                        <FaHeart className="text-lg" />
-                      </button>
-                    </div>
-
-                    {/* اطلاعات کلینیک */}
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <FaMapMarkerAlt className="text-gray-500" />
-                        <div>
-                          <p className="font-medium">{doctor.clinicName}</p>
-                          <p className="text-gray-600">{doctor.clinicAddress}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <FaPhone className="text-gray-500" />
-                        <span>{doctor.phone}</span>
-                      </div>
-                    </div>
-
-                    {/* دکمه‌های اقدام */}
-                    <div className="flex gap-2 mt-4">
-                      <button className="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors">
-                        رزرو نوبت
-                      </button>
-                      <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                        مشاهده پروفایل
-                      </button>
-                    </div>
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      شماره موبایل بیمار *
+                    </label>
+                    <input
+                      type="text"
+                      value={patientMobile}
+                      onChange={(e) => setPatientMobile(e.target.value)}
+                      placeholder="مثال: 09123456789"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      dir="ltr"
+                    />
                   </div>
-                ))}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      انتخاب پزشک ارجاع گیرنده *
+                    </label>
+                    <select
+                      value={selectedDoctor || ''}
+                      onChange={(e) => setSelectedDoctor(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">انتخاب پزشک...</option>
+                      {doctors.map(doctor => (
+                        <option key={doctor.user.id} value={doctor.user.id}>
+                          {doctor.user.name} - {doctor.specialties || 'تخصص نامشخص'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      توضیحات ارجاع *
+                    </label>
+                    <textarea
+                      value={referralNotes}
+                      onChange={(e) => setReferralNotes(e.target.value)}
+                      placeholder="توضیحات مربوط به ارجاع..."
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-4 mt-8">
+                  <Button
+                    variant="outline"
+                    onClick={closeCreateModal}
+                    disabled={createLoading}
+                    className="px-6"
+                  >
+                    انصراف
+                  </Button>
+                  <Button
+                    variant="solid"
+                    onClick={handleCreateReferral}
+                    disabled={createLoading || !selectedDoctor || !patientMobile.trim() || !referralNotes.trim()}
+                    className="px-6 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {createLoading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 text-primary border-b-2 border-white"></div>
+                        در حال ثبت...
+                      </div>
+                    ) : (
+                      'ثبت ارجاع'
+                    )}
+                  </Button>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         )}
       </div>
+    );
+  };
+
+  const tabs = [
+    {
+      id: 'sent',
+      label: 'ارجاعات صادر شده',
+      icon: <HiArrowLeft className="h-5 w-5" />,
+      content: renderTable(sentReferrals)
+    }
+  ];
+
+  return (
+    <div className=" bg-gray-50 min-h-screen">
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center gap-2">
+          <HiXCircle className="h-5 w-5" />
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg flex items-center gap-2">
+          <HiCheckCircle className="h-5 w-5" />
+          {success}
+        </div>
+      )}
+
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">مدیریت ارجاعات</h1>
+          <Button
+            size="md"
+            variant="solid"
+            icon={<HiArrowLeft className="h-5 w-5" />}
+            onClick={() => setIsCreateModalOpen(true)}
+            className="bg-primary hover:bg-blue-700 text-primary shadow-sm hover:shadow-md transition-all duration-200"
+          >
+            ثبت ارجاع جدید
+          </Button>
+        </div>
+        <Tabs tabs={tabs} />
+      </div>
+
+      {/* Referral Details Modal */}
+      {isModalOpen && selectedReferral && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+          <div className="w-full max-w-4xl rounded-xl bg-white shadow-2xl relative max-h-[90vh] overflow-hidden">
+            <button
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10"
+              onClick={closeModal}
+            >
+              <HiXCircle className="h-6 w-6" />
+            </button>
+            <div className="max-h-[90vh] overflow-y-auto p-8">
+              <h2 className="text-2xl font-bold text-gray-800 text-center mb-6 flex items-center justify-center gap-2">
+                <HiEye className="h-6 w-6 text-blue-600" />
+                جزئیات ارجاع
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+                    <HiUser className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <span className="font-semibold text-gray-700">بیمار:</span>{" "}
+                      <span className="text-gray-600">
+                        {selectedReferral.patient?.user?.name || `بیمار ${selectedReferral.patient_id}`}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+                    <HiUserGroup className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <span className="font-semibold text-gray-700">دکتر ارجاع گیرنده:</span>{" "}
+                      <span className="text-gray-600">
+                        {selectedReferral.referred_doctor?.name || `دکتر ${selectedReferral.referred_doctor_id}`}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+                    <HiUserGroup className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <span className="font-semibold text-gray-700">دکتر ارجاع دهنده:</span>{" "}
+                      <span className="text-gray-600">
+                        {selectedReferral.referring_doctor?.name || `دکتر ${selectedReferral.referring_doctor_id}`}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+                    <HiDocumentText className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <span className="font-semibold text-gray-700">توضیحات ارجاع:</span>{" "}
+                      <span className="text-gray-600">{selectedReferral.notes || "بدون توضیحات"}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+                    <HiClock className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <span className="font-semibold text-gray-700">تاریخ ارجاع:</span>{" "}
+                      <span className="text-gray-600">{formatDate(selectedReferral.referral_date)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+                    <HiCurrencyDollar className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <span className="font-semibold text-gray-700">مبلغ کمیسیون:</span>{" "}
+                      <span className="text-gray-600">{selectedReferral.commission_amount} تومان</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+                    <HiCheckCircle className="h-5 w-5 text-blue-500" />
+                    <div className='flex gap-2'>
+                      <span className="font-semibold text-gray-700">وضعیت کمیسیون:</span>{" "}
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium border flex items-center gap-1 ${getStatusColor(selectedReferral.commission_status)}`}>
+                        {getStatusIcon(selectedReferral.commission_status)}
+                        {translateStatus(selectedReferral.commission_status)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+                    <HiClock className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <span className="font-semibold text-gray-700">تاریخ ایجاد:</span>{" "}
+                      <span className="text-gray-600">{formatDate(selectedReferral.created_at)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Appointment Details */}
+              {selectedReferral.appointment ? (
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                    <HiDocumentText className="h-5 w-5 text-purple-600" />
+                    جزئیات نوبت
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <HiClock className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">زمان شروع: {formatDate(selectedReferral.appointment.start_date)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <HiClock className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">زمان پایان: {formatDate(selectedReferral.appointment.end_date)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <HiCheckCircle className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">وضعیت: {selectedReferral.appointment.status}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <HiCurrencyDollar className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">وضعیت پرداخت: {selectedReferral.appointment.payment_status}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <HiDocumentText className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">توضیحات: {selectedReferral.appointment.description || 'بدون توضیحات'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                    <HiDocumentText className="h-5 w-5 text-purple-600" />
+                    جزئیات نوبت
+                  </h3>
+                  <div className="text-center py-4">
+                    <HiDocumentText className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                    <p className="text-gray-500">این ارجاع دارای نوبت مرتبط نیست</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-center">
+                <Button
+                  variant="outline"
+                  icon={<HiXCircle />}
+                  onClick={closeModal}
+                  className="px-8"
+                >
+                  بستن
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -9,7 +9,8 @@ import {
   HiOutlineBuildingOffice,
   HiOutlineCalculator,
   HiOutlineLifebuoy,
-  HiOutlineArrowRightOnRectangle
+  HiOutlineArrowRightOnRectangle,
+  HiOutlineCreditCard
 } from 'react-icons/hi2';
 import { useUser } from '../../components/ui/login/UserDataProvider';
 
@@ -17,6 +18,7 @@ const menuItems = [
   { id: 'Dashboard', name: 'پیشخوان', icon: HiOutlineHome },
   { id: 'Turns', name: 'نوبت ها', icon: HiOutlineCalendarDays },
   { id: 'References', name: 'ارجاعات', icon: HiOutlineLifebuoy },
+  { id: 'Wallet', name: 'کیف پول', icon: HiOutlineCreditCard },
   { id: 'Services', name: 'خدمات و مطب ها', icon: HiOutlineBuildingOffice },
   { id: 'Edit-account', name: 'ویرایش حساب کاربری', icon: HiOutlineUserCircle },
   { id: 'Log-out', name: 'خروج از حساب', icon: HiOutlineArrowRightOnRectangle },

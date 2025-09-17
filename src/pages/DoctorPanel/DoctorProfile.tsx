@@ -9,6 +9,7 @@ import EditAccount from './ContetnsComponents/EditAccount/EditAccount';
 import Turns from './ContetnsComponents/Turns/Turns';
 import References from './ContetnsComponents/References/References';
 import ServicesClinics from './ContetnsComponents/ServicesClinics/ServicesClinics';
+import Wallet from './ContetnsComponents/Wallet/Wallet';
 import LogOut from './LogOut';
 import { HiMiniPencilSquare, HiOutlineBars3 } from 'react-icons/hi2';
 
@@ -18,6 +19,7 @@ const menuItems = [
   { id: 'Turns', name: 'نوبت ها', component: Turns },
   { id: 'Services', name: 'خدمات و مطب ها', component: ServicesClinics },
   { id: 'References', name: 'ارجاعات', component: References },
+  { id: 'Wallet', name: 'کیف پول', component: Wallet },
   { id: 'Log-out', name: 'خروج', component: LogOut },
 ];
 

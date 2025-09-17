@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { Patient } from '../types/types';
 
 // Define the response type
 interface Doctor {
@@ -42,8 +43,9 @@ interface Referral {
   notes: string | null;
   created_at: string;
   updated_at: string;
-  patient: any | null;
+  patient: Patient | null;
   referred_doctor: Doctor;
+  referring_doctor: Doctor;
   appointment: Appointment;
 }
 
@@ -52,6 +54,17 @@ export interface ReferralsResponse {
 }
 
 export interface UpdateCommissionResponse {
+  message: string;
+  referral: Referral;
+}
+
+export interface CreateReferralByMobileRequest {
+  patient_mobile: string;
+  to_doctor_id: number;
+  notes: string;
+}
+
+export interface CreateReferralByMobileResponse {
   message: string;
   referral: Referral;
 }
@@ -142,11 +155,21 @@ export const getReceivedReferrals = async (): Promise<ReferralsResponse> => {
 };
 
 // Update commission status
-export const updateCommissionStatus = async (id: number): Promise<UpdateCommissionResponse> => {
+export const updateCommissionStatus = async (
+  id: number,
+  status: 'paid' | 'failed' = 'paid',
+  amount?: number,
+  appointmentId?: number
+): Promise<UpdateCommissionResponse> => {
   try {
-    const response = await api.put<UpdateCommissionResponse>(`/api/referrals/${id}/commission-status`, {
-      commission_status: 'paid'
-    });
+    const requestBody: any = { commission_status: status };
+    if (amount !== undefined) {
+      requestBody.amount = amount;
+    }
+    if (appointmentId !== undefined) {
+      requestBody.appointment_id = appointmentId;
+    }
+    const response = await api.put<UpdateCommissionResponse>(`/api/referrals/${id}/commission-status`, requestBody);
     return response.data;
   } catch (error) {
     if (error instanceof Error && 'response' in error) {
@@ -173,5 +196,38 @@ export const updateCommissionStatus = async (id: number): Promise<UpdateCommissi
       }
     }
     throw new Error('خطای ناشناخته در بروزرسانی وضعیت کمیسیون');
+  }
+};
+
+// Create referral by mobile
+export const createReferralByMobile = async (data: CreateReferralByMobileRequest): Promise<CreateReferralByMobileResponse> => {
+  try {
+    const response = await api.post<CreateReferralByMobileResponse>('/api/referrals/by-mobile', data);
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 404:
+            throw new Error('دکتر یا بیمار یافت نشد (404)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در ایجاد ارجاع');
   }
 };

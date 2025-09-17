@@ -330,6 +330,7 @@ const AppointmentModal: React.FC<{
           
 
           <div className="mb-6">
+            {/*
             <button
               className="w-full p-4 bg-blue-600 text-white rounded-lg flex justify-between items-center hover:bg-blue-700 transition-colors"
               onClick={() => setIsOpen(!isOpen)}
@@ -340,6 +341,8 @@ const AppointmentModal: React.FC<{
               </div>
               <span>{isOpen ? '▲' : '▼'}</span>
             </button>
+             */}
+            
             {isOpen && (
               <div className="p-4 border border-t-0 rounded-b-lg bg-gray-50">
                 <form onSubmit={handleSubmit} className="space-y-4">

@@ -4,6 +4,7 @@ import UserDataProvider from '../../components/ui/login/UserDataProvider';
 import SidebarMenu from './SidebarMenu';
 import Loading from '../../components/ui/Loading/Loading';
 import { Dashboard, EditAccount, Appointments, References, LogOut } from './MenuContentComponents';
+import Wallet from './ContetnsComponents/Wallet/Wallet';
 import { HiMiniPencilSquare, HiOutlineBars3 } from 'react-icons/hi2';
 
 const menuItems = [
@@ -11,6 +12,7 @@ const menuItems = [
   { id: 'Edit-account', name: 'ویرایش حساب کاربری', component: EditAccount },
   { id: 'Turns', name: 'نوبت ها', component: Appointments },
   { id: 'Support', name: 'ارجاعات', component: References },
+  { id: 'Wallet', name: 'کیف پول', component: Wallet },
   { id: 'Log-out', name: 'خروج از حساب', component: LogOut },
 ];
 

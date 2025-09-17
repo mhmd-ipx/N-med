@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { getReferrals, getReceivedReferrals, updateCommissionStatus, type ReferralsResponse } from '../../../../services/referralsMenuApi';
+import { getReferrals, getReceivedReferrals, updateCommissionStatus, createReferralByMobile, type ReferralsResponse } from '../../../../services/referralsMenuApi';
+import { getDoctors, type Doctor } from '../../../../services/publicApi';
+import { getDoctorAppointments, type Appointment } from '../../../../services/Turnapi';
 import Button from '../../../../components/ui/Button/Button';
 import Tabs from '../../../../components/ui/Tabs/Tabs';
+import CommissionConfirmModal from './CommissionConfirmModal';
 import {
   HiEye,
   HiUser,
@@ -63,7 +66,15 @@ const References: React.FC = () => {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [selectedReferral, setSelectedReferral] = useState<ReferralsResponse['referrals'][0] | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCommissionModalOpen, setIsCommissionModalOpen] = useState(false);
+  const [commissionReferral, setCommissionReferral] = useState<ReferralsResponse['referrals'][0] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [selectedDoctor, setSelectedDoctor] = useState<number | null>(null);
+  const [patientMobile, setPatientMobile] = useState('');
+  const [referralNotes, setReferralNotes] = useState('');
+  const [createLoading, setCreateLoading] = useState(false);
 
   // Filter states for sent referrals
   const [sentSearch, setSentSearch] = useState('');
@@ -82,6 +93,20 @@ const References: React.FC = () => {
       const parsedData: AuthData = JSON.parse(authData);
       setCurrentUserId(parsedData.user.id);
     }
+  }, []);
+
+  useEffect(() => {
+    // Fetch doctors list
+    const fetchDoctors = async () => {
+      try {
+        const doctorsResponse = await getDoctors();
+        setDoctors(doctorsResponse.data);
+      } catch (err) {
+        console.error('Error fetching doctors:', err);
+      }
+    };
+
+    fetchDoctors();
   }, []);
 
   useEffect(() => {
@@ -120,6 +145,8 @@ const References: React.FC = () => {
         return 'در حال انتظار';
       case 'paid':
         return 'پرداخت شده';
+      case 'failed':
+        return 'لغو شده';
       default:
         return status;
     }
@@ -131,6 +158,8 @@ const References: React.FC = () => {
         return 'bg-green-100 text-green-800 border border-green-300';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800 border border-yellow-300';
+      case 'failed':
+        return 'bg-red-100 text-red-800 border border-red-300';
       default:
         return 'bg-gray-100 text-gray-800 border border-gray-300';
     }
@@ -142,6 +171,8 @@ const References: React.FC = () => {
         return <HiCheckCircle className="h-4 w-4" />;
       case 'pending':
         return <HiExclamationTriangle className="h-4 w-4" />;
+      case 'failed':
+        return <HiXCircle className="h-4 w-4" />;
       default:
         return <HiXCircle className="h-4 w-4" />;
     }
@@ -157,17 +188,26 @@ const References: React.FC = () => {
     setSelectedReferral(null);
   };
 
-  const handleConfirm = async (referralId: number) => {
+  const handleConfirm = async (referral: ReferralsResponse['referrals'][0]) => {
+    // Check if referral has an appointment
+    if (!referral.appointment) {
+      // Show commission modal for referrals without appointment
+      setCommissionReferral(referral);
+      setIsCommissionModalOpen(true);
+      return;
+    }
+
+    // If referral has appointment, proceed with direct confirmation
     try {
       setError(null);
       setSuccess(null);
-      await updateCommissionStatus(referralId);
+      await updateCommissionStatus(referral.id);
       setSuccess('وضعیت کمیسیون با موفقیت بروزرسانی شد');
 
       // Update local state to move referral from pending to approved
       setReceivedReferrals(prev =>
         prev.map(ref =>
-          ref.id === referralId
+          ref.id === referral.id
             ? { ...ref, commission_status: 'paid' }
             : ref
         )
@@ -178,6 +218,99 @@ const References: React.FC = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'خطایی رخ داده است');
     }
+  };
+
+  const handleCancel = async (referralId: number) => {
+    try {
+      setError(null);
+      setSuccess(null);
+      await updateCommissionStatus(referralId, 'failed');
+      setSuccess('ارجاع لغو شد');
+
+      // Update local state to move referral to failed
+      setReceivedReferrals(prev =>
+        prev.map(ref =>
+          ref.id === referralId
+            ? { ...ref, commission_status: 'failed' }
+            : ref
+        )
+      );
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطایی رخ داده است');
+    }
+  };
+
+  const handleCommissionModalSuccess = (updatedReferral: ReferralsResponse['referrals'][0]) => {
+    setSuccess('کمیسیون با موفقیت ثبت شد');
+    // Update local state with the updated referral
+    setReceivedReferrals(prev =>
+      prev.map(ref =>
+        ref.id === updatedReferral.id ? updatedReferral : ref
+      )
+    );
+    // Clear success message after 3 seconds
+    setTimeout(() => setSuccess(null), 3000);
+  };
+
+  const handleCommissionModalError = (errorMessage: string) => {
+    setError(errorMessage);
+  };
+
+  const closeCommissionModal = () => {
+    setIsCommissionModalOpen(false);
+    setCommissionReferral(null);
+  };
+
+  const handleCreateReferral = async () => {
+    if (!selectedDoctor || !patientMobile.trim()) {
+      setError('لطفا تمام فیلدهای ضروری را پر کنید');
+      return;
+    }
+
+    setCreateLoading(true);
+    try {
+      setError(null);
+      await createReferralByMobile({
+        patient_mobile: patientMobile,
+        to_doctor_id: selectedDoctor,
+        notes: referralNotes
+      });
+
+      setSuccess('ارجاع با موفقیت ثبت شد');
+
+      // Reset form
+      setSelectedDoctor(null);
+      setPatientMobile('');
+      setReferralNotes('');
+      setIsCreateModalOpen(false);
+
+      // Refresh referrals list
+      if (currentUserId) {
+        const sentResponse = await getReferrals();
+        const sent = sentResponse.referrals.filter(
+          (referral) => referral.referring_doctor_id === currentUserId
+        );
+        setSentReferrals(sent);
+      }
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطایی رخ داده است');
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const closeCreateModal = () => {
+    setIsCreateModalOpen(false);
+    setSelectedDoctor(null);
+    setPatientMobile('');
+    setReferralNotes('');
+    setError(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -192,7 +325,7 @@ const References: React.FC = () => {
 
   const renderTable = (referrals: ReferralsResponse['referrals'], isReceived: boolean) => {
     // Apply filters
-    let filteredReferrals = referrals;
+    let filteredReferrals = [...referrals].reverse(); // Reverse to show newest first
 
     const searchTerm = isReceived ? receivedSearch : sentSearch;
     const doctorFilter = isReceived ? receivedDoctorFilter : sentDoctorFilter;
@@ -201,15 +334,20 @@ const References: React.FC = () => {
     if (searchTerm) {
       filteredReferrals = filteredReferrals.filter(ref =>
         ref.patient_id.toString().includes(searchTerm) ||
+        (ref.patient?.user?.name && ref.patient.user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (ref.notes && ref.notes.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
     if (doctorFilter) {
       if (isReceived) {
-        filteredReferrals = filteredReferrals.filter(ref => ref.referring_doctor_id.toString() === doctorFilter);
+        filteredReferrals = filteredReferrals.filter(ref =>
+          ref.referring_doctor?.name === doctorFilter || ref.referring_doctor_id.toString() === doctorFilter
+        );
       } else {
-        filteredReferrals = filteredReferrals.filter(ref => ref.referred_doctor_id.toString() === doctorFilter);
+        filteredReferrals = filteredReferrals.filter(ref =>
+          ref.referred_doctor?.name === doctorFilter || ref.referred_doctor_id.toString() === doctorFilter
+        );
       }
     }
 
@@ -219,13 +357,13 @@ const References: React.FC = () => {
 
     // Get unique doctors for filter
     const uniqueDoctors = isReceived
-      ? [...new Set(filteredReferrals.map(r => r.referring_doctor_id))].map(id => ({
-          id: id.toString(),
-          name: `دکتر ${id}` // Since referring_doctor name not available
+      ? [...new Set(filteredReferrals.map(r => r.referring_doctor?.name || r.referring_doctor_id.toString()))].map(name => ({
+          id: name,
+          name: name.startsWith('دکتر ') ? name : `دکتر ${name}`
         }))
-      : [...new Set(filteredReferrals.map(r => r.referred_doctor_id))].map(id => ({
-          id: id.toString(),
-          name: filteredReferrals.find(r => r.referred_doctor_id === id)?.referred_doctor?.name || `دکتر ${id}`
+      : [...new Set(filteredReferrals.map(r => r.referred_doctor?.name || r.referred_doctor_id.toString()))].map(name => ({
+          id: name,
+          name: name.startsWith('دکتر ') ? name : `دکتر ${name}`
         }));
 
     if (loading) {
@@ -283,6 +421,7 @@ const References: React.FC = () => {
                 <option value="">همه وضعیت‌ها</option>
                 <option value="pending">در حال انتظار</option>
                 <option value="paid">پرداخت شده</option>
+                <option value="failed">لغو شده</option>
               </select>
             </div>
           </div>
@@ -311,13 +450,13 @@ const References: React.FC = () => {
                   <tr key={referral.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100">
                     <td className="px-6 py-4">
                       <span className="font-medium text-gray-800">
-                        {referral.patient ? `بیمار ${referral.patient.id}` : `بیمار ${referral.patient_id}`}
+                        {referral.patient?.user?.name || `بیمار ${referral.patient_id}`}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-gray-700">
                         {isReceived
-                          ? `دکتر ${referral.referring_doctor_id}`
+                          ? (referral.referring_doctor?.name || `دکتر ${referral.referring_doctor_id}`)
                           : (referral.referred_doctor?.name || `دکتر ${referral.referred_doctor_id}`)
                         }
                       </span>
@@ -345,15 +484,26 @@ const References: React.FC = () => {
                           مشاهده
                         </Button>
                         {isReceived && referral.commission_status === 'pending' && (
-                          <Button
-                            size="sm"
-                            variant="solid"
-                            icon={<HiCheck />}
-                            onClick={() => handleConfirm(referral.id)}
-                            className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-sm hover:shadow-md transition-all duration-200"
-                          >
-                            تایید
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="solid"
+                              icon={<HiCheck />}
+                              onClick={() => handleConfirm(referral)}
+                              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-sm hover:shadow-md transition-all duration-200"
+                            >
+                              تایید
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              icon={<HiXCircle />}
+                              onClick={() => handleCancel(referral.id)}
+                              className="ml-2 bg-red-500 hover:bg-red-50 hover:border-red-300"
+                            >
+                              لغو
+                            </Button>
+                          </>
                         )}
                       </div>
                     </td>
@@ -362,6 +512,112 @@ const References: React.FC = () => {
               </tbody>
             </table>
           </div>
+        )}
+  
+        {/* Create Referral Modal */}
+        {isCreateModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+            <div className="w-full max-w-2xl rounded-xl bg-white shadow-2xl relative max-h-[90vh] overflow-hidden">
+              <button
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10"
+                onClick={closeCreateModal}
+              >
+                <HiXCircle className="h-6 w-6" />
+              </button>
+              <div className="max-h-[90vh] overflow-y-auto p-8">
+                <h2 className="text-2xl font-bold text-gray-800 text-center mb-6 flex items-center justify-center gap-2">
+                  <HiArrowLeft className="h-6 w-6 text-blue-600" />
+                  ثبت ارجاع جدید
+                </h2>
+  
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      شماره موبایل بیمار *
+                    </label>
+                    <input
+                      type="text"
+                      value={patientMobile}
+                      onChange={(e) => setPatientMobile(e.target.value)}
+                      placeholder="مثال: 09123456789"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      dir="ltr"
+                    />
+                  </div>
+  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      انتخاب پزشک ارجاع گیرنده *
+                    </label>
+                    <select
+                      value={selectedDoctor || ''}
+                      onChange={(e) => setSelectedDoctor(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">انتخاب پزشک...</option>
+                      {doctors
+                        .filter(doctor => doctor.id !== currentUserId) // Exclude current doctor
+                        .map(doctor => (
+                          <option key={doctor.user.id} value={doctor.user.id}>
+                            {doctor.user.name} - {doctor.specialties || 'تخصص نامشخص'}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      توضیحات ارجاع
+                    </label>
+                    <textarea
+                      value={referralNotes}
+                      onChange={(e) => setReferralNotes(e.target.value)}
+                      placeholder="توضیحات مربوط به ارجاع..."
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    />
+                  </div>
+                </div>
+  
+                <div className="flex justify-end gap-4 mt-8">
+                  <Button
+                    variant="outline"
+                    onClick={closeCreateModal}
+                    disabled={createLoading}
+                    className="px-6"
+                  >
+                    انصراف
+                  </Button>
+                  <Button
+                    variant="solid"
+                    onClick={handleCreateReferral}
+                    disabled={createLoading || !selectedDoctor || !patientMobile.trim()}
+                    className="px-6 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {createLoading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 text-primary border-b-2 border-white"></div>
+                        در حال ثبت...
+                      </div>
+                    ) : (
+                      'ثبت ارجاع'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+  
+        {/* Commission Confirm Modal */}
+        {isCommissionModalOpen && commissionReferral && (
+          <CommissionConfirmModal
+            isOpen={isCommissionModalOpen}
+            onClose={closeCommissionModal}
+            referral={commissionReferral}
+            onSuccess={handleCommissionModalSuccess}
+            onError={handleCommissionModalError}
+          />
         )}
       </div>
     );
@@ -401,6 +657,18 @@ const References: React.FC = () => {
 
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">مدیریت ارجاعات</h1>
+          <Button
+            size="md"
+            variant="solid"
+            icon={<HiArrowLeft className="h-5 w-5" />}
+            onClick={() => setIsCreateModalOpen(true)}
+            className="bg-primary hover:bg-blue-700 text-primary shadow-sm hover:shadow-md transition-all duration-200"
+          >
+            ثبت ارجاع جدید
+          </Button>
+        </div>
         <Tabs tabs={tabs} />
       </div>
 
@@ -427,7 +695,7 @@ const References: React.FC = () => {
                     <div>
                       <span className="font-semibold text-gray-700">بیمار:</span>{" "}
                       <span className="text-gray-600">
-                        {selectedReferral.patient ? `بیمار ${selectedReferral.patient.id}` : `بیمار ${selectedReferral.patient_id}`}
+                        {selectedReferral.patient?.user?.name || `بیمار ${selectedReferral.patient_id}`}
                       </span>
                     </div>
                   </div>
@@ -445,7 +713,7 @@ const References: React.FC = () => {
                     <div>
                       <span className="font-semibold text-gray-700">دکتر ارجاع دهنده:</span>{" "}
                       <span className="text-gray-600">
-                        {selectedReferral.referring_doctor_id ? `دکتر ${selectedReferral.referring_doctor_id}` : 'نامشخص'}
+                        {selectedReferral.referring_doctor?.name || `دکتر ${selectedReferral.referring_doctor_id}`}
                       </span>
                     </div>
                   </div>
@@ -474,7 +742,7 @@ const References: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
                     <HiCheckCircle className="h-5 w-5 text-blue-500" />
-                    <div>
+                    <div className='flex gap-2'>
                       <span className="font-semibold text-gray-700">وضعیت کمیسیون:</span>{" "}
                       <span className={`px-2 py-1 rounded-full text-xs font-medium border flex items-center gap-1 ${getStatusColor(selectedReferral.commission_status)}`}>
                         {getStatusIcon(selectedReferral.commission_status)}
@@ -493,38 +761,51 @@ const References: React.FC = () => {
               </div>
 
               {/* Appointment Details */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                  <HiDocumentText className="h-5 w-5 text-purple-600" />
-                  جزئیات نوبت
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <HiClock className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">زمان شروع: {formatDate(selectedReferral.appointment.start_date)}</span>
+              {selectedReferral.appointment ? (
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                    <HiDocumentText className="h-5 w-5 text-purple-600" />
+                    جزئیات نوبت
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <HiClock className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">زمان شروع: {formatDate(selectedReferral.appointment.start_date)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <HiClock className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">زمان پایان: {formatDate(selectedReferral.appointment.end_date)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <HiCheckCircle className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">وضعیت: {selectedReferral.appointment.status}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <HiClock className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">زمان پایان: {formatDate(selectedReferral.appointment.end_date)}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <HiCheckCircle className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">وضعیت: {selectedReferral.appointment.status}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <HiCurrencyDollar className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">وضعیت پرداخت: {selectedReferral.appointment.payment_status}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <HiDocumentText className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">توضیحات: {selectedReferral.appointment.description || 'بدون توضیحات'}</span>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <HiCurrencyDollar className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">وضعیت پرداخت: {selectedReferral.appointment.payment_status}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <HiDocumentText className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">توضیحات: {selectedReferral.appointment.description || 'بدون توضیحات'}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                    <HiDocumentText className="h-5 w-5 text-purple-600" />
+                    جزئیات نوبت
+                  </h3>
+                  <div className="text-center py-4">
+                    <HiDocumentText className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                    <p className="text-gray-500">این ارجاع دارای نوبت مرتبط نیست</p>
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-center">
                 <Button

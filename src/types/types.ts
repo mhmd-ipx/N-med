@@ -98,15 +98,14 @@ export type SecretaryRelatedData = {
 
 // رابط برای اطلاعات کاربر
 export interface User {
-  user: User;
   id: number;
   name: string;
-  phone?: string;
-  role: 'patient' | 'doctor' | 'secretary';
-  related_data?:
-    | (User['role'] extends 'doctor' ? DoctorRelatedData : never)
-    | (User['role'] extends 'patient' ? PatientRelatedData : never)
-    | (User['role'] extends 'secretary' ? SecretaryRelatedData : never);
+  phone: string;
+  role: string | null;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+  related_data: any | null;
 }
 
 export interface AuthData {
