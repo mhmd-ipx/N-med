@@ -64,24 +64,24 @@ const Header = () => {
           isScrolled ? 'fixed top-0 left-0 p-0 shadow-md' : 'relative'
         }`}
       >
-        <nav className="w-full lg:max-w-[1300px] lg:mx-auto px-4 py-4 flex items-center justify-center lg:justify-start relative">
+        <nav className="w-full lg:max-w-[1300px] lg:mx-auto px-4 py-4 flex items-center justify-between relative">
           {/* Logo */}
           <div className="flex-shrink-0">
             <HeaderLogo />
           </div>
 
           {/* Desktop Menu */}
-          <div className="hidden lg:flex lg:flex-1 lg:justify-center">
+          <div className="hidden lg:flex">
             <Menu />
           </div>
 
           {/* Desktop Buttons */}
-          <div className="hidden lg:flex lg:justify-end lg:flex-1">
+          <div className="hidden lg:flex">
             <Headerbuttons />
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="absolute right-4 lg:hidden">
+          <div className="lg:hidden">
             <button
               onClick={toggleMobileMenu}
               className="p-2 text-white hover:text-primary-light transition-colors"

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { getReferrals, getReceivedReferrals, type ReferralsResponse } from '../../../../services/referralsMenuApi';
+import { getReferrals, getReceivedReferrals, updateCommissionStatus, type ReferralsResponse } from '../../../../services/referralsMenuApi';
 import Button from '../../../../components/ui/Button/Button';
+import Tabs from '../../../../components/ui/Tabs/Tabs';
 import {
   HiEye,
   HiUser,
@@ -12,7 +13,8 @@ import {
   HiXCircle,
   HiArrowRight,
   HiArrowLeft,
-  HiExclamationTriangle
+  HiExclamationTriangle,
+  HiCheck
 } from 'react-icons/hi2';
 
 interface AuthData {
@@ -57,9 +59,21 @@ const References: React.FC = () => {
   const [sentReferrals, setSentReferrals] = useState<ReferralsResponse['referrals']>([]);
   const [receivedReferrals, setReceivedReferrals] = useState<ReferralsResponse['referrals']>([]);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [selectedReferral, setSelectedReferral] = useState<ReferralsResponse['referrals'][0] | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Filter states for sent referrals
+  const [sentSearch, setSentSearch] = useState('');
+  const [sentDoctorFilter, setSentDoctorFilter] = useState('');
+  const [sentStatusFilter, setSentStatusFilter] = useState('');
+
+  // Filter states for received referrals
+  const [receivedSearch, setReceivedSearch] = useState('');
+  const [receivedDoctorFilter, setReceivedDoctorFilter] = useState('');
+  const [receivedStatusFilter, setReceivedStatusFilter] = useState('');
 
   useEffect(() => {
     // Get current user ID from localStorage
@@ -75,6 +89,7 @@ const References: React.FC = () => {
 
     // Fetch both sent and received referrals
     const fetchReferrals = async () => {
+      setLoading(true);
       try {
         // Fetch sent referrals (referrals sent by current doctor)
         const sentResponse = await getReferrals();
@@ -91,6 +106,8 @@ const References: React.FC = () => {
         setReceivedReferrals(received);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'خطایی رخ داده است');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -111,11 +128,11 @@ const References: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'paid':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-100 text-green-800 border border-green-300';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-yellow-100 text-yellow-800 border border-yellow-300';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800 border border-gray-300';
     }
   };
 
@@ -140,6 +157,29 @@ const References: React.FC = () => {
     setSelectedReferral(null);
   };
 
+  const handleConfirm = async (referralId: number) => {
+    try {
+      setError(null);
+      setSuccess(null);
+      await updateCommissionStatus(referralId);
+      setSuccess('وضعیت کمیسیون با موفقیت بروزرسانی شد');
+
+      // Update local state to move referral from pending to approved
+      setReceivedReferrals(prev =>
+        prev.map(ref =>
+          ref.id === referralId
+            ? { ...ref, commission_status: 'paid' }
+            : ref
+        )
+      );
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطایی رخ داده است');
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString("fa-IR", {
       year: "numeric",
@@ -150,283 +190,218 @@ const References: React.FC = () => {
     });
   };
 
-  // For sent referrals
-  const sentCompleted = sentReferrals.filter(r => r.commission_status === 'paid');
-  const sentPending = sentReferrals.filter(r => r.commission_status === 'pending');
+  const renderTable = (referrals: ReferralsResponse['referrals'], isReceived: boolean) => {
+    // Apply filters
+    let filteredReferrals = referrals;
 
-  // For received referrals
-  const receivedApproved = receivedReferrals.filter(r => r.commission_status === 'paid');
-  const receivedPending = receivedReferrals.filter(r => r.commission_status === 'pending');
+    const searchTerm = isReceived ? receivedSearch : sentSearch;
+    const doctorFilter = isReceived ? receivedDoctorFilter : sentDoctorFilter;
+    const statusFilter = isReceived ? receivedStatusFilter : sentStatusFilter;
+
+    if (searchTerm) {
+      filteredReferrals = filteredReferrals.filter(ref =>
+        ref.patient_id.toString().includes(searchTerm) ||
+        (ref.notes && ref.notes.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    if (doctorFilter) {
+      if (isReceived) {
+        filteredReferrals = filteredReferrals.filter(ref => ref.referring_doctor_id.toString() === doctorFilter);
+      } else {
+        filteredReferrals = filteredReferrals.filter(ref => ref.referred_doctor_id.toString() === doctorFilter);
+      }
+    }
+
+    if (statusFilter) {
+      filteredReferrals = filteredReferrals.filter(ref => ref.commission_status === statusFilter);
+    }
+
+    // Get unique doctors for filter
+    const uniqueDoctors = isReceived
+      ? [...new Set(filteredReferrals.map(r => r.referring_doctor_id))].map(id => ({
+          id: id.toString(),
+          name: `دکتر ${id}` // Since referring_doctor name not available
+        }))
+      : [...new Set(filteredReferrals.map(r => r.referred_doctor_id))].map(id => ({
+          id: id.toString(),
+          name: filteredReferrals.find(r => r.referred_doctor_id === id)?.referred_doctor?.name || `دکتر ${id}`
+        }));
+
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      );
+    }
+
+    if (referrals.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <HiDocumentText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+          <p className="text-gray-500 text-lg">هیچ ارجاعی یافت نشد</p>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        {/* Filters */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">جستجو</label>
+              <input
+                type="text"
+                placeholder="بر اساس بیمار یا توضیحات"
+                value={searchTerm}
+                onChange={(e) => isReceived ? setReceivedSearch(e.target.value) : setSentSearch(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">دکتر</label>
+              <select
+                value={doctorFilter}
+                onChange={(e) => isReceived ? setReceivedDoctorFilter(e.target.value) : setSentDoctorFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">همه دکترها</option>
+                {uniqueDoctors.map(doctor => (
+                  <option key={doctor.id} value={doctor.id}>{doctor.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">وضعیت</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => isReceived ? setReceivedStatusFilter(e.target.value) : setSentStatusFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">همه وضعیت‌ها</option>
+                <option value="pending">در حال انتظار</option>
+                <option value="paid">پرداخت شده</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Table */}
+        {filteredReferrals.length === 0 ? (
+          <div className="text-center py-12">
+            <HiDocumentText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+            <p className="text-gray-500 text-lg">هیچ ارجاعی مطابق فیلترها یافت نشد</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-right font-medium text-gray-700">بیمار</th>
+                  <th className="px-6 py-3 text-right font-medium text-gray-700">دکتر</th>
+                  <th className="px-6 py-3 text-right font-medium text-gray-700">وضعیت</th>
+                  <th className="px-6 py-3 text-right font-medium text-gray-700">تاریخ</th>
+                  <th className="px-6 py-3 text-right font-medium text-gray-700">عملیات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredReferrals.map((referral, index) => (
+                  <tr key={referral.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                    <td className="px-6 py-4">
+                      <span className="font-medium text-gray-800">
+                        {referral.patient ? `بیمار ${referral.patient.id}` : `بیمار ${referral.patient_id}`}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-gray-700">
+                        {isReceived
+                          ? `دکتر ${referral.referring_doctor_id}`
+                          : (referral.referred_doctor?.name || `دکتر ${referral.referred_doctor_id}`)
+                        }
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${getStatusColor(referral.commission_status)}`}>
+                        {getStatusIcon(referral.commission_status)}
+                        {translateStatus(referral.commission_status)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-gray-600 text-sm">
+                        {formatDate(referral.referral_date)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          icon={<HiEye />}
+                          onClick={() => openModal(referral)}
+                          className="hover:bg-blue-50 hover:border-blue-300"
+                        >
+                          مشاهده
+                        </Button>
+                        {isReceived && referral.commission_status === 'pending' && (
+                          <Button
+                            size="sm"
+                            variant="solid"
+                            icon={<HiCheck />}
+                            onClick={() => handleConfirm(referral.id)}
+                            className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-sm hover:shadow-md transition-all duration-200"
+                          >
+                            تایید
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const tabs = [
+    {
+      id: 'sent',
+      label: 'ارجاعات صادر شده',
+      icon: <HiArrowLeft className="h-5 w-5" />,
+      content: renderTable(sentReferrals, false)
+    },
+    {
+      id: 'received',
+      label: 'ارجاعات دریافتی',
+      icon: <HiArrowRight className="h-5 w-5" />,
+      content: renderTable(receivedReferrals, true)
+    }
+  ];
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className=" bg-gray-50 min-h-screen">
       {error && (
-        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-center gap-2">
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center gap-2">
           <HiXCircle className="h-5 w-5" />
           {error}
         </div>
       )}
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
-          <HiArrowRight className="h-8 w-8 text-blue-600" />
-          مدیریت ارجاعات
-        </h1>
-        <p className="text-gray-600">مشاهده و مدیریت ارجاعات ارسالی و دریافتی</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Sent Referrals Column */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-            <h2 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2">
-              <HiArrowLeft className="h-6 w-6 text-blue-600" />
-              ارجاعات صادر شده
-            </h2>
-
-            {/* Completed Sent Referrals */}
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold mb-4 text-green-700 flex items-center gap-2">
-                <HiCheckCircle className="h-5 w-5" />
-                تکمیل شده ({sentCompleted.length})
-              </h3>
-              {sentCompleted.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <HiDocumentText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                  <p>ارجاع تکمیل شده‌ای وجود ندارد</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {sentCompleted.map((referral) => (
-                    <div key={referral.id} className="bg-green-50 border border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <HiUser className="h-4 w-4 text-green-600" />
-                            <span className="font-medium text-gray-800">
-                              {referral.patient ? `بیمار ${referral.patient.id}` : `بیمار ${referral.patient_id}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <HiUserGroup className="h-4 w-4 text-blue-600" />
-                            <span className="text-gray-700">
-                              {referral.referred_doctor?.name || `دکتر ${referral.referred_doctor_id}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <HiDocumentText className="h-4 w-4 text-purple-600" />
-                            <span className="text-gray-700 text-sm">
-                              {referral.appointment?.description || `سرویس ${referral.appointment?.service_id}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium border flex items-center gap-1 ${getStatusColor(referral.commission_status)}`}>
-                              {getStatusIcon(referral.commission_status)}
-                              {translateStatus(referral.commission_status)}
-                            </span>
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          icon={<HiEye />}
-                          onClick={() => openModal(referral)}
-                          className="ml-3"
-                        >
-                          مشاهده
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Pending Sent Referrals */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4 text-yellow-700 flex items-center gap-2">
-                <HiExclamationTriangle className="h-5 w-5" />
-                در انتظار ({sentPending.length})
-              </h3>
-              {sentPending.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <HiDocumentText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                  <p>ارجاع در انتظار وجود ندارد</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {sentPending.map((referral) => (
-                    <div key={referral.id} className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <HiUser className="h-4 w-4 text-yellow-600" />
-                            <span className="font-medium text-gray-800">
-                              {referral.patient ? `بیمار ${referral.patient.id}` : `بیمار ${referral.patient_id}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <HiUserGroup className="h-4 w-4 text-blue-600" />
-                            <span className="text-gray-700">
-                              {referral.referred_doctor?.name || `دکتر ${referral.referred_doctor_id}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <HiDocumentText className="h-4 w-4 text-purple-600" />
-                            <span className="text-gray-700 text-sm">
-                              {referral.appointment?.description || `سرویس ${referral.appointment?.service_id}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium border flex items-center gap-1 ${getStatusColor(referral.commission_status)}`}>
-                              {getStatusIcon(referral.commission_status)}
-                              {translateStatus(referral.commission_status)}
-                            </span>
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          icon={<HiEye />}
-                          onClick={() => openModal(referral)}
-                          className="ml-3"
-                        >
-                          مشاهده
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+      {success && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg flex items-center gap-2">
+          <HiCheckCircle className="h-5 w-5" />
+          {success}
         </div>
+      )}
 
-        {/* Received Referrals Column */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-            <h2 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2">
-              <HiArrowRight className="h-6 w-6 text-green-600" />
-              ارجاعات دریافتی
-            </h2>
 
-            {/* Approved Received Referrals */}
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold mb-4 text-green-700 flex items-center gap-2">
-                <HiCheckCircle className="h-5 w-5" />
-                تایید شده ({receivedApproved.length})
-              </h3>
-              {receivedApproved.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <HiDocumentText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                  <p>ارجاع تایید شده‌ای وجود ندارد</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {receivedApproved.map((referral) => (
-                    <div key={referral.id} className="bg-green-50 border border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <HiUser className="h-4 w-4 text-green-600" />
-                            <span className="font-medium text-gray-800">
-                              {referral.patient ? `بیمار ${referral.patient.id}` : `بیمار ${referral.patient_id}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <HiUserGroup className="h-4 w-4 text-blue-600" />
-                            <span className="text-gray-700">
-                              دکتر ارجاع دهنده ID: {referral.referring_doctor_id}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <HiDocumentText className="h-4 w-4 text-purple-600" />
-                            <span className="text-gray-700 text-sm">
-                              {referral.appointment?.description || `سرویس ${referral.appointment?.service_id}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium border flex items-center gap-1 ${getStatusColor(referral.commission_status)}`}>
-                              {getStatusIcon(referral.commission_status)}
-                              {translateStatus(referral.commission_status)}
-                            </span>
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          icon={<HiEye />}
-                          onClick={() => openModal(referral)}
-                          className="ml-3"
-                        >
-                          مشاهده
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {/* Pending Received Referrals */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4 text-yellow-700 flex items-center gap-2">
-                <HiExclamationTriangle className="h-5 w-5" />
-                در انتظار تایید ({receivedPending.length})
-              </h3>
-              {receivedPending.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <HiDocumentText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                  <p>ارجاع در انتظار تایید وجود ندارد</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {receivedPending.map((referral) => (
-                    <div key={referral.id} className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <HiUser className="h-4 w-4 text-yellow-600" />
-                            <span className="font-medium text-gray-800">
-                              {referral.patient ? `بیمار ${referral.patient.id}` : `بیمار ${referral.patient_id}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <HiUserGroup className="h-4 w-4 text-blue-600" />
-                            <span className="text-gray-700">
-                              دکتر ارجاع دهنده ID: {referral.referring_doctor_id}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <HiDocumentText className="h-4 w-4 text-purple-600" />
-                            <span className="text-gray-700 text-sm">
-                              {referral.appointment?.description || `سرویس ${referral.appointment?.service_id}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium border flex items-center gap-1 ${getStatusColor(referral.commission_status)}`}>
-                              {getStatusIcon(referral.commission_status)}
-                              {translateStatus(referral.commission_status)}
-                            </span>
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          icon={<HiEye />}
-                          onClick={() => openModal(referral)}
-                          className="ml-3"
-                        >
-                          مشاهده
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <Tabs tabs={tabs} />
       </div>
 
       {/* Referral Details Modal */}

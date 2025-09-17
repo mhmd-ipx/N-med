@@ -17,8 +17,7 @@ import PaymentSuccess from '../../pages/PaymentSuccess';
 import PaymentFailed from '../../pages/PaymentFailed';
 import ServiceCategories from '../../pages/ServiceCategories';
 import Doctors from '../../pages/Doctors';
-
-const NotFound = () => <div className="text-center items-center h-full text-red-500 text-2xl mt-10">صفحه مورد نظر یافت نشد :(</div>;
+import NotFound from '../../pages/NotFound';
 
 const AppRoutes = () => {
   return (

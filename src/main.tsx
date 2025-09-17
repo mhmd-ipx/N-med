@@ -5,6 +5,7 @@ import { ToastContainer } from 'react-toastify';
 import { HelmetProvider } from 'react-helmet-async';
 
 import App from './App';
+import UserLoginProvider from './components/ui/login/UserLoginProvider';
 import './index.css';
 import './assets/fonts/Yekan-Bakh-FaNum-05-Medium.woff';
 
@@ -14,8 +15,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <App />
-        <ToastContainer />
+        <UserLoginProvider>
+          <App />
+          <ToastContainer />
+        </UserLoginProvider>
       </QueryClientProvider>
     </HelmetProvider>
   </React.StrictMode>
