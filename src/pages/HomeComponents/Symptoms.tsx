@@ -27,7 +27,7 @@ const SymptomsSection = () => {
             key={symptom.slug}
             to={`/specialties/${symptom.slug}`}
         >
-            <div key={symptom.id} className="border border-light rounded-xl p-4 text-center hover:bg-primary/10 bg-transparent transition-colors">
+            <div className="border border-light rounded-xl p-4 text-center hover:bg-primary/10 bg-transparent transition-colors">
                 <img src={symptom.imageUrl} alt={symptom.name} className="w-16 h-16 mx-auto mb-2" />
                 <p className="text-sm text-blue-800">{symptom.name}</p>
             </div>

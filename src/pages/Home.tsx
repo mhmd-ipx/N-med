@@ -3,6 +3,7 @@ import Herosection from './HomeComponents/Herosection'
 import SearchSection from './HomeComponents/SearchSection'
 import BestDoctors from './HomeComponents/BestDoctors'
 import ServicesSection from './HomeComponents/ServicesSection'
+import SymptomsSection from './HomeComponents/Symptoms'
 function Home() {
   return (
     <div className='w-full justify-center items-center flex '> 
@@ -12,8 +13,10 @@ function Home() {
       <div className='w-full '  >
         <Herosection />
         <SearchSection />
-        <BestDoctors />
+        <SymptomsSection />
+        {/*<BestDoctors />*/}
         <ServicesSection />
+        
       </div>
     </div>
   );

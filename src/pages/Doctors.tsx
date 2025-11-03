@@ -206,7 +206,7 @@ const Doctors: React.FC = () => {
                   <p className="text-gray-500">لطفاً فیلترها را تغییر دهید یا عبارت جستجو را اصلاح کنید</p>
                 </div>
               ) : (
-                <div className="gap-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="gap-4 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
                   {filteredDoctors.map((doctor) => (
                     <div key={doctor.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 text-center border border-gray-100 hover:border-blue-200">
                       <div className="relative mb-4">
@@ -218,9 +218,9 @@ const Doctors: React.FC = () => {
                             (e.target as HTMLImageElement).src = doctorPlaceholder;
                           }}
                         />
-                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                        {/* <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
                           تایید شده
-                        </div>
+                        </div>*/}
                       </div>
                       <h3 className="text-xl font-bold text-gray-800 mb-2">{doctor.user.name}</h3>
                       <p className="text-sm text-blue-600 font-medium mb-3">
@@ -229,7 +229,7 @@ const Doctors: React.FC = () => {
      
                       <Link
                         to={`/doctors/${doctor.id}`}
-                        className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+                        className="inline-block bg-primary hover:bg-blue-700 text-white font-medium   py-2 px-6 rounded-full transition-colors duration-200 shadow-md  hover:shadow-lg"
                       >
                         مشاهده پروفایل
                       </Link>
