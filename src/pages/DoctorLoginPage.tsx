@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import Loginimage from '../assets/images/n-med-login-img.svg'; 
+import Loginimage from '../assets/images/n-med-logo.png'; 
 import LoginForm from '../components/ui/login/Loginform';
 
 function DoctorLoginPage() {

@@ -100,7 +100,7 @@ function Contact() {
                     </div>
                     <div>
                       <p className='font-semibold text-gray-900'>ایمیل</p>
-                      <p className='text-gray-600'>info@n-medclinic.com</p>
+                      <p className='text-gray-600'>Info@niloodarman.com</p>
                     </div>
                   </div>
                   <div className='flex items-start gap-4 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition duration-200'>
@@ -111,8 +111,8 @@ function Contact() {
                     </div>
                     <div>
                       <p className='font-semibold text-gray-900'>تلفن</p>
-                      <p className='text-gray-600'>۰۲۱-۱۲۳۴۵۶۷۸</p>
-                      <p className='text-sm text-gray-500'>اورژانس: ۱۱۵</p>
+                      <p className='text-gray-600'>031-35548186</p>
+                      
                     </div>
                   </div>
                   <div className='flex items-start gap-4 p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition duration-200'>
@@ -124,7 +124,8 @@ function Contact() {
                     </div>
                     <div>
                       <p className='font-semibold text-gray-900'>آدرس</p>
-                      <p className='text-gray-600'>تهران، خیابان ولیعصر، نبش خیابان شهید بهشتی، پلاک ۱۵۶</p>
+                      <p className='text-gray-600'>اصفهان ، شهرک سلامت ، طبقه ی همکف ، واحد ۲۱
+</p>
                     </div>
                   </div>
                 </div>

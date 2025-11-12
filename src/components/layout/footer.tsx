@@ -2,6 +2,7 @@
 import enamad from '../../assets/images/enamad.png';
 import avafarda from '../../assets/images/avafarda.svg';
 import { HiHome, HiFolder, HiUserGroup, HiBookOpen, HiUsers, HiPhone, HiInformationCircle, HiEnvelope, HiMapPin, HiLink, HiChatBubbleOvalLeft, HiPhoto } from 'react-icons/hi2';
+import logo from '../../assets/images/n-med-logo.png';
 
 const Footer = () => {
     return (
@@ -16,8 +17,8 @@ const Footer = () => {
             {/* Company Info */}
             <div className="lg:col-span-2 space-y-6 p-6 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300">
               <div className="flex items-center space-x-4 space-x-reverse">
-                <div className="p-2 bg-white/20 rounded-xl shadow-lg">
-                  <img src="/n-med-logo.png" alt="نیلودرمان لوگو" className="w-10 h-10" />
+                <div className="p-2 bg-white rounded-xl shadow-lg">
+                  <img src={logo} alt="نیلودرمان لوگو" className="w-10 h-10" />
                 </div>
                 <h3 className="text-2xl font-bold text-white">نیلودرمان</h3>
               </div>
@@ -64,9 +65,10 @@ const Footer = () => {
               <div className="p-6 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300">
                 <h4 className="text-lg font-semibold text-white mb-4">تماس با ما</h4>
                 <div className="space-y-3 text-sm text-white/90">
-                  <p className="flex items-center space-x-2 space-x-reverse"><HiPhone className="w-4 h-4 text-white" /><span>۰۲۱-۱۲۳۴۵۶۷۸</span></p>
-                  <p className="flex items-center space-x-2 space-x-reverse"><HiEnvelope className="w-4 h-4 text-white" /><span>info@notash.ir</span></p>
-                  <p className="flex items-center space-x-2 space-x-reverse"><HiMapPin className="w-4 h-4 text-white" /><span>تهران، خیابان ولیعصر</span></p>
+                  <p className="flex items-center space-x-2 space-x-reverse"><HiPhone className="w-4 h-4 text-white" /><span>031-35548186</span></p>
+                  <p className="flex items-center space-x-2 space-x-reverse"><HiEnvelope className="w-4 h-4 text-white" /><span>Info@niloodarman.com</span></p>
+                  <p className="flex items-center space-x-2 space-x-reverse"><HiMapPin className="w-4 h-4 text-white" /><span>اصفهان ، شهرک سلامت ، طبقه ی همکف ، واحد ۲۱
+</span></p>
                 </div>
               </div>
 
