@@ -83,16 +83,16 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 lg:hidden"
           onClick={onMobileClose}
         />
       )}
 
       {/* Sidebar */}
       <div className={`
-        fixed lg:static inset-y-0 right-0 z-40 w-64  transform transition-transform duration-300 ease-in-out
+        fixed lg:static inset-y-0 right-0 z-50 w-64  transform transition-transform duration-300  ease-in-out
         ${isMobileOpen ? 'translate-x-0 bg-white ' : 'translate-x-full lg:translate-x-0 '}
-        lg:w-64 -mt-32 p-4 flex flex-col gap-3 shadow-lg lg:shadow-none
+        lg:w-64 -mt-32 p-4 flex flex-col  gap-3 shadow-lg lg:shadow-none
       `}>
         {/* Mobile Close Button */}
         <button

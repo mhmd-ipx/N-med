@@ -139,6 +139,7 @@ const References: React.FC = () => {
     fetchReferrals();
   }, [currentUserId]);
 
+
   const translateStatus = (status: string) => {
     switch (status) {
       case 'pending':
@@ -334,7 +335,7 @@ const References: React.FC = () => {
     if (searchTerm) {
       filteredReferrals = filteredReferrals.filter(ref =>
         ref.patient_id.toString().includes(searchTerm) ||
-        (ref.patient?.user?.name && ref.patient.user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (ref.patient?.name && ref.patient.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (ref.notes && ref.notes.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
@@ -399,13 +400,15 @@ const References: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">دکتر</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {isReceived ? 'ارجاع دهنده' : 'پزشک'}
+              </label>
               <select
                 value={doctorFilter}
                 onChange={(e) => isReceived ? setReceivedDoctorFilter(e.target.value) : setSentDoctorFilter(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">همه دکترها</option>
+                <option value="">{`همه ${isReceived ? 'ارجاع دهندگان' : 'پزشکان'}`}</option>
                 {uniqueDoctors.map(doctor => (
                   <option key={doctor.id} value={doctor.id}>{doctor.name}</option>
                 ))}
@@ -439,7 +442,9 @@ const References: React.FC = () => {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-3 text-right font-medium text-gray-700">بیمار</th>
-                  <th className="px-6 py-3 text-right font-medium text-gray-700">دکتر</th>
+                  <th className="px-6 py-3 text-right font-medium text-gray-700">
+                    {isReceived ? 'ارجاع دهنده' : 'پزشک'}
+                  </th>
                   <th className="px-6 py-3 text-right font-medium text-gray-700">وضعیت</th>
                   <th className="px-6 py-3 text-right font-medium text-gray-700">تاریخ</th>
                   <th className="px-6 py-3 text-right font-medium text-gray-700">عملیات</th>
@@ -450,7 +455,7 @@ const References: React.FC = () => {
                   <tr key={referral.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100">
                     <td className="px-6 py-4">
                       <span className="font-medium text-gray-800">
-                        {referral.patient?.user?.name || `بیمار ${referral.patient_id}`}
+                        {referral.patient?.name || `بیمار ${referral.patient_id}`}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -514,100 +519,6 @@ const References: React.FC = () => {
           </div>
         )}
   
-        {/* Create Referral Modal */}
-        {isCreateModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-            <div className="w-full max-w-2xl rounded-xl bg-white shadow-2xl relative max-h-[90vh] overflow-hidden">
-              <button
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10"
-                onClick={closeCreateModal}
-              >
-                <HiXCircle className="h-6 w-6" />
-              </button>
-              <div className="max-h-[90vh] overflow-y-auto p-8">
-                <h2 className="text-2xl font-bold text-gray-800 text-center mb-6 flex items-center justify-center gap-2">
-                  <HiArrowLeft className="h-6 w-6 text-blue-600" />
-                  ثبت ارجاع جدید
-                </h2>
-  
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      شماره موبایل بیمار *
-                    </label>
-                    <input
-                      type="text"
-                      value={patientMobile}
-                      onChange={(e) => setPatientMobile(e.target.value)}
-                      placeholder="مثال: 09123456789"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      dir="ltr"
-                    />
-                  </div>
-  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      انتخاب پزشک ارجاع گیرنده *
-                    </label>
-                    <select
-                      value={selectedDoctor || ''}
-                      onChange={(e) => setSelectedDoctor(Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">انتخاب پزشک...</option>
-                      {doctors
-                        .filter(doctor => doctor.id !== currentUserId) // Exclude current doctor
-                        .map(doctor => (
-                          <option key={doctor.user.id} value={doctor.user.id}>
-                            {doctor.user.name} - {doctor.specialties || 'تخصص نامشخص'}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      توضیحات ارجاع
-                    </label>
-                    <textarea
-                      value={referralNotes}
-                      onChange={(e) => setReferralNotes(e.target.value)}
-                      placeholder="توضیحات مربوط به ارجاع..."
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    />
-                  </div>
-                </div>
-  
-                <div className="flex justify-end gap-4 mt-8">
-                  <Button
-                    variant="outline"
-                    onClick={closeCreateModal}
-                    disabled={createLoading}
-                    className="px-6"
-                  >
-                    انصراف
-                  </Button>
-                  <Button
-                    variant="solid"
-                    onClick={handleCreateReferral}
-                    disabled={createLoading || !selectedDoctor || !patientMobile.trim()}
-                    className="px-6 bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    {createLoading ? (
-                      <div className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 text-primary border-b-2 border-white"></div>
-                        در حال ثبت...
-                      </div>
-                    ) : (
-                      'ثبت ارجاع'
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
   
         {/* Commission Confirm Modal */}
         {isCommissionModalOpen && commissionReferral && (
@@ -664,13 +575,108 @@ const References: React.FC = () => {
             variant="solid"
             icon={<HiArrowLeft className="h-5 w-5" />}
             onClick={() => setIsCreateModalOpen(true)}
-            className="bg-primary hover:bg-blue-700 text-primary shadow-sm hover:shadow-md transition-all duration-200"
+            className="bg-primary hover:bg-blue-700 text-blue shadow-sm hover:shadow-md transition-all duration-200"
           >
             ثبت ارجاع جدید
           </Button>
         </div>
         <Tabs tabs={tabs} />
       </div>
+
+      {/* Create Referral Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-60">
+          <div className="w-full max-w-2xl rounded-xl bg-white shadow-2xl relative max-h-[90vh] overflow-hidden">
+            <button
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10"
+              onClick={closeCreateModal}
+            >
+              <HiXCircle className="h-6 w-6" />
+            </button>
+            <div className="max-h-[90vh] overflow-y-auto p-8">
+              <h2 className="text-2xl font-bold text-gray-800 text-center mb-6 flex items-center justify-center gap-2">
+                <HiArrowLeft className="h-6 w-6 text-blue-600" />
+                ثبت ارجاع جدید
+              </h2>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    شماره موبایل بیمار *
+                  </label>
+                  <input
+                    type="text"
+                    value={patientMobile}
+                    onChange={(e) => setPatientMobile(e.target.value)}
+                    placeholder="مثال: 09123456789"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    dir="ltr"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    انتخاب پزشک ارجاع گیرنده *
+                  </label>
+                  <select
+                    value={selectedDoctor || ''}
+                    onChange={(e) => setSelectedDoctor(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">انتخاب پزشک...</option>
+                    {doctors
+                      .filter(doctor => doctor.id !== currentUserId) // Exclude current doctor
+                      .map(doctor => (
+                        <option key={doctor.user.id} value={doctor.user.id}>
+                          {doctor.user.name} - {doctor.specialties || 'تخصص نامشخص'}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    توضیحات ارجاع
+                  </label>
+                  <textarea
+                    value={referralNotes}
+                    onChange={(e) => setReferralNotes(e.target.value)}
+                    placeholder="توضیحات مربوط به ارجاع..."
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-4 mt-8">
+                <Button
+                  variant="outline"
+                  onClick={closeCreateModal}
+                  disabled={createLoading}
+                  className="px-6"
+                >
+                  انصراف
+                </Button>
+                <Button
+                  variant="solid"
+                  onClick={handleCreateReferral}
+                  disabled={createLoading || !selectedDoctor || !patientMobile.trim()}
+                  className="px-6 bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {createLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 text-primary border-b-2 border-white"></div>
+                      در حال ثبت...
+                    </div>
+                  ) : (
+                    'ثبت ارجاع'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Referral Details Modal */}
       {isModalOpen && selectedReferral && (
@@ -695,7 +701,7 @@ const References: React.FC = () => {
                     <div>
                       <span className="font-semibold text-gray-700">بیمار:</span>{" "}
                       <span className="text-gray-600">
-                        {selectedReferral.patient?.user?.name || `بیمار ${selectedReferral.patient_id}`}
+                        {selectedReferral.patient?.name || `بیمار ${selectedReferral.patient_id}`}
                       </span>
                     </div>
                   </div>
@@ -711,7 +717,7 @@ const References: React.FC = () => {
                   <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
                     <HiUserGroup className="h-5 w-5 text-blue-500" />
                     <div>
-                      <span className="font-semibold text-gray-700">دکتر ارجاع دهنده:</span>{" "}
+                      <span className="font-semibold text-gray-700"> ارجاع دهنده:</span>{" "}
                       <span className="text-gray-600">
                         {selectedReferral.referring_doctor?.name || `دکتر ${selectedReferral.referring_doctor_id}`}
                       </span>

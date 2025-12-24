@@ -245,11 +245,11 @@ const CommissionConfirmModal: React.FC<CommissionConfirmModalProps> = ({
               variant="solid"
               onClick={handleConfirm}
               disabled={loading || (activeTab === 'amount' && !manualAmount.trim()) || (activeTab === 'appointment' && !selectedAppointmentId)}
-              className="px-6 bg-green-600 hover:bg-green-700 text-white"
+              className="px-6 bg-green-600 hover:bg-green-700 text-primary"
             >
               {loading ? (
                 <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 text-primary border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 text-primary border-b-2 border-blue"></div>
                   در حال ثبت...
                 </div>
               ) : (

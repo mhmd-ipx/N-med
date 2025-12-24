@@ -59,7 +59,10 @@ const UserProfile = () => {
                     <span className='text-xl md:text-2xl font-medium'>سلام {user.name || 'کاربر گرامی'}</span>
                     <div className='flex gap-2 mt-1'>
                       <span className='text-sm'>پنل مدیریت حساب کاربری بیمار</span>
-                      <HiMiniPencilSquare className='text-xl' />
+                      <HiMiniPencilSquare
+                        className='text-xl cursor-pointer hover:text-blue-200 transition-colors'
+                        onClick={() => setActiveItem('Edit-account')}
+                      />
                     </div>
                   </div>
 

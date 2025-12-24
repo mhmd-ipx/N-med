@@ -1,4 +1,4 @@
-import { getsymptoms } from '../../services/api';
+import { getRealSymptoms } from '../../services/api';
 import type { symptoms } from '../../types/types';
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -9,8 +9,8 @@ const SymptomsSection = () => {
   useEffect(() => {
     const fetchSymptoms = async () => {
       try {
-        const data = await getsymptoms();
-        setSymptoms(data);
+        const response = await getRealSymptoms();
+        setSymptoms(response.data);
       } catch (error) {
         console.error("Error fetching symptoms:", error);
       }
@@ -28,8 +28,8 @@ const SymptomsSection = () => {
             to={`/specialties/${symptom.slug}`}
         >
             <div className="border border-light rounded-xl p-4 text-center hover:bg-primary/10 bg-transparent transition-colors">
-                <img src={symptom.imageUrl} alt={symptom.name} className="w-16 h-16 mx-auto mb-2" />
-                <p className="text-sm text-blue-800">{symptom.name}</p>
+                <img src={`https://api.niloudarman.ir/storage/thumbnails/${symptom.thumbnail}`} alt={symptom.title} className="w-16 h-16 mx-auto mb-2" />
+                <p className="text-sm text-blue-800">{symptom.title}</p>
             </div>
         </Link>
         ))}

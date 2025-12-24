@@ -1,8 +1,12 @@
 import axios from 'axios';
-import type { Doctor, Appointment, Specialty , symptoms , Services } from '../types/types';
+import type { Doctor, Appointment, Specialty , symptoms , Services, SymptomsResponse } from '../types/types';
 
 const api = axios.create({
   baseURL: 'http://localhost:3001'
+});
+
+const realApi = axios.create({
+  baseURL: 'https://api.niloudarman.ir'
 });
 
 export const getDoctors = async (filters?: { specialty?: string; city?: string }) => {
@@ -32,6 +36,11 @@ export const getprovinces = async (filters?: { specialty?: string; city?: string
 
 export const getsymptoms = async () => {
   const response = await api.get<symptoms[]>('/symptoms');
+  return response.data;
+};
+
+export const getRealSymptoms = async (): Promise<SymptomsResponse> => {
+  const response = await realApi.get('/api/symptoms');
   return response.data;
 };
 

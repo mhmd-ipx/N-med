@@ -213,8 +213,8 @@ const CreateClinicModal = ({ isOpen, onClose, onClinicCreate, token }: CreateCli
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-10000">
-      <div className="bg-white p-6 rounded-2xl w-[900px] relative">
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+      <div className="bg-white  p-6 rounded-2xl w-[900px] relative">
         <button
           className="absolute top-4 left-4 text-gray-600 hover:text-gray-800"
           onClick={onClose}

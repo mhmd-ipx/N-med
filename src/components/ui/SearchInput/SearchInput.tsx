@@ -142,7 +142,7 @@ const SearchInput = () => {
             <select
               value={selectedProvince}
               onChange={(e) => setSelectedProvince(Number(e.target.value))}
-              className="text-primary p-1 sm:p-2 outline-none rounded-full bg-light text-right appearance-none pr-8 sm:pr-10 pl-3 sm:pl-4 ml-2 text-sm sm:text-base"
+              className="w-28 sm:w-36 text-primary p-1 sm:p-2 outline-none rounded-full bg-light text-right appearance-none pr-8 sm:pr-10 pl-3 sm:pl-4 ml-2 text-sm sm:text-base"
             >
               {provinces.map((prov) => (
                 <option key={prov.id} value={prov.id}>
@@ -156,7 +156,7 @@ const SearchInput = () => {
           <input
             type="text"
             placeholder="نام پزشک، تخصص یا بیماری..."
-            className="flex-1 p-1 sm:p-2 text-gray-700 outline-none rounded-full text-right text-sm sm:text-base"
+            className="w-full p-1 sm:p-2 text-gray-700 outline-none rounded-full text-right text-sm sm:text-base"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />

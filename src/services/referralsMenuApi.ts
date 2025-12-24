@@ -1,5 +1,4 @@
 import axios from 'axios';
-import type { Patient } from '../types/types';
 
 // Define the response type
 interface Doctor {
@@ -10,6 +9,25 @@ interface Doctor {
   is_active: number;
   created_at: string;
   updated_at: string;
+  is_admin: number;
+  email: string | null;
+  card_number: string;
+  sheba_number: string;
+  related_data: any | null;
+}
+
+interface Patient {
+  id: number;
+  name: string;
+  phone: string;
+  role: string | null;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+  is_admin: number;
+  email: string | null;
+  card_number: string;
+  sheba_number: string;
   related_data: any | null;
 }
 
@@ -33,7 +51,7 @@ interface Appointment {
 
 interface Referral {
   id: number;
-  appointment_id: number;
+  appointment_id: number | null;
   referring_doctor_id: number;
   referred_doctor_id: number;
   patient_id: number;
@@ -46,7 +64,7 @@ interface Referral {
   patient: Patient | null;
   referred_doctor: Doctor;
   referring_doctor: Doctor;
-  appointment: Appointment;
+  appointment: Appointment | null;
 }
 
 export interface ReferralsResponse {
@@ -109,7 +127,15 @@ export const getReferrals = async (): Promise<ReferralsResponse> => {
           case 403:
             throw new Error('دسترسی غیرمجاز (403)');
           case 422:
-            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+            const responseData = axiosError.response.data;
+            let errorMessage = responseData?.message || 'داده‌های ورودی نامعتبر هستند';
+            if (responseData?.errors) {
+              const errorDetails = Object.entries(responseData.errors)
+                .map(([field, messages]) => `${field}: ${(messages as string[]).join(', ')}`)
+                .join('; ');
+              errorMessage += ` (${errorDetails})`;
+            }
+            throw new Error(errorMessage);
           case 500:
             throw new Error('خطای سرور (500)');
           default:
@@ -151,6 +177,37 @@ export const getReceivedReferrals = async (): Promise<ReferralsResponse> => {
       }
     }
     throw new Error('خطای ناشناخته در دریافت اطلاعات ارجاعات دریافتی');
+  }
+};
+
+// Get patient referrals (new API for patient panel)
+export const getPatientReferrals = async (): Promise<ReferralsResponse> => {
+  try {
+    const response = await api.get<ReferralsResponse>('/api/referrals/patient/refferals');
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در دریافت اطلاعات ارجاعات بیمار');
   }
 };
 
@@ -201,12 +258,15 @@ export const updateCommissionStatus = async (
 
 // Create referral by mobile
 export const createReferralByMobile = async (data: CreateReferralByMobileRequest): Promise<CreateReferralByMobileResponse> => {
+  console.log('API createReferralByMobile sending data:', data);
   try {
     const response = await api.post<CreateReferralByMobileResponse>('/api/referrals/by-mobile', data);
     return response.data;
   } catch (error) {
+    console.error('API Error in createReferralByMobile:', error);
     if (error instanceof Error && 'response' in error) {
       const axiosError = error as any;
+      console.log('Error response:', axiosError.response);
       if (axiosError.response) {
         switch (axiosError.response.status) {
           case 400:
