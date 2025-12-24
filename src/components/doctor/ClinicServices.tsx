@@ -26,7 +26,7 @@ const ClinicServices = ({ clinics }: ClinicServicesProps) => {
             <div className="flex items-start gap-3 mb-6">
               <HiOutlineMapPin className="w-5 h-5 text-gray-400 mt-1 flex-shrink-0" />
               <div className="text-right flex-1">
-                <h3 className="text-lg font-semibold text-gray-900">{clinic.title || 'مطب'}</h3>
+                <h3 className="text-lg font-semibold text-gray-900">مطب {clinic.title || 'بدون نام'}</h3>
                 <p className="text-sm text-gray-600 mt-1">{clinic.address || 'آدرس مشخص نشده'}</p>
               </div>
             </div>
@@ -41,6 +41,13 @@ const ClinicServices = ({ clinics }: ClinicServicesProps) => {
                     className="block"
                   >
                     <div className="group flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-blue-50 hover:shadow-md transition-all duration-200 cursor-pointer">
+                      {service.thumbnail && (
+                        <img
+                          src={service.thumbnail}
+                          alt={service.title}
+                          className="w-16 h-16 rounded-lg object-cover ml-4 flex-shrink-0"
+                        />
+                      )}
                       <div className="text-right flex-1">
                         <h4 className="font-medium text-gray-900 hover:text-blue-700 transition-colors">{service.title}</h4>
                         {service.description && (

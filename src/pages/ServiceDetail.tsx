@@ -227,9 +227,9 @@ const ServiceDetail = () => {
                     {/* Get Appointment Button */}
                     <button
                       onClick={scrollToBooking}
-                      className="inline-flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-semibold text-sm sm:text-base md:text-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                      className="inline-flex items-center gap-2 sm:gap-3 bg-gradient-to-r rounded-full from-blue-500 to-indigo-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-semibold text-sm sm:text-base md:text-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
                     >
-                      <HiOutlineCalendar className="text-lg sm:text-xl md:text-2xl" />
+                      <HiOutlineCalendar className="text-lg sm:text-xl md:text-2xl " />
                       دریافت نوبت
                     </button>
                   </div>
@@ -304,7 +304,7 @@ const ServiceDetail = () => {
               </div>
               <button
                 onClick={() => setShowClinicModal(true)}
-                className="flex items-center gap-1 sm:gap-2 bg-blue-50 text-blue-600 px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors text-xs sm:text-sm font-medium"
+                className="flex items-center gap-1 sm:gap-2 bg-blue-50 rounded-full text-blue-600 px-3 sm:px-4 py-2  hover:bg-blue-100 transition-colors text-xs sm:text-sm font-medium"
               >
                 <HiOutlineEye className="text-xs sm:text-sm" />
                 مشاهده جزئیات
@@ -344,7 +344,7 @@ const ServiceDetail = () => {
                 </div>
                 <button
                   onClick={() => navigate(`/doctors/${service.doctor.id}`)}
-                  className="flex items-center gap-1 sm:gap-2 bg-green-50 text-green-600 px-3 sm:px-4 py-2 rounded-lg hover:bg-green-100 transition-colors text-xs sm:text-sm font-medium"
+                  className="flex items-center gap-1 sm:gap-2 bg-green-50 text-green-600 px-3 sm:px-4 py-2 rounded-full hover:bg-green-100 transition-colors text-xs sm:text-sm font-medium"
                 >
                   <HiOutlineEye className="text-xs sm:text-sm" />
                   مشاهده پروفایل

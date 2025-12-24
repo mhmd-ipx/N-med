@@ -8,19 +8,6 @@ interface DoctorSidebarProps {
 const DoctorSidebar = ({ doctor }: DoctorSidebarProps) => {
   return (
     <div className="space-y-8">
-      {/* Working Hours */}
-      <div className="bg-white rounded-2xl shadow-sm p-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-6 text-right">ساعات کاری</h3>
-        <div className="space-y-3">
-          {['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه'].map((day) => (
-            <div key={day} className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">{day}</span>
-              <span className="text-sm font-medium text-gray-900">9:00 - 17:00</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Contact Info */}
       <div className="bg-white rounded-2xl shadow-sm p-6">
         <h3 className="text-xl font-bold text-gray-900 mb-6 text-right">اطلاعات تماس</h3>

@@ -45,7 +45,7 @@ const Footer = () => {
                 <li><a href="/" className="flex items-center space-x-2 space-x-reverse text-white/90 hover:text-white transition-all duration-300 hover:translate-x-1"><HiHome className="w-4 h-4 text-white" /><span className="text-sm">خانه</span></a></li>
                 <li><a href="/categories" className="flex items-center space-x-2 space-x-reverse text-white/90 hover:text-white transition-all duration-300 hover:translate-x-1"><HiFolder className="w-4 h-4 text-white" /><span className="text-sm">دسته‌بندی‌ها</span></a></li>
                 <li><a href="/doctors" className="flex items-center space-x-2 space-x-reverse text-white/90 hover:text-white transition-all duration-300 hover:translate-x-1"><HiUserGroup className="w-4 h-4 text-white" /><span className="text-sm">پزشکان</span></a></li>
-                <li><a href="/magazine" className="flex items-center space-x-2 space-x-reverse text-white/90 hover:text-white transition-all duration-300 hover:translate-x-1"><HiBookOpen className="w-4 h-4 text-white" /><span className="text-sm">مجله سلامتی</span></a></li>
+                <li><a href="https://blog.niloudarman.ir" className="flex items-center space-x-2 space-x-reverse text-white/90 hover:text-white transition-all duration-300 hover:translate-x-1"><HiBookOpen className="w-4 h-4 text-white" /><span className="text-sm">مجله سلامتی</span></a></li>
               </ul>
             </div>
 

@@ -83,8 +83,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
 
       {/* Sidebar */}
       <div className={`
-        fixed lg:static inset-y-0 right-0 z-50 w-64 bg-white transform transition-transform duration-300 ease-in-out
-        ${isMobileOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+        fixed lg:static inset-y-0 right-0 z-40 w-64  transform transition-transform duration-300 ease-in-out
+        ${isMobileOpen ? 'translate-x-0 bg-white ' : 'translate-x-full lg:translate-x-0 '}
         lg:w-64 -mt-32 p-4 flex flex-col gap-3 shadow-lg lg:shadow-none
       `}>
         {/* Mobile Close Button */}

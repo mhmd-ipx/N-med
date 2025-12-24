@@ -109,7 +109,7 @@ const Doctors: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-[1300px]">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
@@ -206,33 +206,29 @@ const Doctors: React.FC = () => {
                   <p className="text-gray-500">لطفاً فیلترها را تغییر دهید یا عبارت جستجو را اصلاح کنید</p>
                 </div>
               ) : (
-                <div className="gap-4 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
+                <div className="gap-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
                   {filteredDoctors.map((doctor) => (
-                    <div key={doctor.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 text-center border border-gray-100 hover:border-blue-200">
-                      <div className="relative mb-4">
-                        <img
-                          src={doctor.avatar || doctorPlaceholder}
-                          alt={doctor.user.name}
-                          className="w-24 h-24 mx-auto rounded-full object-cover border-4 border-blue-100"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = doctorPlaceholder;
-                          }}
-                        />
-                        {/* <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                          تایید شده
-                        </div>*/}
+                    <div key={doctor.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-4 border border-gray-100 hover:border-blue-200 flex items-center gap-4">
+                      <img
+                        src={doctor.avatar || doctorPlaceholder}
+                        alt={doctor.user.name}
+                        className="w-20 h-20 rounded-full object-cover border-4 border-blue-100 flex-shrink-0"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = doctorPlaceholder;
+                        }}
+                      />
+                      <div className="flex-1 text-right">
+                        <h3 className="text-lg font-bold text-gray-800 mb-1">{doctor.user.name}</h3>
+                        <p className="text-sm text-blue-600 font-medium mb-2">
+                          {getSpecialtyNames(doctor.specialties)}
+                        </p>
+                        <Link
+                          to={`/doctors/${doctor.id}`}
+                          className="inline-block w-full bg-primary rounded-full hover:bg-blue-700 text-white font-medium py-2 px-4 text-sm text-center transition-colors duration-200 shadow-md hover:shadow-lg"
+                        >
+                          مشاهده پروفایل
+                        </Link>
                       </div>
-                      <h3 className="text-xl font-bold text-gray-800 mb-2">{doctor.user.name}</h3>
-                      <p className="text-sm text-blue-600 font-medium mb-3">
-                        {getSpecialtyNames(doctor.specialties)}
-                      </p>
-     
-                      <Link
-                        to={`/doctors/${doctor.id}`}
-                        className="inline-block bg-primary hover:bg-blue-700 text-white font-medium   py-2 px-6 rounded-full transition-colors duration-200 shadow-md  hover:shadow-lg"
-                      >
-                        مشاهده پروفایل
-                      </Link>
                     </div>
                   ))}
                 </div>

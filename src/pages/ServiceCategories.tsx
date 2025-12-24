@@ -92,7 +92,7 @@ const ServiceCategories: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-[1300px]">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
@@ -189,7 +189,7 @@ const ServiceCategories: React.FC = () => {
                   <p className="text-gray-500">لطفاً فیلترها را تغییر دهید یا عبارت جستجو را اصلاح کنید</p>
                 </div>
               ) : (
-                <div className="gap-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="gap-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2">
                   {filteredServices.map((service) => {
                     const province = allProvinces.find((prov) => prov.id === service.clinic?.province_id);
 

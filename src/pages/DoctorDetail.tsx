@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { HiOutlineArrowLeft } from 'react-icons/hi2';
-import { getDoctorById } from '../services/publicApi';
-import type { Doctor, DoctorResponse } from '../services/publicApi';
+import { getDoctorById, getSpecialties, getDoctorReviews } from '../services/publicApi';
+import type { Doctor, DoctorResponse, Specialty, Review } from '../services/publicApi';
 import DoctorProfile from '../components/doctor/DoctorProfile';
 import ClinicServices from '../components/doctor/ClinicServices';
 import DoctorReviews from '../components/doctor/DoctorReviews';
@@ -11,6 +11,9 @@ import DoctorSidebar from '../components/doctor/DoctorSidebar';
 const DoctorDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [specialties, setSpecialties] = useState<Specialty[]>([]);
+  const [doctorStats, setDoctorStats] = useState<{ averageRating: number; reviewCount: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,16 +27,59 @@ const DoctorDetail = () => {
 
       try {
         setLoading(true);
-        // console.log('Fetching doctor with ID:', id);
         const doctorId = parseInt(id);
 
-        // Get individual doctor data
-        const response: DoctorResponse = await getDoctorById(doctorId);
-        // console.log('Doctor data received:', response);
+        // Fetch doctor data, specialties, and reviews in parallel
+        const [doctorResponse, specialtiesResponse, reviewsResponse] = await Promise.all([
+          getDoctorById(doctorId),
+          getSpecialties(),
+          getDoctorReviews(doctorId)
+        ]);
 
-        // The API returns { data: Doctor } structure
-        if (response && response.data) {
-          setDoctor(response.data);
+        if (doctorResponse && doctorResponse.data) {
+          let doctorData = doctorResponse.data;
+
+          // Map specialty IDs to titles
+          if (doctorData.specialties && specialtiesResponse) {
+            const specialtyTitles: string[] = [];
+
+            // Handle different formats of specialties (could be string, array of strings, or array of numbers)
+            let specialtyIds: number[] = [];
+            if (typeof doctorData.specialties === 'string') {
+              // If it's a comma-separated string, split it
+              const ids = doctorData.specialties.split(',').map((s: string) => s.trim());
+              specialtyIds = ids.map((id: string) => parseInt(id)).filter((id: number) => !isNaN(id));
+            } else if (Array.isArray(doctorData.specialties)) {
+              // If it's already an array
+              specialtyIds = (doctorData.specialties as any[]).map((id: any) => typeof id === 'string' ? parseInt(id) : id).filter((id: number) => !isNaN(id));
+            }
+
+            // Map IDs to titles
+            specialtyIds.forEach((id: number) => {
+              const specialty = specialtiesResponse.find((s: Specialty) => s.id === id);
+              if (specialty) {
+                specialtyTitles.push(specialty.title);
+              }
+            });
+
+            // Update doctor data with specialty titles as comma-separated string
+            doctorData = {
+              ...doctorData,
+              specialties: specialtyTitles.length > 0 ? specialtyTitles.join(', ') : null
+            };
+          }
+
+          // Calculate doctor stats from reviews
+          const reviewsData = reviewsResponse.data || [];
+          const reviewCount = reviewsData.length;
+          const averageRating = reviewCount > 0
+            ? reviewsData.reduce((sum, review) => sum + parseFloat(review.rating), 0) / reviewCount
+            : 0;
+
+          setDoctor(doctorData);
+          setReviews(reviewsData);
+          setSpecialties(specialtiesResponse);
+          setDoctorStats({ averageRating, reviewCount });
           setError(null);
         } else {
           throw new Error('پاسخ API نامعتبر است');
@@ -64,7 +110,7 @@ const DoctorDetail = () => {
   if (error || !doctor) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center ">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl text-red-600">⚠️</span>
           </div>
@@ -81,7 +127,7 @@ const DoctorDetail = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm">
+      <div className="bg-white shadow-sm ">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link
             to="/"
@@ -94,18 +140,11 @@ const DoctorDetail = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            <DoctorProfile doctor={doctor} />
-            <ClinicServices clinics={doctor.clinics} />
-            <DoctorReviews />
-          </div>
-
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <DoctorSidebar doctor={doctor} />
-          </div>
+        <div className="space-y-8">
+          <DoctorProfile doctor={doctor} stats={doctorStats} />
+          <ClinicServices clinics={doctor.clinics} />
+          <DoctorSidebar doctor={doctor} />
+          <DoctorReviews doctorId={doctor.id} />
         </div>
       </div>
     </div>

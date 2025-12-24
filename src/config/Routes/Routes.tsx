@@ -7,7 +7,6 @@ import DoctorLoginPage from '../../pages/DoctorLoginPage';
 import UserProfile from '../../pages/PatientPanel/Userprofile';
 import DoctorProfile from '../../pages/DoctorPanel/DoctorProfile';
 import Contact from '../../pages/Contact';
-import Magazine from '../../pages/Magazine';
 import Appointments from '../../pages/Appointments';
 import Categories from '../../pages/Categories';
 import ServiceDetail from '../../pages/ServiceDetail';
@@ -35,7 +34,6 @@ const AppRoutes = () => {
         <Route key="DoctorLogin" path="/doctor-login" element={<DoctorLoginPage />} />
         <Route key="DoctorProfile" path="/doctor-Profile" element={<DoctorProfile />} />
         <Route key="DoctorProfileSub" path="/doctor-Profile/:subPath" element={<DoctorProfile />} />
-        <Route key="magazine" path="/magazine" element={<Magazine />} />
         <Route key="appointments" path="/appointments" element={<Appointments />} />
         <Route key="categories" path="/categories" element={<Categories />} />
         <Route key="serviceCategories" path="/service-categories" element={<ServiceCategories />} />

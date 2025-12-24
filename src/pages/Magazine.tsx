@@ -1,6 +1,10 @@
 import { Helmet } from 'react-helmet-async';
+import { useEffect } from 'react';
 
 function Magazine() {
+  useEffect(() => {
+    window.location.href = 'https://blog.niloudarman.ir';
+  }, []);
   return (
     <div className='w-full justify-center items-center flex'>
       <Helmet>
@@ -55,7 +59,9 @@ function Magazine() {
                     غذاهایی که به سلامت قلب شما کمک می‌کنند و رژیم‌های پیشنهادی.
                   </p>
                   <a
-                    href='#'
+                    href='https://blog.niloudarman.ir/'
+                    target='_blank'
+                    rel='noopener noreferrer'
                     className='text-blue-600 hover:underline'
                   >
                     ادامه مطلب
@@ -75,7 +81,9 @@ function Magazine() {
                     تکنیک‌های ساده مدیتیشن برای آرامش ذهن و کاهش استرس.
                   </p>
                   <a
-                    href='#'
+                    href='https://blog.niloudarman.ir/'
+                    target='_blank'
+                    rel='noopener noreferrer'
                     className='text-blue-600 hover:underline'
                   >
                     ادامه مطلب

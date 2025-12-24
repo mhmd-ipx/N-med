@@ -10,7 +10,7 @@ function Contact() {
 
       {/* Hero Section */}
       <section className='bg-gradient-to-r from-blue-600 to-purple-700 py-16 md:py-24 text-white'>
-        <div className='container mx-auto px-4 text-center'>
+        <div className='container mx-auto px-4 text-center max-w-[1300px]'>
           <h1 className='text-3xl md:text-5xl font-bold mb-6 animate-fade-in'>تماس با ما</h1>
           <p className='text-lg md:text-xl max-w-3xl mx-auto leading-relaxed'>
             آماده‌ایم تا به سوالات شما پاسخ دهیم، نوبت رزرو کنیم یا خدمات پزشکی آنلاین ارائه دهیم.
@@ -21,7 +21,7 @@ function Contact() {
 
       {/* Contact Form and Info Section */}
       <section className='py-16 md:py-24 bg-gray-50'>
-        <div className='container mx-auto px-4'>
+        <div className='container mx-auto px-4 max-w-[1300px]'>
           <div className='grid grid-cols-1 lg:grid-cols-2 gap-12'>
             {/* Contact Form */}
             <div className='bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300'>
@@ -156,7 +156,7 @@ function Contact() {
 
       {/* Social Media Section */}
       <section className='py-16 bg-white'>
-        <div className='container mx-auto px-4 text-center'>
+        <div className='container mx-auto px-4 text-center max-w-[1300px]'>
           <h2 className='text-2xl md:text-3xl font-semibold mb-8 text-gray-800'>ما را در شبکه‌های اجتماعی دنبال کنید</h2>
           <div className='flex justify-center space-x-6 rtl:space-x-reverse'>
             <a href='#' className='w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition duration-300'>
@@ -180,7 +180,7 @@ function Contact() {
 
       {/* Map Section */}
       <section className='py-16 md:py-24 bg-gray-50'>
-        <div className='container mx-auto px-4'>
+        <div className='container mx-auto px-4 max-w-[1300px]'>
           <h2 className='text-2xl md:text-3xl font-semibold mb-8 text-center text-gray-800'>موقعیت ما روی نقشه</h2>
           <div className='w-full h-96 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center shadow-lg'>
             <div className='text-center'>

@@ -634,7 +634,7 @@ const handleDateSelect = async (date: any) => {
                     </div>
                     <button
                       type="submit"
-                      className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 px-4 sm:px-6 py-3 sm:py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg text-sm sm:text-base"
+                      className="w-full bg-gradient-to-r from-green-500 rounded-full to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 px-4 sm:px-6 py-3 sm:py-4 font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg text-sm sm:text-base"
                     >
                       <div className="flex items-center justify-center gap-2">
                         <HiOutlineCheckCircle className="text-base sm:text-lg" />

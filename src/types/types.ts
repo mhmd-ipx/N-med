@@ -105,6 +105,8 @@ export interface User {
   is_active: number;
   created_at: string;
   updated_at: string;
+  card_number: string | null;
+  sheba_number: string | null;
   related_data: any | null;
 }
 
@@ -468,6 +470,8 @@ export interface DoctorProfileUpdateRequest {
   bio: string;
   avatar: string;
   code: string;
+  card_number: string;
+  sheba_number: string;
 }
 
 // تایپ برای پاسخ ویرایش پروفایل دکتر
@@ -492,6 +496,8 @@ export interface DoctorProfileUpdateResponse {
       is_active: number;
       created_at: string;
       updated_at: string;
+      card_number: string | null;
+      sheba_number: string | null;
       related_data: any | null;
     };
   };
@@ -507,6 +513,8 @@ export interface PatientProfileUpdateRequest {
   gender: string;
   national_code: string;
   birth_year: number;
+  card_number: string;
+  sheba_number: string;
 }
 
 // تایپ برای پاسخ ویرایش پروفایل بیمار
@@ -528,6 +536,8 @@ export interface PatientProfileUpdateResponse {
       is_active: number;
       created_at: string;
       updated_at: string;
+      card_number: string | null;
+      sheba_number: string | null;
       related_data: any | null;
     };
   };

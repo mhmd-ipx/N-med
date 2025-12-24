@@ -34,9 +34,15 @@ const Menu = ({ onItemClick }: MenuProps) => {
         </NavLink>
       </li>
       <li>
-        <NavLink to="/magazine" className={({ isActive }) => getLinkClass(isActive)} onClick={handleLinkClick}>
+        <a
+          href="https://blog.niloudarman.ir"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="transition-colors px-2 text-white p-2 text-sm rounded-md text-black hover:text-primary-light hover:bg-primary-light"
+          onClick={handleLinkClick}
+        >
           مجله سلامتی نوتاش
-        </NavLink>
+        </a>
       </li>
       <li>
         <NavLink to="/about" className={({ isActive }) => getLinkClass(isActive)} onClick={handleLinkClick}>

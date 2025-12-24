@@ -12,7 +12,7 @@ const ServicesSection = () => {
                     />
                     <div className='flex flex-col text-white gap-4 text-center lg:text-right order-1 lg:order-2'>
                         <h2 className="font-bold text-xl md:text-2xl"> خدمات پزشکان </h2>
-                        <p className="text-sm md:text-base leading-relaxed max-w-2xl">
+                        <p className="text-sm md:text-base leading-relaxed">
                         لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از صنعت چاپ و با استفاده از طراحان گرافیک است. چاپگرها و متون بلکه روزنامه و مجله در ستون و سطرآنچنان که لازم است و برای شرایط فعلی تکنولوژی مورد نیاز و کاربردهای متنوع با هدف بهبود ابزارهای کاربردی می باشد. کتابهای زیادی در شصت و سه درصد گذشته حال و آینده، شناخت فراوان جامعه و متخصصان را می طلبد.
                         </p>
                     </div>

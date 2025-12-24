@@ -1153,4 +1153,35 @@ export const updatePatientProfile = async (profileData: PatientProfileUpdateRequ
   }
 };
 
+// Post doctor review
+export const postDoctorReview = async (doctorId: number, reviewData: { review_text: string; rating: number }): Promise<any> => {
+  try {
+    const response = await api.post(`/api/doctors/${doctorId}/reviews`, reviewData);
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در ارسال نظر');
+  }
+};
+
 export default api;

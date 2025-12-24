@@ -102,6 +102,53 @@ export interface Specialty {
   updated_at: string;
 }
 
+export interface ReviewUser {
+  id: number;
+  name: string;
+  phone: string;
+  role: string | null;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+  is_admin: number;
+  email: string | null;
+  card_number: string | null;
+  sheba_number: string | null;
+  related_data: any;
+}
+
+export interface Review {
+  id: number;
+  user_id: number;
+  doctor_id: number;
+  review_text: string;
+  rating: string;
+  created_at: string;
+  updated_at: string;
+  confirmed: number;
+  user: ReviewUser;
+}
+
+export interface ReviewsResponse {
+  current_page: number;
+  data: Review[];
+  first_page_url: string;
+  from: number;
+  last_page: number;
+  last_page_url: string;
+  links: Array<{
+    url: string | null;
+    label: string;
+    active: boolean;
+  }>;
+  next_page_url: string | null;
+  path: string;
+  per_page: number;
+  prev_page_url: string | null;
+  to: number;
+  total: number;
+}
+
 // ایجاد نمونه axios با تنظیمات پایه بدون توکن
 const publicApi = axios.create({
   baseURL: 'https://api.niloudarman.ir',
@@ -195,6 +242,33 @@ export const getDoctorById = async (id: number): Promise<DoctorResponse> => {
       }
     }
     throw new Error('خطای ناشناخته در دریافت اطلاعات پزشک');
+  }
+};
+
+// دریافت نظرات یک پزشک
+export const getDoctorReviews = async (doctorId: number): Promise<ReviewsResponse> => {
+  try {
+    const response = await publicApi.get<ReviewsResponse>(`/api/doctors/${doctorId}/reviews`);
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 404:
+            throw new Error('نظرات یافت نشد');
+          case 400:
+            throw new Error('درخواست نامعتبر است');
+          case 500:
+            throw new Error('خطای سرور');
+          default:
+            throw new Error(`خطای ناشناخته: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در دریافت نظرات');
   }
 };
 
