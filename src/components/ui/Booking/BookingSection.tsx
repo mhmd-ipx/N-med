@@ -191,16 +191,27 @@ const BookingSection = ({ doctorId, serviceId, service }: BookingSectionProps) =
       try {
         const finalDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
-        // console.log("Sending request to getAvailableTimes with:", {
-        //   user_id: doctorId,
-        //   service_id: serviceId,
-        //   date: finalDate,
-        // });
+        /*console.log("📤 Sending API request to getAvailableTimes with body:", {
+          user_id: doctorId,
+          service_id: serviceId,
+          date: finalDate,
+        });*/
 
         const response = await getAvailableTimes(doctorId, serviceId, finalDate);
-        // console.log("getAvailableTimes response:", response);
+        /*console.log("Doctor ID:", doctorId);
+        console.log("📥 Full getAvailableTimes response:", response);
+        console.log("Response data:", response.data);*/
 
-        if (response.data.length === 0) {
+        let hasValidData = response.data.length > 0;
+        if (hasValidData) {
+          const responseDate = response.data[0].start_time.split(' ')[0];
+          //console.log("responseDate:", responseDate, "finalDate:", finalDate);
+          if (responseDate !== finalDate) {
+            hasValidData = false;
+          }
+        }
+
+        if (!hasValidData) {
           setBookingStatus("برای این تاریخ نوبتی موجود نیست");
           setAvailableTimes([]);
           setLoadingTimes(false);
@@ -213,7 +224,9 @@ const BookingSection = ({ doctorId, serviceId, service }: BookingSectionProps) =
         }
       } catch (error: any) {
         console.error("Error in handleDaySelect:", error.message, error);
-        setBookingStatus(`خطا در دریافت نوبت‌های موجود: ${error.message}`);
+        const errorMessage = error.message === 'نوبتی موجود نیست' ? 'نوبتی نیست برای این تاریخ' : `خطا در دریافت نوبت‌های موجود: ${error.message}`;
+        setBookingStatus(errorMessage);
+        setAvailableTimes([]);
         setTimeout(() => setBookingStatus(null), 3000);
         setLoadingTimes(false);
       }
@@ -274,19 +287,26 @@ const handleDateSelect = async (date: any) => {
          throw new Error("Invalid date format");
        }
 
-       // console.log("Converted date:", finalDate);
-
-      // ارسال درخواست با تاریخ جدید
-      // console.log("Sending request to getAvailableTimes with:", {
-      //   user_id: doctorId,
-      //   service_id: serviceId,
-      //   date: finalDate,
-      // });
-
+       /*console.log("📤 Sending API request to getAvailableTimes with body:", {
+         user_id: doctorId,
+         service_id: serviceId,
+         date: finalDate,
+       });
+*/
       const response = await getAvailableTimes(doctorId, serviceId, finalDate);
-      // console.log("getAvailableTimes response:", response);
+      //console.log("📥 Full getAvailableTimes response:", response);
+      //console.log("Response data:", response.data);
 
-      if (response.data.length === 0) {
+      let hasValidData = response.data.length > 0;
+      if (hasValidData) {
+        const responseDate = response.data[0].start_time.split(' ')[0];
+        //console.log("responseDate:", responseDate, "finalDate:", finalDate);
+        if (responseDate !== finalDate) {
+          hasValidData = false;
+        }
+      }
+
+      if (!hasValidData) {
         setBookingStatus("برای این تاریخ نوبتی موجود نیست");
         setAvailableTimes([]);
         setLoadingTimes(false);
@@ -302,7 +322,9 @@ const handleDateSelect = async (date: any) => {
       }
     } catch (error: any) {
       console.error("Error in handleDateSelect:", error.message, error);
-      setBookingStatus(`خطا در دریافت نوبت‌های موجود: ${error.message}`);
+      const errorMessage = error.message === 'نوبتی موجود نیست' ? 'نوبتی نیست برای این تاریخ' : `خطا در دریافت نوبت‌های موجود: ${error.message}`;
+      setBookingStatus(errorMessage);
+      setAvailableTimes([]);
       setTimeout(() => setBookingStatus(null), 3000);
       setLoadingTimes(false);
     }

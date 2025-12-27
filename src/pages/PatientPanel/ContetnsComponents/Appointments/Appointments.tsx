@@ -86,6 +86,7 @@ const Appointments: React.FC = () => {
         const apiAppointments = await getPatientAppointments();
         const transformedAppointments = apiAppointments.map(transformApiAppointmentToPatientAppointment);
         setAppointments(transformedAppointments);
+        console.log(apiAppointments);
       } catch (err) {
         console.error('Error fetching appointments:', err);
         setError(err instanceof Error ? err.message : 'خطا در بارگذاری نوبت‌ها');
@@ -96,7 +97,6 @@ const Appointments: React.FC = () => {
 
     fetchAppointments();
   }, []);
-
   // فیلتر کردن نوبت‌ها بر اساس وضعیت
   const filteredAppointments = appointments.filter(appointment => {
     if (filterStatus === 'all') return true;

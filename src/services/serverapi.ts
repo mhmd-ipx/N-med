@@ -696,6 +696,43 @@ export const getServices = async (): Promise<ServicesResponse> => {
   }
 };
 
+// تابع برای دریافت لیست سرویس‌های یک پزشک
+export const getDoctorServices = async (doctorId: number): Promise<ServicesResponse> => {
+  try {
+    const response = await api.get<ServicesResponse>(`/api/doctors/${doctorId}/services`);
+    if (!response.data || !response.data.data) {
+      throw new Error('پاسخ API داده‌ی معتبر ندارد');
+    }
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      if ('response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response) {
+          switch (axiosError.response.status) {
+            case 400:
+              throw new Error('درخواست نامعتبر است (400)');
+            case 401:
+              throw new Error('عدم احراز هویت (401)');
+            case 403:
+              throw new Error('دسترسی غیرمجاز (403)');
+            case 404:
+              throw new Error('سرویس‌ها یافت نشدند (404)');
+            case 500:
+              throw new Error('خطای سرور (500)');
+            default:
+              throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+          }
+        } else if (axiosError.request) {
+          throw new Error('هیچ پاسخی از سرور دریافت نشد');
+        }
+      }
+      throw new Error('خطا در دریافت لیست سرویس‌های پزشک: ' + error.message);
+    }
+    throw new Error('خطای ناشناخته در دریافت لیست سرویس‌های پزشک');
+  }
+};
+
 // Upload file
 export const uploadFile = async (file: File): Promise<FileUploadResponse> => {
   try {

@@ -64,14 +64,17 @@ api.interceptors.request.use(
 
 // Get available time slots
 export const getAvailableTimes = async (userId: number, serviceId: number, date: string): Promise<AvailableTimesResponse> => {
+  //console.log('getAvailableTimes Input:', { userId, serviceId, date });
   try {
     const response = await api.post<AvailableTimesResponse>('/api/panel/schedules/by-user', {
       user_id: userId,
       service_id: serviceId,
       date,
     });
+    //console.log('getAvailableTimes Output:', response.data);
     return response.data;
   } catch (error) {
+    //console.log('getAvailableTimes Error:', error);
     if (error instanceof Error && 'response' in error) {
       const axiosError = error as any;
       if (axiosError.response) {
@@ -82,6 +85,8 @@ export const getAvailableTimes = async (userId: number, serviceId: number, date:
             throw new Error('عدم احراز هویت (401)');
           case 403:
             throw new Error('دسترسی غیرمجاز (403)');
+          case 404:
+            throw new Error('نوبتی موجود نیست');
           case 422:
             throw new Error('داده‌های ورودی نامعتبر هستند (422)');
           case 500:

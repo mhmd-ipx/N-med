@@ -57,6 +57,7 @@ interface DoctorUser {
 export interface Doctor {
   id: number;
   user: DoctorUser;
+  name: string | null;
   specialties: string | null;
   address: string | null;
   bio: string | null;

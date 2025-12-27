@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getServices, deleteService } from '../../../../../services/serverapi.ts';
+import { getServices, deleteService, getDoctorServices } from '../../../../../services/serverapi.ts';
 import type { ProfileInfoProps, Service, ServicesResponse, ServiceDeleteResponse, CreateServiceResponse } from '../../../../../types/types.ts';
 import {
   HiOutlinePencilSquare,
@@ -29,12 +29,12 @@ const Services: React.FC<ProfileInfoProps> = ({ user, token }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
 
-  const CACHE_KEY = 'cached_services';
+  const CACHE_KEY = `cached_services_${user.id}`;
 
   const fetchAndCacheServices = async () => {
     try {
       setLoading(true);
-      const response: ServicesResponse = await getServices();
+      const response: ServicesResponse = await getDoctorServices(user.id!);
       setServices(response.data);
       localStorage.setItem(CACHE_KEY, JSON.stringify(response.data));
       setLoading(false);
@@ -77,7 +77,7 @@ const Services: React.FC<ProfileInfoProps> = ({ user, token }) => {
       const response: ServiceDeleteResponse = await deleteService(service.id);
       setSuccessMessage(response.message);
       localStorage.removeItem(CACHE_KEY);
-      const updatedServicesResponse = await getServices();
+      const updatedServicesResponse = await getDoctorServices(user.id!);
       setServices(updatedServicesResponse.data);
       localStorage.setItem(CACHE_KEY, JSON.stringify(updatedServicesResponse.data));
     } catch (err) {

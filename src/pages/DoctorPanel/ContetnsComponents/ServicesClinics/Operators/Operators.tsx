@@ -387,6 +387,7 @@ const Operators = ({ token }: ProfileInfoProps) => {
                                   })}
                                 </tbody>
                               </table>
+                              {/* Edit Schedule Button 
                               <div className="mt-2 flex justify-center">
                                 <button
                                   className="text-primary flex gap-1 p-2 text-xs w-full justify-center items-center bg-light rounded-md"
@@ -396,6 +397,7 @@ const Operators = ({ token }: ProfileInfoProps) => {
                                   ویرایش زمان‌بندی
                                 </button>
                               </div>
+                              */}
                             </div>
                           </div>
                         </div>

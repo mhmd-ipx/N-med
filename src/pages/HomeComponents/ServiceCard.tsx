@@ -158,8 +158,8 @@ const SingleServiceCard = ({ service, doctor, province }: SingleServiceCardProps
   }
 
   // استفاده از نام واقعی اگر موجود باشد، در غیر این صورت استفاده از ID
-  const doctorName = finalDoctorData.user?.name ? `دکتر ${finalDoctorData.user.name}` : `دکتر ${finalDoctorData.id}`;
-
+  const doctorName = 'name' in finalDoctorData && finalDoctorData.name ? `دکتر ${finalDoctorData.name}` : finalDoctorData.user?.name ? `دکتر ${finalDoctorData.user.name}` : `دکتر ${finalDoctorData.id}`;
+console.log (finalDoctorData);
   // از "Nullish Coalescing" (|| 0) استفاده می‌کنیم تا مطمئن شویم
   // اگر service.discount_price وجود نداشت، به جای آن از صفر استفاده شود.
   const discountAmount = service.price - (service.discount_price || 0);
