@@ -131,7 +131,7 @@ const SearchInput = () => {
 
     return "بدون تخصص";
   };
-
+//console.log (specialties);
   return (
     <div className="relative w-full mx-auto">
       <div className="relative w-full sm:w-[80%] mx-auto px-4 sm:px-0">
@@ -279,10 +279,15 @@ const SearchInput = () => {
               className="flex flex-col items-center gap-4 justify-center p-3 bg-white border border-gray-200 rounded-2xl hover:shadow-md transition-shadow"
             >
               <img
-                src={spec.thumbnail || defaultSpecialtyImage}
+                src={
+                  spec.thumbnail
+                    ? `https://api.niloudarman.ir/storage/${spec.thumbnail}`
+                    : defaultSpecialtyImage
+                }
                 alt={spec.title}
                 className="w-8 h-8 ml-2"
               />
+
               <span className="text-sm font-medium text-primary">
                 {spec.title}
               </span>
