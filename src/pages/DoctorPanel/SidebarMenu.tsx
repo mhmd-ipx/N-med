@@ -48,7 +48,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
 
   // Get user profile image or fallback to default
   const profileImage = (user as any)?.related_data?.avatar || Userimage;
-
+  //console.log(user);
   const handleItemClick = (itemId: string) => {
     if (itemId === 'Log-out') {
       // نمایش پاپ‌آپ تأیید برای لاگ‌اوت

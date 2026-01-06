@@ -103,6 +103,7 @@ export type PatientRelatedData = {
   medical_history: string | null;
   insurance_info: string | null;
   attachments: string[];
+  avatar?: string;
   created_at: string;
   updated_at: string;
 };
@@ -534,7 +535,8 @@ export interface PatientProfileUpdateRequest {
   phone: string;
   gender: string;
   national_code: string;
-  birth_year: number;
+  birth_year: number | null;
+  avatar: string;
   card_number: string;
   sheba_number: string;
 }
@@ -546,8 +548,9 @@ export interface PatientProfileUpdateResponse {
     id: number;
     user_id: number;
     national_code: string;
-    birth_year: number;
+    birth_year: number | null;
     gender: string;
+    avatar: string;
     created_at: string;
     updated_at: string;
     user: {

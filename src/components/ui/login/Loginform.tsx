@@ -153,7 +153,7 @@ const LoginForm = ({ role, redirectPath }: LoginFormProps) => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative ">
       {isLoading && <Loading />}
       {!isOtpSent ? (
         <PhoneInputForm

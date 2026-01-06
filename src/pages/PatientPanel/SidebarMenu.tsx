@@ -34,6 +34,7 @@ interface SidebarMenuProps {
 }
 
 const SidebarMenu: React.FC<SidebarMenuProps> = ({
+  user,
   activeItem,
   setActiveItem,
   isMobileOpen = false,
@@ -42,6 +43,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
 
+  const profileImage = (user as any)?.related_data?.avatar || Userimage;
+console.log(user);
   const handleItemClick = (itemId: string) => {
     if (itemId === 'Log-out') {
       // نمایش پاپ‌آپ تأیید برای لاگ‌اوت
@@ -97,7 +100,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
 
         <div className="relative aspect-square">
           <img
-            src={Userimage}
+            src={profileImage}
             alt="پروفایل کاربر"
             className="absolute inset-0 w-full h-full object-contain rounded-2xl"
           />

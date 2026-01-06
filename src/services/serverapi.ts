@@ -1163,10 +1163,12 @@ export const updateDoctorProfile = async (profileData: DoctorProfileUpdateReques
 export const updatePatientProfile = async (profileData: PatientProfileUpdateRequest): Promise<PatientProfileUpdateResponse> => {
   try {
     const response = await api.put<PatientProfileUpdateResponse>('/api/patient/profile', profileData);
+    console.log(profileData);
     return response.data;
   } catch (error) {
     if (error instanceof Error && 'response' in error) {
       const axiosError = error as any;
+      console.log (error);
       if (axiosError.response) {
         switch (axiosError.response.status) {
           case 400:
@@ -1176,7 +1178,7 @@ export const updatePatientProfile = async (profileData: PatientProfileUpdateRequ
           case 403:
             throw new Error('دسترسی غیرمجاز (403)');
           case 422:
-            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+            throw new Error(axiosError.response.data?.message || 'داده‌های ورودی نامعتبر هستند (422)');
           case 500:
             throw new Error('خطای سرور (500)');
           default:

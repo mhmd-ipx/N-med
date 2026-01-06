@@ -1,15 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
-import { HiOutlineBars3, HiOutlineXMark, HiOutlinePhone, HiOutlineGlobeAlt, HiOutlineChatBubbleLeftRight } from 'react-icons/hi2';
+import { HiOutlineBars3, HiOutlineXMark, HiOutlinePhone, HiOutlineGlobeAlt, HiOutlineChatBubbleLeftRight, HiOutlineUserCircle } from 'react-icons/hi2';
 import { FaInstagram, FaWhatsapp } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 import Menu from '../../ui/Menu';
 import Headerbuttons from './buttons';
 import HeaderLogo from './HeaderLogo';
+import Button from '../../ui/Button';
+import { useUser } from '../../ui/login/UserLoginProvider';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement | null>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
+  const { user } = useUser();
 
   useEffect(() => {
     // محاسبه ارتفاع هدر هنگام لود و تغییر اندازه پنجره
@@ -81,7 +85,30 @@ const Header = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="lg:hidden">
+          <div className="lg:hidden flex items-center gap-2">
+            {user ? (
+              <Link to={user.role === 'doctor' ? '/doctor-Profile' : user.role === 'patient' ? '/UserProfile' : '/UserProfile'}>
+                <Button
+                  variant="solid"
+                  icon={<HiOutlineUserCircle className="text-2xl" />}
+                  iconAlignment="start"
+                  size="sm"
+                >
+                  {user.name || 'پنل کاربری'}
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/UserProfile">
+                <Button
+                  variant="solid"
+                  icon={<HiOutlineUserCircle className="text-2xl" />}
+                  iconAlignment="start"
+                  size="sm"
+                >
+                  ورود کاربران
+                </Button>
+              </Link>
+            )}
             <button
               onClick={toggleMobileMenu}
               className="p-2 text-white hover:text-primary-light transition-colors"

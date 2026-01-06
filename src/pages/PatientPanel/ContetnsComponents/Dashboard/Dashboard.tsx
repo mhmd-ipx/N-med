@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
+import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FaUser, FaCalendarCheck, FaFileMedical, FaHeart, FaSyncAlt } from 'react-icons/fa';
+import { useUser } from '../../../../components/ui/login/UserDataProvider';
+import Userimage from '../../../../assets/images/userimg.png';
 
 // تعریف نوع برای دیتای داشبورد بیمار
 interface PatientDashboardData {
   appointments_count: number;
   medical_records_count: number;
   referrals_count: number;
-  favorites_count: number;
 }
 
 // تعریف نوع برای دیتای کاربر از authData
@@ -34,75 +37,54 @@ const mockPatientDashboardData: PatientDashboardData = {
   appointments_count: 5,
   medical_records_count: 12,
   referrals_count: 3,
-  favorites_count: 8,
 };
 
-// داده‌های تستی برای نوبت‌های آینده
-const mockUpcomingAppointments = [
-  {
-    id: 1,
-    doctorName: 'دکتر علی رضایی',
-    specialty: 'قلب و عروق',
-    date: '۱۴۰۳/۰۶/۱۵',
-    time: '۱۴:۳۰',
-    clinic: 'کلینیک قلب تهران',
-    status: 'تایید شده'
-  },
-  {
-    id: 2,
-    doctorName: 'دکتر مریم احمدی',
-    specialty: 'داخلی',
-    date: '۱۴۰۳/۰۶/۱۸',
-    time: '۱۰:۰۰',
-    clinic: 'بیمارستان روزبه',
-    status: 'در انتظار'
-  },
-  {
-    id: 3,
-    doctorName: 'دکتر رضا کرمی',
-    specialty: 'ارتوپدی',
-    date: '۱۴۰۳/۰۶/۲۰',
-    time: '۱۶:۰۰',
-    clinic: 'کلینیک ارتوپدی اصفهان',
-    status: 'تایید شده'
-  }
-];
-
-// داده‌های تستی برای پزشکان مورد علاقه
-const mockFavoriteDoctors = [
-  { id: 1, name: 'دکتر علی رضایی', specialty: 'قلب و عروق' },
-  { id: 2, name: 'دکتر مریم احمدی', specialty: 'داخلی' },
-  { id: 3, name: 'دکتر رضا کرمی', specialty: 'ارتوپدی' },
-  { id: 4, name: 'دکتر سارا حسینی', specialty: 'زنان و زایمان' },
-];
+// تعریف نوع برای نوبت‌ها
+interface Appointment {
+  id: number;
+  doctorName: string;
+  specialty: string;
+  date: string;
+  time: string;
+  clinic: string;
+  status: string;
+}
 
 const Dashboard: React.FC = () => {
+  const { user, isLoading } = useUser();
   const [dashboardData, setDashboardData] = useState<PatientDashboardData>(mockPatientDashboardData);
-  const [authData, setAuthData] = useState<AuthData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [upcomingAppointments, setUpcomingAppointments] = useState<Appointment[]>([]);
 
   // لود اولیه دیتا
   useEffect(() => {
-    const loadData = () => {
-      try {
-        setLoading(true);
-        // دریافت اطلاعات کاربر از localStorage
-        const storedAuthData = localStorage.getItem("authData");
-        if (storedAuthData) {
-          const parsedAuthData = JSON.parse(storedAuthData);
-          setAuthData(parsedAuthData);
-        }
+    const loadData = async () => {
+      // در واقعیت اینجا از API دریافت می‌کنیم
+      setDashboardData(mockPatientDashboardData);
 
-        // در واقعیت اینجا از API دریافت می‌کنیم
-        setDashboardData(mockPatientDashboardData);
-      } catch (err) {
-        console.error("خطا در لود اطلاعات داشبورد:", err);
-      } finally {
-        setLoading(false);
+      // دریافت نوبت‌های آینده
+      if (user) {
+        try {
+          const response = await fetch('/api/patient/appointments', {
+            headers: {
+              'Authorization': `Bearer ${(user as any).token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (response.ok) {
+            const appointments = await response.json();
+            setUpcomingAppointments(appointments);
+          } else {
+            console.error('Failed to fetch appointments');
+          }
+        } catch (error) {
+          console.error('Error fetching appointments:', error);
+        }
       }
     };
-    loadData();
-  }, []);
+    if (!isLoading) {
+      loadData();
+    }
+  }, [user, isLoading]);
 
   // هندلر دکمه بروزرسانی
   const handleRefresh = () => {
@@ -110,9 +92,11 @@ const Dashboard: React.FC = () => {
     // console.log("بروزرسانی داشبورد...");
   };
 
-  if (loading) {
+  if (isLoading) {
     return <div className="text-center py-10">در حال بارگذاری...</div>;
   }
+
+  const profileImage = user?.related_data?.avatar || Userimage;
 
   return (
     <div className="px-4 min-h-screen" dir="rtl">
@@ -120,10 +104,10 @@ const Dashboard: React.FC = () => {
       <div className="mb-6 border border-gray-200 p-4 rounded-xl bg-primary flex items-center justify-between text-right transition-colors">
         <div>
           <h3 className="font-semibold mb-3 text-gray-700 flex items-center text-white">
-            <FaUser className="text-primary bg-white p-2 rounded-3xl text-4xl ml-3" />
-            {authData?.user.name || "بیمار گرامی"}
+            <img src={profileImage} alt="پروفایل کاربر" className="w-12 h-12 rounded-3xl ml-3 object-contain bg-white p-1" />
+            {user?.name || "بیمار گرامی"}
           </h3>
-          <p className="text-white">شماره موبایل: {authData?.user.phone || "نامشخص"}</p>
+          <p className="text-white">شماره موبایل: {user?.phone || "نامشخص"}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -141,17 +125,9 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* چهار باکس چارتی */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-        <a href="/UserProfile/Appointments" className="block">
-          <div className="border border-gray-200 p-4 rounded-xl bg-white flex items-center text-right hover:bg-gray-50 transition-colors">
-            <FaCalendarCheck className="text-3xl text-primary ml-3" />
-            <div>
-              <h3 className="font-semibold text-gray-700">نوبت‌های فعال</h3>
-              <p className="text-2xl font-bold text-gray-800">{dashboardData.appointments_count}</p>
-            </div>
-          </div>
-        </a>
-        <a href="/UserProfile/Appointments" className="block">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mb-4">
+
+        <Link to="/UserProfile/Appointments" className="block">
           <div className="border border-gray-200 p-4 rounded-xl bg-white flex items-center text-right hover:bg-gray-50 transition-colors">
             <FaFileMedical className="text-3xl text-primary ml-3" />
             <div>
@@ -159,37 +135,31 @@ const Dashboard: React.FC = () => {
               <p className="text-2xl font-bold text-gray-800">{dashboardData.medical_records_count}</p>
             </div>
           </div>
-        </a>
-        <a href="/UserProfile/References" className="block">
-          <div className="border border-gray-200 p-4 rounded-xl bg-white flex items-center text-right hover:bg-gray-50 transition-colors">
-            <FaHeart className="text-3xl text-primary ml-3" />
-            <div>
-              <h3 className="font-semibold text-gray-700">پزشکان مورد علاقه</h3>
-              <p className="text-2xl font-bold text-gray-800">{dashboardData.favorites_count}</p>
-            </div>
-          </div>
-        </a>
-        <a href="/UserProfile/References" className="block">
-          <div className="border border-gray-200 p-4 rounded-xl bg-white flex items-center text-right hover:bg-gray-50 transition-colors">
+        </Link>
+        <a href="/UserProfile/Support" >
+        <div className="border border-gray-200 p-4 rounded-xl bg-white flex items-center text-right hover:bg-gray-50 transition-colors">
             <FaUser className="text-3xl text-primary ml-3" />
             <div>
               <h3 className="font-semibold text-gray-700">ارجاعات دریافتی</h3>
               <p className="text-2xl font-bold text-gray-800">{dashboardData.referrals_count}</p>
             </div>
           </div>
+
         </a>
+        
+          
       </div>
 
-      {/* دیو دو ستونه برای نوبت‌ها و پزشکان مورد علاقه */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <a href="/UserProfile/Appointments" className="block">
-          <div className="border p-4 rounded-xl bg-white hover:bg-gray-50">
+      {/* دیو برای نوبت‌ها */}
+      <div className="mb-4">
+        <a href="/UserProfile/Turns" >
+        <div className="border p-4 rounded-xl bg-white hover:bg-gray-50">
             <h3 className="font-semibold mb-3 text-gray-700 flex items-center gap-2 text-lg">
               <FaCalendarCheck className="text-2xl text-primary ml-3" />
               نوبت‌های آینده
             </h3>
             <div className="space-y-3">
-              {mockUpcomingAppointments.map((appointment) => (
+              {upcomingAppointments.map((appointment: Appointment) => (
                 <div key={appointment.id} className="bg-gray-50 p-3 rounded-lg">
                   <div className="flex justify-between items-start">
                     <div>
@@ -214,51 +184,9 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </a>
-
-        <a href="/UserProfile/References" className="block">
-          <div className="border p-4 rounded-xl bg-white hover:bg-gray-50">
-            <h3 className="font-semibold mb-3 text-gray-700 flex items-center gap-2 text-lg">
-              <FaHeart className="text-2xl text-primary ml-3" />
-              پزشکان مورد علاقه
-            </h3>
-            <div className="space-y-3">
-              {mockFavoriteDoctors.map((doctor) => (
-                <div key={doctor.id} className="bg-gray-50 p-3 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium text-gray-800">{doctor.name}</p>
-                      <p className="text-sm text-gray-600">{doctor.specialty}</p>
-                    </div>
-                    <FaHeart className="text-red-500" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </a>
+      
       </div>
 
-      {/* بخش اطلاعات سلامت */}
-      <div className="border p-4 rounded-xl bg-white">
-        <h3 className="font-semibold mb-3 text-gray-700 flex items-center gap-2 text-lg">
-          <FaFileMedical className="text-2xl text-primary ml-3" />
-          اطلاعات سلامت شما
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-medium text-blue-800 mb-2">گروه خونی</h4>
-            <p className="text-blue-600">O+</p>
-          </div>
-          <div className="bg-green-50 p-4 rounded-lg">
-            <h4 className="font-medium text-green-800 mb-2">آلرژی‌ها</h4>
-            <p className="text-green-600">ندارد</p>
-          </div>
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <h4 className="font-medium text-purple-800 mb-2">بیماری‌های زمینه‌ای</h4>
-            <p className="text-purple-600">فشار خون بالا</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

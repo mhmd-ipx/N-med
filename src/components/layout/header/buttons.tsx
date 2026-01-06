@@ -45,17 +45,6 @@ const Headerbuttons = () => {
                 ورود کاربران
             </Button>
         </Link>
-        <Link to={`/doctor-Profile`}>
-            <Button
-                variant="outline"
-
-                iconAlignment="start"
-                className=""
-                size='sm'
-            >
-                پرتال پزشکان
-            </Button>
-        </Link>
         </div>
     );
 }

@@ -1,6 +1,8 @@
 import { Helmet } from 'react-helmet-async';
+import { Link } from 'react-router-dom';
 import Loginimage from '../assets/images/n-med-logo1.png';
 import LoginForm from '../components/ui/login/Loginform';
+import Button from '../components/ui/Button';
 
 function PatientLoginPage() {
   return (
@@ -8,19 +10,39 @@ function PatientLoginPage() {
       <Helmet>
         <title>ورود کاربران</title>
       </Helmet>
+
       <div className='w-full flex flex-col max-w-[1300px] mx-auto px-4 md:px-0'>
-        <div className='flex bg-white rounded-2xl   md:rounded-3xl w-full h-auto items-center justify-center p-6 md:p-10 md:flex-row flex-col gap-8 md:gap-0'>
-          <img
-            src={Loginimage}
-            alt="نوتاش - ورود کاربران"
-            className="md:h-[350px] h-[120px] md:h-[200px] lg:h-[350px] w-auto max-w-full"
-          />
-          <div className='flex flex-col gap-6 md:gap-10 justify-center items-center w-full md:w-auto'>
-            <h1 className='text-xl md:text-2xl font-semibold text-center'>
+        {/* دیو سفید - کاملاً مرکز شده در همه دستگاه‌ها */}
+        <div className='flex flex-col md:flex-row bg-white rounded-2xl md:rounded-3xl w-full h-auto shadow-lg p-6 md:p-10 gap-8 md:gap-12 items-center justify-center'>
+          
+          {/* تصویر - همیشه در مرکز */}
+          <div className='flex justify-center items-center w-full md:w-auto'>
+            <img
+              src={Loginimage}
+              alt="نوتاش - ورود کاربران"
+              className="h-[120px] sm:h-[180px] md:h-[250px] lg:h-[350px] w-auto object-contain"
+            />
+          </div>
+
+          {/* بخش فرم و دکمه */}
+          <div className='flex flex-col gap-2 md:gap-2 justify-center items-center  md:w-auto text-center'>
+            <h1 className='text-xl md:text-2xl font-semibold'>
               ورود کاربران
             </h1>
-            <div className='w-full max-w-sm'>
+
+            <div className=' max-w-sm'>
               <LoginForm role="patient" redirectPath="/UserProfile" />
+            </div>
+
+            <div className='w-full max-w-sm mt-2'>
+              <Link to="/doctor-login">
+                <Button 
+                  variant="plain" 
+                  className="w-full bg-transparent hover:bg-transparent text-primary"
+                >
+                  ورود به پورتال پزشکان
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -28,4 +50,5 @@ function PatientLoginPage() {
     </div>
   );
 }
+
 export default PatientLoginPage;

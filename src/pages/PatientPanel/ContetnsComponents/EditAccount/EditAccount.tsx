@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../../../../components/ui/login/UserDataProvider';
 import { updatePatientProfile } from '../../../../services/serverapi';
+import FileUpload from '../../../../components/ui/FileUpload/FileUpload';
 import type { PatientProfileUpdateRequest } from '../../../../types/types';
 
 const EditAccount = () => {
@@ -15,7 +16,8 @@ const EditAccount = () => {
     phone: '',
     gender: '',
     national_code: '',
-    birth_year: 0,
+    birth_year: null as number | null,
+    avatar: '',
     card_number: '',
     sheba_number: ''
   });
@@ -29,7 +31,8 @@ const EditAccount = () => {
         phone: userData.phone || '',
         gender: userData.related_data?.gender || '',
         national_code: userData.related_data?.national_code || '',
-        birth_year: userData.related_data?.birth_year || 0,
+        birth_year: userData.related_data?.birth_year || null,
+        avatar: userData.related_data?.avatar || '',
         card_number: userData.card_number || '',
         sheba_number: userData.sheba_number || ''
       });
@@ -40,7 +43,14 @@ const EditAccount = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'birth_year' ? parseInt(value) || 0 : value
+      [name]: name === 'birth_year' ? (value ? parseInt(value) : null) : value
+    }));
+  };
+
+  const handleAvatarChange = (url: string | null) => {
+    setFormData(prev => ({
+      ...prev,
+      avatar: url || ''
     }));
   };
 
@@ -57,12 +67,13 @@ const EditAccount = () => {
         gender: formData.gender,
         national_code: formData.national_code,
         birth_year: formData.birth_year,
+        avatar: formData.avatar,
         card_number: formData.card_number,
         sheba_number: formData.sheba_number
       };
 
       const response = await updatePatientProfile(updateData);
-
+      
       // Update user data in context and localStorage
       if (response.data && response.data.user && user) {
         // Create a proper User object from the API response
@@ -77,7 +88,8 @@ const EditAccount = () => {
             ...userData.related_data,
             national_code: response.data.national_code,
             birth_year: response.data.birth_year,
-            gender: response.data.gender
+            gender: response.data.gender,
+            avatar: response.data.avatar
           }
         };
 
@@ -167,13 +179,13 @@ const EditAccount = () => {
             <svg className="w-4 h-4 ml-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
             </svg>
-            جنسیت *
+            جنسیت
           </label>
           <select
             name="gender"
             value={formData.gender}
             onChange={handleInputChange}
-            required
+            
             className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition duration-200"
           >
             <option value="">جنسیت خود را انتخاب کنید</option>
@@ -188,14 +200,14 @@ const EditAccount = () => {
             <svg className="w-4 h-4 ml-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
             </svg>
-            کد ملی *
+            کد ملی
           </label>
           <input
             type="text"
             name="national_code"
             value={formData.national_code}
             onChange={handleInputChange}
-            required
+            
             className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition duration-200"
             placeholder="کد ملی خود را وارد کنید"
           />
@@ -207,14 +219,14 @@ const EditAccount = () => {
             <svg className="w-4 h-4 ml-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
             </svg>
-            سال تولد *
+            سال تولد
           </label>
           <input
             type="number"
             name="birth_year"
-            value={formData.birth_year || ''}
+            value={formData.birth_year ?? ''}
             onChange={handleInputChange}
-            required
+            
             min="1300"
             max="1405"
             className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition duration-200"
@@ -255,6 +267,21 @@ const EditAccount = () => {
             onChange={handleInputChange}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition duration-200"
             placeholder="شماره شبا خود را وارد کنید"
+          />
+        </div>
+
+        {/* Avatar */}
+        <div className="col-span-2">
+          <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+            <svg className="w-4 h-4 ml-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+            </svg>
+            تصویر پروفایل
+          </label>
+          <FileUpload
+            onUrlChange={handleAvatarChange}
+            initialFileUrl={formData.avatar}
+            layout="horizontal"
           />
         </div>
 
