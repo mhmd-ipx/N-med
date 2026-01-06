@@ -12,34 +12,29 @@ const ServiceCategories: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [allProvinces, setAllProvinces] = useState<Province[]>([]);
-  const [allSpecialties, setAllSpecialties] = useState<Specialty[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtering, setFiltering] = useState(false);
 
   // Read filters from URL
   const searchTerm = searchParams.get('search') || '';
   const provinceSlug = searchParams.get('province');
-  const specialtySlug = searchParams.get('specialty');
-  const selectedSymptom = searchParams.get('symptom');
+
 
   // Find selected province and specialty objects
   const selectedProvince = provinceSlug
     ? allProvinces.find(p => p.enname.toLowerCase() === provinceSlug.toLowerCase())
     : null;
 
-  const selectedSpecialty = specialtySlug
-    ? allSpecialties.find(s => s.slug.toLowerCase() === specialtySlug.toLowerCase())
-    : null;
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [servicesData, doctorsResponse, provincesData, specialtiesData] = await Promise.all([
+        const [servicesData, doctorsResponse, provincesData] = await Promise.all([
           getServices(),
           getDoctors(),
           getProvinces(),
-          getSpecialties(),
         ]);
         console.log('servicesData', servicesData);
         // console.log('Services:', servicesData);
@@ -49,7 +44,6 @@ const ServiceCategories: React.FC = () => {
         if (Array.isArray(servicesData)) setServices(servicesData);
         if (doctorsResponse && doctorsResponse.data) setDoctors(doctorsResponse.data);
         if (Array.isArray(provincesData)) setAllProvinces(provincesData);
-        if (Array.isArray(specialtiesData)) setAllSpecialties(specialtiesData);
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -65,10 +59,7 @@ const ServiceCategories: React.FC = () => {
     return allProvinces.filter(province => provinceIds.has(province.id));
   }, [services, allProvinces]);
 
-  const availableSpecialties = useMemo(() => {
-    const specialtyIds = new Set(doctors.map(doctor => doctor.specialties ? parseInt(doctor.specialties) : null).filter(Boolean));
-    return allSpecialties.filter(specialty => specialtyIds.has(specialty.id));
-  }, [doctors, allSpecialties]);
+
 
   const filteredServices = useMemo(() => {
     setFiltering(true);
@@ -78,21 +69,14 @@ const ServiceCategories: React.FC = () => {
 
       const matchesSearch = service.title.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesProvince = !selectedProvince || (province && province.id === selectedProvince.id);
-      // Check if doctor has the selected specialty
-      const matchesSpecialty = !selectedSpecialty || (doctor && doctor.specialties && parseInt(doctor.specialties) === selectedSpecialty.id);
 
-      // TODO: فیلتر بر اساس علائم - فعلاً همیشه true برمیگردونه
-      // وقتی API برای علائم و بیماری‌ها آماده شد، باید این قسمت رو کامل کنیم
-      // باید چک کنیم که آیا سرویس یا دکتر مربوطه با علامت انتخاب شده مرتبط هست یا نه
-      const matchesSymptom = !selectedSymptom; // فعلاً اگر علامتی انتخاب شده باشه، نتیجه‌ای نشون نمیده
-
-      return matchesSearch && matchesProvince && matchesSpecialty && matchesSymptom && doctor && province;
+      return matchesSearch && matchesProvince && doctor && province;
     });
 
     // Simulate filtering delay for better UX
     setTimeout(() => setFiltering(false), 300);
     return filtered;
-  }, [services, doctors, allProvinces, searchTerm, selectedProvince, selectedSpecialty, selectedSymptom]);
+  }, [services, doctors, allProvinces, searchTerm, selectedProvince]);
 
   const handleSearchChange = (value: string) => {
     const newParams = new URLSearchParams(searchParams);
@@ -119,29 +103,8 @@ const ServiceCategories: React.FC = () => {
     setFiltering(true);
   };
 
-  const handleSpecialtyChange = (specialtyId: number | null) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (specialtyId) {
-      const specialty = allSpecialties.find(s => s.id === specialtyId);
-      if (specialty) {
-        newParams.set('specialty', specialty.slug.toLowerCase());
-      }
-    } else {
-      newParams.delete('specialty');
-    }
-    setSearchParams(newParams);
-    setFiltering(true);
-  };
-
-  const handleSymptomChange = (symptom: string | null) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (symptom) {
-      newParams.set('symptom', symptom);
-    } else {
-      newParams.delete('symptom');
-    }
-    setSearchParams(newParams);
-    setFiltering(true);
+  const handleSpecialtyChange = (_specialtyId: number | null) => {
+    // Not used in this page - only kept for Filters component compatibility
   };
 
   return (
@@ -185,13 +148,11 @@ const ServiceCategories: React.FC = () => {
 
               <Filters
                 provinces={availableProvinces}
-                specialties={availableSpecialties}
+                specialties={[]}
                 selectedProvince={selectedProvince?.id || null}
-                selectedSpecialty={selectedSpecialty?.id || null}
-                selectedSymptom={selectedSymptom}
+                selectedSpecialty={null}
                 onProvinceChange={handleProvinceChange}
                 onSpecialtyChange={handleSpecialtyChange}
-                onSymptomChange={handleSymptomChange}
               />
             </div>
           </div>
@@ -210,7 +171,7 @@ const ServiceCategories: React.FC = () => {
                 ) : (
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600 font-medium">{filteredServices.length} خدمت یافت شد</span>
-                    {(selectedProvince || selectedSpecialty || selectedSymptom || searchTerm) && (
+                    {(selectedProvince || searchTerm) && (
                       <button
                         onClick={() => {
                           setSearchParams(new URLSearchParams());

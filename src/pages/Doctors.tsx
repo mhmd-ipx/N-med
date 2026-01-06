@@ -43,7 +43,6 @@ const Doctors: React.FC = () => {
           getSpecialties(),
           getSymptoms(),
         ]);
-        console.log(doctorsResponse);
         if (doctorsResponse && doctorsResponse.data) {
           // Filter only approved doctors
           const approvedDoctors = doctorsResponse.data.filter(doctor => doctor.status === 'approved');
@@ -51,7 +50,9 @@ const Doctors: React.FC = () => {
         }
         if (Array.isArray(provincesData)) setAllProvinces(provincesData);
         if (Array.isArray(specialtiesData)) setAllSpecialties(specialtiesData);
-        if (Array.isArray(symptomsData)) setAllSymptoms(symptomsData);
+        if (symptomsData && Array.isArray(symptomsData.data)) {
+          setAllSymptoms(symptomsData.data);
+        }
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -108,11 +109,14 @@ const Doctors: React.FC = () => {
 
     doctors.forEach(doctor => {
       if (doctor.symptoms && Array.isArray(doctor.symptoms)) {
-        doctor.symptoms.forEach(symptom => symptomIds.add(symptom.id));
+        doctor.symptoms.forEach(symptom => {
+          symptomIds.add(symptom.id);
+        });
       }
     });
 
-    return allSymptoms.filter(symptom => symptomIds.has(symptom.id));
+    const available = allSymptoms.filter(symptom => symptomIds.has(symptom.id));
+    return available;
   }, [doctors, allSymptoms]);
 
   const getSpecialtyNames = (specialtyIds: number[] | string | null): string => {
@@ -128,8 +132,6 @@ const Doctors: React.FC = () => {
   const filteredDoctors = useMemo(() => {
     setFiltering(true);
 
-    console.log('Filtering with selectedSymptom:', selectedSymptom);
-
     const filtered = doctors.filter((doctor) => {
       const matchesSearch = doctor.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (doctor.bio && doctor.bio.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -142,17 +144,8 @@ const Doctors: React.FC = () => {
         (doctor.symptoms && Array.isArray(doctor.symptoms) && doctor.symptoms.length > 0 &&
           doctor.symptoms.some(symptom => symptom.id === selectedSymptom.id));
 
-      if (selectedSymptom) {
-        console.log(`Doctor ${doctor.user.name}:`, {
-          symptoms: doctor.symptoms,
-          matchesSymptom
-        });
-      }
-
       return matchesSearch && matchesProvince && matchesSpecialty && matchesSymptom;
     });
-
-    console.log('Filtered count:', filtered.length);
 
     // Simulate filtering delay for better UX
     setTimeout(() => setFiltering(false), 300);

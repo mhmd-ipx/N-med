@@ -229,9 +229,15 @@ export const getSpecialties = async (): Promise<Specialty[]> => {
 };
 
 // دریافت لیست علائم و بیماری‌ها
-export const getSymptoms = async (): Promise<Symptom[]> => {
+export interface SymptomsResponse {
+  data: Symptom[];
+  links: Links;
+  meta: Meta;
+}
+
+export const getSymptoms = async (): Promise<SymptomsResponse> => {
   try {
-    const response = await publicApi.get<Symptom[]>('/api/symptoms');
+    const response = await publicApi.get<SymptomsResponse>('/api/symptoms');
     return response.data;
   } catch (error) {
     throw new Error('خطا در دریافت لیست علائم و بیماری‌ها');
