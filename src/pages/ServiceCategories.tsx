@@ -1,21 +1,35 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Filters from '../components/ServiceCategories/Filters';
-import { getDoctors, type Doctor, type DoctorsResponse } from '../services/referralApi';
+import { getDoctors, type Doctor } from '../services/referralApi';
 import { getServices, SingleServiceCard } from '../pages/HomeComponents/ServiceCard';
 import { getProvinces, getSpecialties, type Province, type Specialty } from '../services/publicApi';
 import type { Service } from '../pages/HomeComponents/ServiceCard';
 import { HiOutlineFilter, HiOutlineSearch } from 'react-icons/hi';
+import { useSearchParams } from 'react-router-dom';
 
 const ServiceCategories: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedProvince, setSelectedProvince] = useState<number | null>(null);
-  const [selectedSpecialty, setSelectedSpecialty] = useState<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [services, setServices] = useState<Service[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [allProvinces, setAllProvinces] = useState<Province[]>([]);
   const [allSpecialties, setAllSpecialties] = useState<Specialty[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtering, setFiltering] = useState(false);
+
+  // Read filters from URL
+  const searchTerm = searchParams.get('search') || '';
+  const provinceSlug = searchParams.get('province');
+  const specialtySlug = searchParams.get('specialty');
+  const selectedSymptom = searchParams.get('symptom');
+
+  // Find selected province and specialty objects
+  const selectedProvince = provinceSlug
+    ? allProvinces.find(p => p.enname.toLowerCase() === provinceSlug.toLowerCase())
+    : null;
+
+  const selectedSpecialty = specialtySlug
+    ? allSpecialties.find(s => s.slug.toLowerCase() === specialtySlug.toLowerCase())
+    : null;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,7 +41,7 @@ const ServiceCategories: React.FC = () => {
           getProvinces(),
           getSpecialties(),
         ]);
-
+        console.log('servicesData', servicesData);
         // console.log('Services:', servicesData);
         // console.log('Doctors:', doctorsResponse);
         // console.log('Provinces:', provincesData);
@@ -63,30 +77,70 @@ const ServiceCategories: React.FC = () => {
       const province = allProvinces.find((prov) => prov.id === service.clinic?.province_id);
 
       const matchesSearch = service.title.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesProvince = !selectedProvince || (province && province.id === selectedProvince);
+      const matchesProvince = !selectedProvince || (province && province.id === selectedProvince.id);
       // Check if doctor has the selected specialty
-      const matchesSpecialty = !selectedSpecialty || (doctor && doctor.specialties && parseInt(doctor.specialties) === selectedSpecialty);
+      const matchesSpecialty = !selectedSpecialty || (doctor && doctor.specialties && parseInt(doctor.specialties) === selectedSpecialty.id);
 
-      return matchesSearch && matchesProvince && matchesSpecialty && doctor && province;
+      // TODO: فیلتر بر اساس علائم - فعلاً همیشه true برمیگردونه
+      // وقتی API برای علائم و بیماری‌ها آماده شد، باید این قسمت رو کامل کنیم
+      // باید چک کنیم که آیا سرویس یا دکتر مربوطه با علامت انتخاب شده مرتبط هست یا نه
+      const matchesSymptom = !selectedSymptom; // فعلاً اگر علامتی انتخاب شده باشه، نتیجه‌ای نشون نمیده
+
+      return matchesSearch && matchesProvince && matchesSpecialty && matchesSymptom && doctor && province;
     });
 
     // Simulate filtering delay for better UX
     setTimeout(() => setFiltering(false), 300);
     return filtered;
-  }, [services, doctors, allProvinces, searchTerm, selectedProvince, selectedSpecialty]);
+  }, [services, doctors, allProvinces, searchTerm, selectedProvince, selectedSpecialty, selectedSymptom]);
 
   const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
+    const newParams = new URLSearchParams(searchParams);
+    if (value) {
+      newParams.set('search', value);
+    } else {
+      newParams.delete('search');
+    }
+    setSearchParams(newParams);
     setFiltering(true);
   };
 
   const handleProvinceChange = (provinceId: number | null) => {
-    setSelectedProvince(provinceId);
+    const newParams = new URLSearchParams(searchParams);
+    if (provinceId) {
+      const province = allProvinces.find(p => p.id === provinceId);
+      if (province) {
+        newParams.set('province', province.enname.toLowerCase());
+      }
+    } else {
+      newParams.delete('province');
+    }
+    setSearchParams(newParams);
     setFiltering(true);
   };
 
   const handleSpecialtyChange = (specialtyId: number | null) => {
-    setSelectedSpecialty(specialtyId);
+    const newParams = new URLSearchParams(searchParams);
+    if (specialtyId) {
+      const specialty = allSpecialties.find(s => s.id === specialtyId);
+      if (specialty) {
+        newParams.set('specialty', specialty.slug.toLowerCase());
+      }
+    } else {
+      newParams.delete('specialty');
+    }
+    setSearchParams(newParams);
+    setFiltering(true);
+  };
+
+  const handleSymptomChange = (symptom: string | null) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (symptom) {
+      newParams.set('symptom', symptom);
+    } else {
+      newParams.delete('symptom');
+    }
+    setSearchParams(newParams);
     setFiltering(true);
   };
 
@@ -132,10 +186,12 @@ const ServiceCategories: React.FC = () => {
               <Filters
                 provinces={availableProvinces}
                 specialties={availableSpecialties}
-                selectedProvince={selectedProvince}
-                selectedSpecialty={selectedSpecialty}
+                selectedProvince={selectedProvince?.id || null}
+                selectedSpecialty={selectedSpecialty?.id || null}
+                selectedSymptom={selectedSymptom}
                 onProvinceChange={handleProvinceChange}
                 onSpecialtyChange={handleSpecialtyChange}
+                onSymptomChange={handleSymptomChange}
               />
             </div>
           </div>
@@ -154,12 +210,10 @@ const ServiceCategories: React.FC = () => {
                 ) : (
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600 font-medium">{filteredServices.length} خدمت یافت شد</span>
-                    {(selectedProvince || selectedSpecialty || searchTerm) && (
+                    {(selectedProvince || selectedSpecialty || selectedSymptom || searchTerm) && (
                       <button
                         onClick={() => {
-                          setSelectedProvince(null);
-                          setSelectedSpecialty(null);
-                          setSearchTerm('');
+                          setSearchParams(new URLSearchParams());
                         }}
                         className="text-sm text-red-500 hover:text-red-600 font-medium"
                       >

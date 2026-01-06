@@ -1,30 +1,49 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Filters from '../components/ServiceCategories/Filters';
-import { getDoctors, getProvinces, getSpecialties, type Doctor, type DoctorsResponse, type Province, type Specialty } from '../services/publicApi';
-import { Link } from 'react-router-dom';
+import { getDoctors, getProvinces, getSpecialties, getSymptoms, type Doctor, type DoctorsResponse, type Province, type Specialty, type Symptom } from '../services/publicApi';
+import { Link, useSearchParams } from 'react-router-dom';
 import { HiOutlineFilter, HiOutlineSearch } from 'react-icons/hi';
 import doctorPlaceholder from '../assets/images/Doctors/doctor1.jpg';
 
 const Doctors: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedProvince, setSelectedProvince] = useState<number | null>(null);
-  const [selectedSpecialty, setSelectedSpecialty] = useState<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [allProvinces, setAllProvinces] = useState<Province[]>([]);
   const [allSpecialties, setAllSpecialties] = useState<Specialty[]>([]);
+  const [allSymptoms, setAllSymptoms] = useState<Symptom[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtering, setFiltering] = useState(false);
+
+  // Read filters from URL
+  const searchTerm = searchParams.get('search') || '';
+  const provinceSlug = searchParams.get('province');
+  const specialtySlug = searchParams.get('specialty');
+  const symptomSlug = searchParams.get('symptom');
+
+  // Find selected province and specialty objects
+  const selectedProvince = provinceSlug
+    ? allProvinces.find(p => p.enname.toLowerCase() === provinceSlug.toLowerCase())
+    : null;
+
+  const selectedSpecialty = specialtySlug
+    ? allSpecialties.find(s => s.slug.toLowerCase() === specialtySlug.toLowerCase())
+    : null;
+
+  const selectedSymptom = symptomSlug
+    ? allSymptoms.find(s => s.slug.toLowerCase() === symptomSlug.toLowerCase())
+    : null;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [doctorsResponse, provincesData, specialtiesData] = await Promise.all([
+        const [doctorsResponse, provincesData, specialtiesData, symptomsData] = await Promise.all([
           getDoctors(),
           getProvinces(),
           getSpecialties(),
+          getSymptoms(),
         ]);
-
+        console.log(doctorsResponse);
         if (doctorsResponse && doctorsResponse.data) {
           // Filter only approved doctors
           const approvedDoctors = doctorsResponse.data.filter(doctor => doctor.status === 'approved');
@@ -32,6 +51,7 @@ const Doctors: React.FC = () => {
         }
         if (Array.isArray(provincesData)) setAllProvinces(provincesData);
         if (Array.isArray(specialtiesData)) setAllSpecialties(specialtiesData);
+        if (Array.isArray(symptomsData)) setAllSymptoms(symptomsData);
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -43,27 +63,57 @@ const Doctors: React.FC = () => {
 
   // Filter provinces and specialties based on actual doctors data
   const availableProvinces = useMemo(() => {
-    const provinceIds = new Set(doctors.map(doctor => {
-      // Extract province from address or clinics
+    const provinceNames = new Set<string>();
+
+    doctors.forEach(doctor => {
+      // Extract province from clinics addresses
+      doctor.clinics.forEach(clinic => {
+        if (clinic.address) {
+          // Try to match province name in address
+          allProvinces.forEach(province => {
+            if (clinic.address.includes(province.faname) || clinic.address.includes(province.enname)) {
+              provinceNames.add(province.enname);
+            }
+          });
+        }
+      });
+
+      // Also check doctor's own address
       if (doctor.address) {
-        // You might need to parse the address to get province
-        // For now, return all provinces
-        return null;
+        allProvinces.forEach(province => {
+          if (doctor.address!.includes(province.faname) || doctor.address!.includes(province.enname)) {
+            provinceNames.add(province.enname);
+          }
+        });
       }
-      return null;
-    }).filter(Boolean));
-    return allProvinces; // Return all for now
+    });
+
+    return allProvinces.filter(province => provinceNames.has(province.enname));
   }, [doctors, allProvinces]);
 
   const availableSpecialties = useMemo(() => {
-    const specialtyIds = new Set();
+    const specialtyIds = new Set<number>();
+
     doctors.forEach(doctor => {
-      if (Array.isArray(doctor.specialties)) {
+      if (doctor.specialties && Array.isArray(doctor.specialties)) {
         doctor.specialties.forEach(id => specialtyIds.add(id));
       }
     });
+
     return allSpecialties.filter(specialty => specialtyIds.has(specialty.id));
   }, [doctors, allSpecialties]);
+
+  const availableSymptoms = useMemo(() => {
+    const symptomIds = new Set<number>();
+
+    doctors.forEach(doctor => {
+      if (doctor.symptoms && Array.isArray(doctor.symptoms)) {
+        doctor.symptoms.forEach(symptom => symptomIds.add(symptom.id));
+      }
+    });
+
+    return allSymptoms.filter(symptom => symptomIds.has(symptom.id));
+  }, [doctors, allSymptoms]);
 
   const getSpecialtyNames = (specialtyIds: number[] | string | null): string => {
     if (!specialtyIds || (Array.isArray(specialtyIds) && specialtyIds.length === 0)) return 'تخصص ذکر نشده';
@@ -77,33 +127,85 @@ const Doctors: React.FC = () => {
 
   const filteredDoctors = useMemo(() => {
     setFiltering(true);
+
+    console.log('Filtering with selectedSymptom:', selectedSymptom);
+
     const filtered = doctors.filter((doctor) => {
       const matchesSearch = doctor.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (doctor.bio && doctor.bio.toLowerCase().includes(searchTerm.toLowerCase()));
+        (doctor.bio && doctor.bio.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesProvince = !selectedProvince || (doctor.address && doctor.address.includes('اصفهان')); // Simple province check
       const matchesSpecialty = !selectedSpecialty ||
-                              (Array.isArray(doctor.specialties) && doctor.specialties.includes(selectedSpecialty));
+        (Array.isArray(doctor.specialties) && doctor.specialties.includes(selectedSpecialty.id));
 
-      return matchesSearch && matchesProvince && matchesSpecialty;
+      // Check if doctor has the selected symptom
+      const matchesSymptom = !selectedSymptom ||
+        (doctor.symptoms && Array.isArray(doctor.symptoms) && doctor.symptoms.length > 0 &&
+          doctor.symptoms.some(symptom => symptom.id === selectedSymptom.id));
+
+      if (selectedSymptom) {
+        console.log(`Doctor ${doctor.user.name}:`, {
+          symptoms: doctor.symptoms,
+          matchesSymptom
+        });
+      }
+
+      return matchesSearch && matchesProvince && matchesSpecialty && matchesSymptom;
     });
+
+    console.log('Filtered count:', filtered.length);
 
     // Simulate filtering delay for better UX
     setTimeout(() => setFiltering(false), 300);
     return filtered;
-  }, [doctors, searchTerm, selectedProvince, selectedSpecialty]);
+  }, [doctors, searchTerm, selectedProvince, selectedSpecialty, selectedSymptom]);
 
   const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
+    const newParams = new URLSearchParams(searchParams);
+    if (value) {
+      newParams.set('search', value);
+    } else {
+      newParams.delete('search');
+    }
+    setSearchParams(newParams);
     setFiltering(true);
   };
 
   const handleProvinceChange = (provinceId: number | null) => {
-    setSelectedProvince(provinceId);
+    const newParams = new URLSearchParams(searchParams);
+    if (provinceId) {
+      const province = allProvinces.find(p => p.id === provinceId);
+      if (province) {
+        newParams.set('province', province.enname.toLowerCase());
+      }
+    } else {
+      newParams.delete('province');
+    }
+    setSearchParams(newParams);
     setFiltering(true);
   };
 
   const handleSpecialtyChange = (specialtyId: number | null) => {
-    setSelectedSpecialty(specialtyId);
+    const newParams = new URLSearchParams(searchParams);
+    if (specialtyId) {
+      const specialty = allSpecialties.find(s => s.id === specialtyId);
+      if (specialty) {
+        newParams.set('specialty', specialty.slug.toLowerCase());
+      }
+    } else {
+      newParams.delete('specialty');
+    }
+    setSearchParams(newParams);
+    setFiltering(true);
+  };
+
+  const handleSymptomChange = (symptom: string | null) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (symptom) {
+      newParams.set('symptom', symptom);
+    } else {
+      newParams.delete('symptom');
+    }
+    setSearchParams(newParams);
     setFiltering(true);
   };
 
@@ -149,10 +251,13 @@ const Doctors: React.FC = () => {
               <Filters
                 provinces={availableProvinces}
                 specialties={availableSpecialties}
-                selectedProvince={selectedProvince}
-                selectedSpecialty={selectedSpecialty}
+                symptoms={availableSymptoms}
+                selectedProvince={selectedProvince?.id || null}
+                selectedSpecialty={selectedSpecialty?.id || null}
+                selectedSymptom={selectedSymptom?.slug || null}
                 onProvinceChange={handleProvinceChange}
                 onSpecialtyChange={handleSpecialtyChange}
+                onSymptomChange={handleSymptomChange}
               />
             </div>
           </div>
@@ -171,12 +276,10 @@ const Doctors: React.FC = () => {
                 ) : (
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600 font-medium">{filteredDoctors.length} پزشک یافت شد</span>
-                    {(selectedProvince || selectedSpecialty || searchTerm) && (
+                    {(selectedProvince || selectedSpecialty || selectedSymptom || searchTerm) && (
                       <button
                         onClick={() => {
-                          setSelectedProvince(null);
-                          setSelectedSpecialty(null);
-                          setSearchTerm('');
+                          setSearchParams(new URLSearchParams());
                         }}
                         className="text-sm text-red-500 hover:text-red-600 font-medium"
                       >

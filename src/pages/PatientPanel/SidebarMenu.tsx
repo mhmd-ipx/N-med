@@ -31,6 +31,7 @@ interface SidebarMenuProps {
   setActiveItem: (itemId: string) => void;
   isMobileOpen?: boolean;
   onMobileClose?: () => void;
+  onLogoutClick?: () => void;
 }
 
 const SidebarMenu: React.FC<SidebarMenuProps> = ({
@@ -38,35 +39,31 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
   activeItem,
   setActiveItem,
   isMobileOpen = false,
-  onMobileClose
+  onMobileClose,
+  onLogoutClick
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
   const profileImage = (user as any)?.related_data?.avatar || Userimage;
-console.log(user);
+  console.log(user);
+
   const handleItemClick = (itemId: string) => {
     if (itemId === 'Log-out') {
-      // نمایش پاپ‌آپ تأیید برای لاگ‌اوت
-      const confirmLogout = window.confirm('آیا مطمئن هستید که می‌خواهید از حساب خود خارج شوید؟');
-      if (confirmLogout) {
-        // حذف داده‌های احراز هویت
-        localStorage.removeItem('authData');
-        // هدایت به صفحه لاگین
-        navigate('/UserProfile');
-      } else {
-        // اگر کنسل کرد، آیتم فعال به Dashboard برگرده
-        setActiveItem('Dashboard');
-        navigate('/UserProfile');
+      if (onLogoutClick) {
+        onLogoutClick();
       }
-    } else {
-      // برای سایر آیتم‌ها رفتار عادی
-      setActiveItem(itemId);
-      const basePath = location.pathname.includes('/UserProfile')
-        ? '/UserProfile'
-        : location.pathname.split('/').slice(0, -1).join('/') || '/UserProfile';
-      navigate(`${basePath}/${itemId}`);
+      if (onMobileClose) {
+        onMobileClose();
+      }
+      return;
     }
+
+    setActiveItem(itemId);
+    const basePath = location.pathname.includes('/UserProfile')
+      ? '/UserProfile'
+      : location.pathname.split('/').slice(0, -1).join('/') || '/UserProfile';
+    navigate(`${basePath}/${itemId}`);
 
     // بستن منوی موبایل بعد از کلیک
     if (onMobileClose) {
@@ -111,13 +108,12 @@ console.log(user);
             <button
               key={item.id}
               onClick={() => handleItemClick(item.id)}
-              className={`flex items-center w-full p-3 mb-2 rounded-lg transition-colors ${
-                item.id === 'Log-out'
-                  ? 'text-black hover:text-primary' // لاگ‌اوت نباید فعال (highlight) بشه
-                  : activeItem === item.id
-                    ? 'bg-primary text-white'
-                    : 'text-black hover:text-primary'
-              }`}
+              className={`flex items-center w-full p-3 mb-2 rounded-lg transition-colors ${item.id === 'Log-out'
+                ? 'text-black hover:text-primary' // لاگ‌اوت نباید فعال (highlight) بشه
+                : activeItem === item.id
+                  ? 'bg-primary text-white'
+                  : 'text-black hover:text-primary'
+                }`}
             >
               <item.icon className="text-3xl ml-3" />
               <span>{item.name}</span>

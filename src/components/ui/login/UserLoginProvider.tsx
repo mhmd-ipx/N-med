@@ -21,7 +21,7 @@ export const useUser = () => {
   return context;
 };
 
-const UserLoginProvider = ({ children }) => {
+const UserLoginProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,9 +64,9 @@ const UserLoginProvider = ({ children }) => {
             setUser(parsedUser);
           } else {
             const userData = await getUser(parsedToken.token);
-            const finalUser = userData.user || userData;
-            setUser(finalUser);
-            localStorage.setItem('userData', JSON.stringify(finalUser));
+            // getUser returns User directly, not { user: User }
+            setUser(userData);
+            localStorage.setItem('userData', JSON.stringify(userData));
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -82,8 +82,16 @@ const UserLoginProvider = ({ children }) => {
     // گوش دادن به تغییرات اطلاعات کاربر
     const handleUserUpdate = (event: Event) => {
       const newUser = (event as CustomEvent).detail;
-      setUser(newUser);
-      localStorage.setItem('userData', JSON.stringify(newUser));
+
+      // اگر newUser null است (logout)، state را پاک کن
+      if (newUser === null) {
+        setUser(null);
+        setToken(null);
+        // پاک کردن localStorage انجام شده در LogOut component
+      } else {
+        setUser(newUser);
+        localStorage.setItem('userData', JSON.stringify(newUser));
+      }
     };
 
     window.addEventListener('userUpdated', handleUserUpdate);

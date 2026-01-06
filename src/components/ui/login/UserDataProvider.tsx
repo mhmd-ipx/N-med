@@ -8,6 +8,7 @@ import Loading from '../Loading/Loading';
 interface UserContextType {
   user: User | null;
   token: string | null;
+  isLoading: boolean;
   updateUser: (newUser: User) => void;
 }
 
@@ -75,15 +76,13 @@ const UserDataProvider = ({ children, role, redirectPath }: UserDataProviderExte
               setUser(parsedUser);
             } else {
               const userData = await getUser(parsedToken.token);
-              const finalUser = userData.user || userData;
-              setUser(finalUser);
-              localStorage.setItem('userData', JSON.stringify(finalUser));
+              setUser(userData);
+              localStorage.setItem('userData', JSON.stringify(userData));
             }
           } else {
             const userData = await getUser(parsedToken.token);
-            const finalUser = userData.user || userData;
-            setUser(finalUser);
-            localStorage.setItem('userData', JSON.stringify(finalUser));
+            setUser(userData);
+            localStorage.setItem('userData', JSON.stringify(userData));
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -102,8 +101,16 @@ const UserDataProvider = ({ children, role, redirectPath }: UserDataProviderExte
     // گوش دادن به تغییرات اطلاعات کاربر
     const handleUserUpdate = (event: Event) => {
       const newUser = (event as CustomEvent).detail;
-      setUser(newUser);
-      localStorage.setItem('userData', JSON.stringify(newUser));
+
+      // اگر newUser null است (logout)، state را پاک کن
+      if (newUser === null) {
+        setUser(null);
+        setToken(null);
+        // پاک کردن localStorage انجام شده در logout utility
+      } else {
+        setUser(newUser);
+        localStorage.setItem('userData', JSON.stringify(newUser));
+      }
     };
 
     window.addEventListener('userUpdated', handleUserUpdate);
@@ -137,8 +144,8 @@ const UserDataProvider = ({ children, role, redirectPath }: UserDataProviderExte
   if (!user.role || user.role.trim().toLowerCase() !== role.trim().toLowerCase()) {
     const redirectTo =
       user.role === 'doctor' ? '/doctor-Profile' :
-      user.role === 'patient' ? '/UserProfile' :
-      user.role === 'secretary' ? '/SecretaryProfile' : redirectPath;
+        user.role === 'patient' ? '/UserProfile' :
+          user.role === 'secretary' ? '/SecretaryProfile' : redirectPath;
     return (
       <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-md text-center">
         <h2 className="text-2xl font-bold text-red-600 mb-4">دسترسی غیرمجاز</h2>
@@ -156,7 +163,7 @@ const UserDataProvider = ({ children, role, redirectPath }: UserDataProviderExte
   }
 
   return (
-    <UserContext.Provider value={{ user, token, updateUser }}>
+    <UserContext.Provider value={{ user, token, isLoading, updateUser }}>
       {children({ user, token, isLoading })}
     </UserContext.Provider>
   );

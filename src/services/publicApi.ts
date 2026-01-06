@@ -36,7 +36,8 @@ export interface User {
 export interface Doctor {
   id: number;
   user: User;
-  specialties: string | null;
+  specialties: number[] | null;
+  symptoms: Symptom[];
   address: string | null;
   bio: string | null;
   avatar: string | null;
@@ -100,6 +101,19 @@ export interface Specialty {
   seo_id: number | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface Symptom {
+  id: number;
+  title: string;
+  thumbnail: string | null;
+  slug: string;
+  created_at: string;
+  updated_at: string;
+  pivot?: {
+    doctor_id: number;
+    symptom_id: number;
+  };
 }
 
 export interface ReviewUser {
@@ -211,6 +225,16 @@ export const getSpecialties = async (): Promise<Specialty[]> => {
     return response.data;
   } catch (error) {
     throw new Error('خطا در دریافت لیست تخصص‌ها');
+  }
+};
+
+// دریافت لیست علائم و بیماری‌ها
+export const getSymptoms = async (): Promise<Symptom[]> => {
+  try {
+    const response = await publicApi.get<Symptom[]>('/api/symptoms');
+    return response.data;
+  } catch (error) {
+    throw new Error('خطا در دریافت لیست علائم و بیماری‌ها');
   }
 };
 

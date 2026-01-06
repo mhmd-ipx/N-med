@@ -3,8 +3,9 @@ import { useLocation } from 'react-router-dom';
 import UserDataProvider from '../../components/ui/login/UserDataProvider';
 import SidebarMenu from './SidebarMenu';
 import Loading from '../../components/ui/Loading/Loading';
-import { Dashboard, EditAccount, Appointments, References, LogOut } from './MenuContentComponents';
+import { Dashboard, EditAccount, Appointments, References } from './MenuContentComponents';
 import Wallet from './ContetnsComponents/Wallet/Wallet';
+import LogOut from './LogOut';
 import { HiMiniPencilSquare, HiOutlineBars3 } from 'react-icons/hi2';
 
 const menuItems = [
@@ -13,7 +14,6 @@ const menuItems = [
   { id: 'Turns', name: 'نوبت ها', component: Appointments },
   { id: 'Support', name: 'ارجاعات', component: References },
   { id: 'Wallet', name: 'کیف پول', component: Wallet },
-  { id: 'Log-out', name: 'خروج از حساب', component: LogOut },
 ];
 
 
@@ -31,6 +31,7 @@ const UserProfile = () => {
     return menuItems.find(item => item.id === lastSegment)?.id || menuItems[0].id;
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const ActiveComponent = menuItems.find(item => item.id === activeItem)?.component;
 
@@ -87,6 +88,7 @@ const UserProfile = () => {
                     setActiveItem={setActiveItem}
                     isMobileOpen={isMobileMenuOpen}
                     onMobileClose={handleMobileMenuClose}
+                    onLogoutClick={() => setShowLogoutModal(true)}
                   />
 
                   {/* Content Area */}
@@ -100,6 +102,11 @@ const UserProfile = () => {
                 </div>
               </div>
             </div>
+
+            {/* Logout Modal Overlay */}
+            {showLogoutModal && (
+              <LogOut onClose={() => setShowLogoutModal(false)} />
+            )}
           </div>
         );
       }}

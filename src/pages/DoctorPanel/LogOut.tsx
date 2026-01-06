@@ -1,33 +1,44 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import ConfirmModal from '../../components/ui/ConfirmModal';
+import { performLogout } from '../../utils/logout';
 
-const LogOut = () => {
-  const navigate = useNavigate();
+interface LogOutProps {
+  onClose: () => void;
+}
 
-  useEffect(() => {
-    // نمایش پاپ‌آپ تأیید به محض رندر شدن کامپوننت
-    const confirmLogout = window.confirm('آیا مطمئن هستید که می‌خواهید از حساب خود خارج شوید؟');
+const LogOut: React.FC<LogOutProps> = ({ onClose }) => {
+  const [showModal, setShowModal] = useState(true);
 
-    if (confirmLogout) {
-      // حذف داده‌های احراز هویت از localStorage
-      localStorage.removeItem('authData');
-      localStorage.removeItem('userData');
+  const handleConfirm = () => {
+    // پاک کردن تمام داده‌ها
+    performLogout();
 
-      // بروزرسانی context کاربر به null
-      window.dispatchEvent(new CustomEvent('userUpdated', { detail: null }));
+    // بستن modal
+    setShowModal(false);
+    onClose();
 
-      // هدایت به صفحه اصلی بعد از یک تأخیر کوتاه
-      setTimeout(() => {
-        navigate('/');
-      }, 100);
-    } else {
-      // اگر کاربر لغو کرد، به صفحه‌ای مثل داشبورد برگرده
-      navigate('/doctor-Profile/Dashboard');
-    }
-  }, [navigate]);
+    // هدایت به صفحه اصلی با force reload
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 100);
+  };
 
-  // چون نیازی به رندر چیزی نداریم، null برمی‌گردونیم
-  return null;
+  const handleCancel = () => {
+    setShowModal(false);
+    onClose();
+  };
+
+  return (
+    <ConfirmModal
+      isOpen={showModal}
+      title="خروج از حساب کاربری"
+      message="آیا مطمئن هستید که می‌خواهید از حساب خود خارج شوید؟"
+      confirmText="بله، خروج"
+      cancelText="لغو"
+      onConfirm={handleConfirm}
+      onCancel={handleCancel}
+    />
+  );
 };
 
 export default LogOut;

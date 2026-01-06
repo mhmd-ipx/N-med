@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom';
 import UserDataProvider from '../../components/ui/login/UserDataProvider';
 import SidebarMenu from './SidebarMenu';
 import Loading from '../../components/ui/Loading/Loading';
-import { ProfileInfo, Appointments, MedicalRecords, Settings } from './MenuContentComponents';
 import Dashboard from './ContetnsComponents/Dashboard/Dashboard';
 import EditAccount from './ContetnsComponents/EditAccount/EditAccount';
 import Turns from './ContetnsComponents/Turns/Turns';
@@ -20,7 +19,6 @@ const menuItems = [
   { id: 'Services', name: 'خدمات و مطب ها', component: ServicesClinics },
   { id: 'References', name: 'ارجاعات', component: References },
   { id: 'Wallet', name: 'کیف پول', component: Wallet },
-  { id: 'Log-out', name: 'خروج', component: LogOut },
 ];
 
 
@@ -33,6 +31,7 @@ const DoctorProfile = () => {
     return menuItems.find(item => item.id === path)?.id || menuItems[0].id;
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const ActiveComponent = menuItems.find(item => item.id === activeItem)?.component;
 
@@ -89,6 +88,7 @@ const DoctorProfile = () => {
                     setActiveItem={setActiveItem}
                     isMobileOpen={isMobileMenuOpen}
                     onMobileClose={handleMobileMenuClose}
+                    onLogoutClick={() => setShowLogoutModal(true)}
                   />
 
                   {/* Content Area */}
@@ -102,6 +102,11 @@ const DoctorProfile = () => {
                 </div>
               </div>
             </div>
+
+            {/* Logout Modal Overlay */}
+            {showLogoutModal && (
+              <LogOut onClose={() => setShowLogoutModal(false)} />
+            )}
           </div>
         );
       }}

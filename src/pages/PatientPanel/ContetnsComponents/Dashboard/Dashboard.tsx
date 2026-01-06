@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaUser, FaCalendarCheck, FaFileMedical, FaHeart, FaSyncAlt } from 'react-icons/fa';
 import { useUser } from '../../../../components/ui/login/UserDataProvider';
 import Userimage from '../../../../assets/images/userimg.png';
+import { getPatientAppointments } from '../../../../services/serverapi';
 
 // تعریف نوع برای دیتای داشبورد بیمار
 interface PatientDashboardData {
@@ -39,6 +40,41 @@ const mockPatientDashboardData: PatientDashboardData = {
   referrals_count: 3,
 };
 
+// تابع تبدیل داده‌های API به فرمت داشبورد
+const transformApiAppointmentToDashboardAppointment = (apiAppointment: any): Appointment => {
+  // تبدیل تاریخ و زمان
+  const startDate = new Date(apiAppointment.start_date);
+
+  // تبدیل به تاریخ شمسی (تقریبی)
+  const persianDate = startDate.toLocaleDateString('fa-IR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+
+  const startTime = startDate.toLocaleTimeString('fa-IR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  // تبدیل وضعیت
+  const statusMap: { [key: string]: string } = {
+    'waiting': 'تایید شده',
+    'finished': 'انجام شده',
+    'canceled': 'لغو شده'
+  };
+
+  return {
+    id: apiAppointment.id,
+    doctorName: apiAppointment.doctor?.name || 'پزشک نامشخص',
+    specialty: 'پزشک', // در API اطلاعات تخصص موجود نیست
+    date: persianDate,
+    time: startTime,
+    clinic: apiAppointment.service?.clinic?.name || 'کلینیک نامشخص',
+    status: statusMap[apiAppointment.status] || 'تایید شده'
+  };
+};
+
 // تعریف نوع برای نوبت‌ها
 interface Appointment {
   id: number;
@@ -58,29 +94,31 @@ const Dashboard: React.FC = () => {
   // لود اولیه دیتا
   useEffect(() => {
     const loadData = async () => {
-      // در واقعیت اینجا از API دریافت می‌کنیم
-      setDashboardData(mockPatientDashboardData);
+  // در واقعیت اینجا از API دریافت می‌کنیم
+  setDashboardData(mockPatientDashboardData);
 
-      // دریافت نوبت‌های آینده
-      if (user) {
-        try {
-          const response = await fetch('/api/patient/appointments', {
-            headers: {
-              'Authorization': `Bearer ${(user as any).token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          if (response.ok) {
-            const appointments = await response.json();
-            setUpcomingAppointments(appointments);
-          } else {
-            console.error('Failed to fetch appointments');
-          }
-        } catch (error) {
-          console.error('Error fetching appointments:', error);
-        }
-      }
-    };
+  if (user) {
+    try {
+      const appointments = await getPatientAppointments();
+      const transformedAppointments = appointments.map(
+        transformApiAppointmentToDashboardAppointment
+      );
+
+      // مرتب‌سازی بر اساس تاریخ و ساعت (جدیدترین اول)
+      const sortedAppointments = transformedAppointments.sort((a, b) => {
+        const dateA = new Date(a.date + ' ' + a.time);
+        const dateB = new Date(b.date + ' ' + b.time);
+        return dateB - dateA;
+      });
+
+      // نمایش 4 نوبت آخر (جدیدترین‌ها)
+      setUpcomingAppointments(sortedAppointments.slice(0, 4));
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    }
+  }
+};
+
     if (!isLoading) {
       loadData();
     }

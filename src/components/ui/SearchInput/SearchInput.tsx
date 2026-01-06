@@ -82,21 +82,13 @@ const SearchInput = () => {
 
       // جستجو بر اساس تخصص - بررسی انواع مختلف داده
       let specialtyMatch = false;
-      if (doc.specialties) {
-        if (typeof doc.specialties === 'string') {
-          // اگر رشته است
-          specialtyMatch = doc.specialties.toLowerCase().includes(searchTerm.toLowerCase());
-        } else if (Array.isArray(doc.specialties)) {
-          // اگر آرایه است، بررسی هر عنصر
-          specialtyMatch = (doc.specialties as any[]).some((specialty: any) => {
-            if (typeof specialty === 'string') {
-              return specialty.toLowerCase().includes(searchTerm.toLowerCase());
-            } else if (typeof specialty === 'object' && specialty?.name) {
-              return specialty.name.toLowerCase().includes(searchTerm.toLowerCase());
-            }
-            return false;
-          });
-        }
+      if (doc.specialties && Array.isArray(doc.specialties)) {
+        // specialties is now an array of numbers
+        // We can search by specialty ID or get specialty name from specialties list
+        specialtyMatch = doc.specialties.some((specialtyId: number) => {
+          const specialty = specialties.find(s => s.id === specialtyId);
+          return specialty && specialty.title.toLowerCase().includes(searchTerm.toLowerCase());
+        });
       }
 
       return nameMatch || specialtyMatch;
@@ -131,7 +123,7 @@ const SearchInput = () => {
 
     return "بدون تخصص";
   };
-//console.log (specialties);
+  //console.log (specialties);
   return (
     <div className="relative w-full mx-auto">
       <div className="relative w-full sm:w-[80%] mx-auto px-4 sm:px-0">
@@ -215,11 +207,10 @@ const SearchInput = () => {
                           <h4 className="text-base font-semibold text-gray-900 truncate group-hover:text-blue-700 transition-colors">
                             {doc.user.name}
                           </h4>
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            doc.status === 'active'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-600'
-                          }`}>
+                          <span className={`text-xs px-2 py-1 rounded-full ${doc.status === 'active'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-600'
+                            }`}>
                             {doc.status === 'active' ? 'فعال' : 'غیرفعال'}
                           </span>
                         </div>
@@ -230,11 +221,11 @@ const SearchInput = () => {
 
                         {doc.bio && (
                           <p className="text-xs text-gray-500 mt-1 overflow-hidden"
-                             style={{
-                               display: '-webkit-box',
-                               WebkitLineClamp: 2,
-                               WebkitBoxOrient: 'vertical' as const,
-                             }}>
+                            style={{
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical' as const,
+                            }}>
                             {doc.bio}
                           </p>
                         )}
@@ -271,11 +262,11 @@ const SearchInput = () => {
 
       {/* نمایش تخصص‌ها */}
       <div className="w-full sm:w-[80%] mx-auto mt-4 px-4 sm:px-0">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-6 gap-2">
           {specialties.map((spec) => (
             <Link
               key={spec.id}
-              to={`/specialties/${spec.id}`}
+              to={`/doctors?specialty=${spec.slug.toLowerCase()}`}
               className="flex flex-col items-center gap-4 justify-center p-3 bg-white border border-gray-200 rounded-2xl hover:shadow-md transition-shadow"
             >
               <img
