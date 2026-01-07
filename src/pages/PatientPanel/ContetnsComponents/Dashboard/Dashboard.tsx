@@ -109,30 +109,6 @@ const Dashboard: React.FC = () => {
   return (
     <div className="px-4 min-h-screen" dir="rtl">
       {/* چهار باکس چارتی */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mb-4">
-
-        <Link to="/UserProfile/Appointments" className="block">
-          <div className="border border-gray-200 p-4 rounded-xl bg-white flex items-center text-right hover:bg-gray-50 transition-colors">
-            <FaFileMedical className="text-3xl text-primary ml-3" />
-            <div>
-              <h3 className="font-semibold text-gray-700">سوابق پزشکی</h3>
-              <p className="text-2xl font-bold text-gray-800">{dashboardData.medical_records_count}</p>
-            </div>
-          </div>
-        </Link>
-        <a href="/UserProfile/Support" >
-          <div className="border border-gray-200 p-4 rounded-xl bg-white flex items-center text-right hover:bg-gray-50 transition-colors">
-            <FaUser className="text-3xl text-primary ml-3" />
-            <div>
-              <h3 className="font-semibold text-gray-700">ارجاعات دریافتی</h3>
-              <p className="text-2xl font-bold text-gray-800">{dashboardData.referrals_count}</p>
-            </div>
-          </div>
-
-        </a>
-
-
-      </div>
 
       {/* دیو برای نوبت‌ها */}
       <div className="mb-4">

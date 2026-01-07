@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { getWalletBalance, getWalletTransactions, type WalletBalanceResponse, type WalletTransactionsResponse, type Transaction } from '../../../../services/walletApi';
+import { getWalletBalance, getWalletTransactions, getWithdrawalRequests, type WalletBalanceResponse, type WalletTransactionsResponse, type Transaction, type WithdrawalRequest } from '../../../../services/walletApi';
 import Button from '../../../../components/ui/Button/Button';
 import Tabs from '../../../../components/ui/Tabs/Tabs';
+import WithdrawalRequestModal from '../../../../components/ui/WithdrawalRequestModal';
 import {
   HiCurrencyDollar,
   HiDocumentText,
@@ -11,17 +12,21 @@ import {
   HiArrowUp,
   HiArrowDown,
   HiEye,
-  HiExclamationTriangle
+  HiExclamationTriangle,
+  HiOutlinePlusCircle
 } from 'react-icons/hi2';
 
 const Wallet: React.FC = () => {
   const [balance, setBalance] = useState<WalletBalanceResponse['data'] | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingRequests, setLoadingRequests] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
 
   // Filter states for transactions
   const [typeFilter, setTypeFilter] = useState('');
@@ -31,6 +36,7 @@ const Wallet: React.FC = () => {
 
   useEffect(() => {
     fetchWalletData();
+    fetchWithdrawalRequests();
   }, []);
 
   useEffect(() => {
@@ -46,6 +52,18 @@ const Wallet: React.FC = () => {
       setError(err instanceof Error ? err.message : 'خطایی رخ داده است');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWithdrawalRequests = async () => {
+    setLoadingRequests(true);
+    try {
+      const requests = await getWithdrawalRequests();
+      setWithdrawalRequests(requests);
+    } catch (err) {
+      console.error('خطا در دریافت درخواست‌های برداشت:', err);
+    } finally {
+      setLoadingRequests(false);
     }
   };
 
@@ -369,6 +387,104 @@ const Wallet: React.FC = () => {
     );
   };
 
+  const renderWithdrawalRequests = () => {
+    const getStatusColor = (status: string) => {
+      switch (status) {
+        case 'approved':
+          return 'bg-green-100 text-green-800 border-green-300';
+        case 'pending':
+          return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+        case 'rejected':
+          return 'bg-red-100 text-red-800 border-red-300';
+        default:
+          return 'bg-gray-100 text-gray-800 border-gray-300';
+      }
+    };
+
+    const getStatusLabel = (status: string) => {
+      switch (status) {
+        case 'approved':
+          return 'تایید شده';
+        case 'pending':
+          return 'در انتظار بررسی';
+        case 'rejected':
+          return 'رد شده';
+        default:
+          return status;
+      }
+    };
+
+    const formatDate = (dateString: string) => {
+      return new Date(dateString).toLocaleString("fa-IR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    };
+
+    if (loadingRequests) {
+      return (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {/* دکمه درخواست برداشت */}
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-gray-800">درخواست‌های برداشت</h3>
+          <Button
+            variant="solid"
+            onClick={() => setIsWithdrawalModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-primary flex items-center gap-2"
+            disabled={!balance || balance.balance <= 0}
+          >
+            <HiOutlinePlusCircle className="h-5 w-5" />
+            درخواست برداشت جدید
+          </Button>
+        </div>
+
+        {/* لیست درخواست‌ها */}
+        {withdrawalRequests.length === 0 ? (
+          <div className="text-center py-12">
+            <HiDocumentText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+            <p className="text-gray-500 text-lg">هیچ درخواست برداشتی یافت نشد</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {withdrawalRequests.map((request) => (
+              <div key={request.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(request.status)}`}>
+                        {getStatusLabel(request.status)}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {formatDate(request.created_at)}
+                      </span>
+                    </div>
+                    <p className="text-gray-700 mb-2">{request.description}</p>
+                    <div className="flex items-center gap-2">
+                      <HiCurrencyDollar className="text-blue-600" />
+                      <span className="text-lg font-bold text-blue-600">
+                        {new Intl.NumberFormat('fa-IR').format(request.amount)} تومان
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const tabs = [
     {
       id: 'overview',
@@ -381,6 +497,12 @@ const Wallet: React.FC = () => {
       label: 'تراکنش‌ها',
       icon: <HiDocumentText className="h-5 w-5" />,
       content: renderTransactions()
+    },
+    {
+      id: 'withdrawal-requests',
+      label: 'درخواست‌ها',
+      icon: <HiDocumentText className="h-5 w-5" />,
+      content: renderWithdrawalRequests()
     }
   ];
 
@@ -490,6 +612,21 @@ const Wallet: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Withdrawal Request Modal */}
+      {isWithdrawalModalOpen && balance && (
+        <WithdrawalRequestModal
+          isOpen={isWithdrawalModalOpen}
+          onClose={() => setIsWithdrawalModalOpen(false)}
+          currentBalance={balance.balance}
+          onSuccess={() => {
+            setSuccess('درخواست برداشت با موفقیت ثبت شد');
+            fetchWithdrawalRequests();
+            fetchWalletData();
+            setTimeout(() => setSuccess(null), 5000);
+          }}
+        />
       )}
     </div>
   );

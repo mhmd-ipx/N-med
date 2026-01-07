@@ -49,6 +49,36 @@ export interface DepositResponse {
   };
 }
 
+// Withdrawal Request Types
+export interface WithdrawalRequest {
+  id: number;
+  user_id: number;
+  amount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  description: string;
+  requested_at: string;
+  processed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateWithdrawalRequest {
+  amount: number;
+  description: string;
+}
+
+export interface WithdrawalRequestResponse {
+  id: number;
+  user_id: number;
+  amount: number;
+  status: string;
+  description: string;
+  requested_at: string;
+  processed_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: 'https://api.niloudarman.ir',
@@ -162,5 +192,67 @@ export const depositToWallet = async (depositData: DepositRequest): Promise<Depo
       }
     }
     throw new Error('خطای ناشناخته در شارژ کیف پول');
+  }
+};
+
+// Create withdrawal request
+export const createWithdrawalRequest = async (requestData: CreateWithdrawalRequest): Promise<WithdrawalRequestResponse> => {
+  try {
+    const response = await api.post<WithdrawalRequestResponse>('/api/withdrawal-requests', requestData);
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در ثبت درخواست برداشت');
+  }
+};
+
+// Get withdrawal requests
+export const getWithdrawalRequests = async (): Promise<WithdrawalRequest[]> => {
+  try {
+    const response = await api.get<WithdrawalRequest[]>('/api/withdrawal-requests');
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        switch (axiosError.response.status) {
+          case 400:
+            throw new Error('درخواست نامعتبر است (400)');
+          case 401:
+            throw new Error('عدم احراز هویت (401)');
+          case 403:
+            throw new Error('دسترسی غیرمجاز (403)');
+          case 422:
+            throw new Error('داده‌های ورودی نامعتبر هستند (422)');
+          case 500:
+            throw new Error('خطای سرور (500)');
+          default:
+            throw new Error(`خطای ناشناخته API: ${axiosError.response.status}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error('هیچ پاسخی از سرور دریافت نشد');
+      }
+    }
+    throw new Error('خطای ناشناخته در دریافت لیست درخواست‌های برداشت');
   }
 };
