@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { fetchClinicsData, getCachedClinics, getCachedOperators, cacheOperators, cacheUserTimes, getCachedUserTimes } from '../Clinices/ClinicDataManager.ts';
 import { getOperators, detachOperator, getUserTimes, getServices } from '../../../../../services/serverapi.ts';
 import type { Clinic, ProfileInfoProps, Operator, CreateAndAssignOperatorResponse, UserTime, ServicesResponse, Service } from '../../../../../types/types.ts';
-import { HiOutlineXMark, HiOutlineDevicePhoneMobile, HiOutlineBuildingOffice2, HiOutlineCalendar ,  HiOutlineTrash, HiUser, HiOutlinePlusCircle, HiOutlineClock, HiChevronDown, HiChevronUp } from 'react-icons/hi2';
+import { HiOutlineXMark, HiOutlineDevicePhoneMobile, HiOutlineBuildingOffice2, HiOutlineCalendar, HiOutlineTrash, HiUser, HiOutlinePlusCircle, HiOutlineClock, HiChevronDown, HiChevronUp } from 'react-icons/hi2';
 import SuccessPopup from '../../../../../components/ui/SuccessPopup.tsx';
 import CreateOperatorModal from './CreateOperatorModal.tsx';
 import AddScheduleModal from './AddScheduleModal.tsx';
@@ -41,6 +41,7 @@ const Operators = ({ token }: ProfileInfoProps) => {
     const loadServices = async () => {
       try {
         const response: ServicesResponse = await getServices();
+
         setServices(response.data);
       } catch (err) {
         setError('خطا در بارگذاری خدمات');
@@ -245,7 +246,7 @@ const Operators = ({ token }: ProfileInfoProps) => {
           }
         `}
       </style>
-      
+
       {clinics.map((clinic) => (
         <div key={clinic.id} className="mb-6 border-r-2 pr-2 border-primary">
           <div className="flex items-center justify-between gap-2 mb-2">
@@ -260,9 +261,9 @@ const Operators = ({ token }: ProfileInfoProps) => {
             >
               <HiOutlinePlusCircle className="text-xl" />افزودن
             </button>
-             */} 
-            
-            
+             */}
+
+
           </div>
           <div className="mt-3">
             {loadingOperators[clinic.id] ? (
@@ -286,7 +287,7 @@ const Operators = ({ token }: ProfileInfoProps) => {
                               <HiOutlineDevicePhoneMobile className="text-2xl  text-gray-400" />
                               <span className="text-gray-500">{operator.phone}</span>
                             </div>
-                            
+
                           </div>
                         </div>
                         <div className="flex gap-2">
@@ -327,9 +328,9 @@ const Operators = ({ token }: ProfileInfoProps) => {
                             <HiOutlineTrash className="text-xl" />
                           </button>
                            */}
-                          
-                          
-                          
+
+
+
                         </div>
                       </div>
                       {loadingTimes[operator.user_id] ? (
@@ -344,11 +345,11 @@ const Operators = ({ token }: ProfileInfoProps) => {
                                     {activeWeekdays.map((day) => (
                                       <th key={day} className="border border-gray-200 px-4 py-2 text-sm text-center rounded-t-lg">
                                         {day === 'Saturday' ? 'شنبه' :
-                                        day === 'Sunday' ? 'یک‌شنبه' :
-                                        day === 'Monday' ? 'دوشنبه' :
-                                        day === 'Tuesday' ? 'سه‌شنبه' :
-                                        day === 'Wednesday' ? 'چهارشنبه' :
-                                        day === 'Thursday' ? 'پنج‌شنبه' : 'جمعه'}
+                                          day === 'Sunday' ? 'یک‌شنبه' :
+                                            day === 'Monday' ? 'دوشنبه' :
+                                              day === 'Tuesday' ? 'سه‌شنبه' :
+                                                day === 'Wednesday' ? 'چهارشنبه' :
+                                                  day === 'Thursday' ? 'پنج‌شنبه' : 'جمعه'}
                                       </th>
                                     ))}
                                   </tr>
@@ -387,16 +388,16 @@ const Operators = ({ token }: ProfileInfoProps) => {
                                   })}
                                 </tbody>
                               </table>
-                              {/* Edit Schedule Button 
-                              <div className="mt-2 flex justify-center">
-                                <button
-                                  className="text-primary flex gap-1 p-2 text-xs w-full justify-center items-center bg-light rounded-md"
-                                  onClick={() => setIsEditModalOpen({ clinicId: clinic.id, userId: operator.user_id })}
-                                >
-                                  <HiOutlinePlusCircle className="text-xl" />
-                                  ویرایش زمان‌بندی
-                                </button>
-                              </div>
+                              {/* Edit Schedule Button
+                                <div className="mt-2 flex justify-center">
+                                  <button
+                                    className="text-primary flex gap-1 p-2 text-xs w-full justify-center items-center bg-light rounded-md"
+                                    onClick={() => setIsEditModalOpen({ clinicId: clinic.id, userId: operator.user_id })}
+                                  >
+                                    <HiOutlinePlusCircle className="text-xl" />
+                                    ویرایش زمان‌بندی
+                                  </button>
+                                </div>
                               */}
                             </div>
                           </div>
@@ -438,7 +439,7 @@ const Operators = ({ token }: ProfileInfoProps) => {
           clinicId={isCancellationsModalOpen.clinicId}
           isOpen={true}
           onClose={() => setIsCancellationsModalOpen(null)}
-          onCancellationChange={() => handleCancellationChange(isCancellationsModalOpen.clinicId, isCancellationsModalOpen.userId , )}
+          onCancellationChange={() => handleCancellationChange(isCancellationsModalOpen.clinicId, isCancellationsModalOpen.userId,)}
         />
       )}
       {isEditModalOpen && (
@@ -459,7 +460,7 @@ const Operators = ({ token }: ProfileInfoProps) => {
         />
       )}
     </div>
-    
+
   );
 };
 

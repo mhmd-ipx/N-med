@@ -23,22 +23,22 @@ export interface AvailableTimesResponse {
 }
 
 export interface AppointmentRegisterResponse {
-   message: string;
-   appointment: {
-     user_id: number;
-     service_id: number;
-     patient_id: number;
-     start_date: string;
-     end_date: string;
-     status: string;
-     payment_status: string;
-     description: string;
-     attachments: string[] | null;
-     updated_at: string;
-     created_at: string;
-     id: number;
-   };
- }
+  message: string;
+  appointment: {
+    user_id: number;
+    service_id: number;
+    patient_id: number;
+    start_date: string;
+    end_date: string;
+    status: string;
+    payment_status: string;
+    description: string;
+    attachments: string[] | null;
+    updated_at: string;
+    created_at: string;
+    id: number;
+  };
+}
 
 const api = axios.create({
   baseURL: 'https://api.niloudarman.ir',
@@ -104,16 +104,16 @@ export const getAvailableTimes = async (userId: number, serviceId: number, date:
 
 // Register appointment
 export const registerAppointment = async (
-   appointmentData: {
-     user_id: number;
-     service_id: number;
-     patient_id: number;
-     start_date: string;
-     end_date: string;
-     description: string;
-     attachments: string[];
-   }
- ): Promise<AppointmentRegisterResponse> => {
+  appointmentData: {
+    user_id: number;
+    service_id: number;
+    patient_id: number;
+    start_date: string;
+    end_date: string;
+    description: string;
+    attachments: string[];
+  }
+): Promise<AppointmentRegisterResponse> => {
   try {
     const response = await api.post<AppointmentRegisterResponse>('/api/panel/appointment/register', appointmentData);
     return response.data;

@@ -23,108 +23,109 @@ interface BookingSectionProps {
 }
 
 interface TimeSlot {
-   start_time: string;
-   end_time: string;
+  start_time: string;
+  end_time: string;
 }
 
 interface AppointmentSlot {
-   start_time: string;
-   end_time: string;
-   display_time: string;
+  start_time: string;
+  end_time: string;
+  display_time: string;
 }
 
 const BookingSection = ({ doctorId, serviceId, service }: BookingSectionProps) => {
-    const [selectedDate, setSelectedDate] = useState<any>(null);
-    const [selectedDateObj, setSelectedDateObj] = useState<Date | null>(null);
-    const [availableTimes, setAvailableTimes] = useState<AppointmentSlot[]>([]);
-    const [selectedTime, setSelectedTime] = useState<AppointmentSlot | null>(null);
-    const [bookingStatus, setBookingStatus] = useState<string | null>(null);
-    const [description, setDescription] = useState('');
-    const [showForm, setShowForm] = useState(false);
-    const [loadingTimes, setLoadingTimes] = useState(false);
-    const [availableDays, setAvailableDays] = useState<Date[]>([]);
-    const [showCalendar, setShowCalendar] = useState(false);
-    const [currentMonth, setCurrentMonth] = useState(new Date());
-    const formRef = useRef<HTMLDivElement>(null);
-    const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [bookingData, setBookingData] = useState<any>(null);
-    const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<any>(null);
+  const [selectedDateObj, setSelectedDateObj] = useState<Date | null>(null);
+  const [availableTimes, setAvailableTimes] = useState<AppointmentSlot[]>([]);
+  const [selectedTime, setSelectedTime] = useState<AppointmentSlot | null>(null);
+  const [bookingStatus, setBookingStatus] = useState<string | null>(null);
+  const [description, setDescription] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [loadingTimes, setLoadingTimes] = useState(false);
+  const [availableDays, setAvailableDays] = useState<Date[]>([]);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const formRef = useRef<HTMLDivElement>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [bookingData, setBookingData] = useState<any>(null);
+  const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
 
-   // Function to disable past dates
-   const isDateDisabled = (date: any) => {
-     const today = new Date();
-     today.setHours(0, 0, 0, 0); // Reset time to start of day
 
-     // Convert Persian date to Gregorian for comparison
-     if (date && date.year && date.month && date.day) {
-       // For Persian calendar, we need to convert to Gregorian
-       // For simplicity, we'll use a basic check
-       const selectedDate = new Date(date.year, date.month - 1, date.day);
-       return selectedDate < today;
-     }
+  // Function to disable past dates
+  const isDateDisabled = (date: any) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day
 
-     return false;
-   };
+    // Convert Persian date to Gregorian for comparison
+    if (date && date.year && date.month && date.day) {
+      // For Persian calendar, we need to convert to Gregorian
+      // For simplicity, we'll use a basic check
+      const selectedDate = new Date(date.year, date.month - 1, date.day);
+      return selectedDate < today;
+    }
 
-   // Function to break down time slots into appointment slots
-   const generateAppointmentSlots = (timeSlots: TimeSlot[], serviceTime: number = 60, selectedDate?: string): AppointmentSlot[] => {
-     const appointmentSlots: AppointmentSlot[] = [];
+    return false;
+  };
 
-     timeSlots.forEach(slot => {
-       // Extract time part from API response (format: "2025-08-29 09:30:00")
-       const startTimeParts = slot.start_time.split(' ');
-       const endTimeParts = slot.end_time.split(' ');
+  // Function to break down time slots into appointment slots
+  const generateAppointmentSlots = (timeSlots: TimeSlot[], serviceTime: number = 60, selectedDate?: string): AppointmentSlot[] => {
+    const appointmentSlots: AppointmentSlot[] = [];
 
-       if (startTimeParts.length === 2 && endTimeParts.length === 2) {
-         const startTimeStr = startTimeParts[1]; // "09:30:00"
-         const endTimeStr = endTimeParts[1]; // "17:00:00"
+    timeSlots.forEach(slot => {
+      // Extract time part from API response (format: "2025-08-29 09:30:00")
+      const startTimeParts = slot.start_time.split(' ');
+      const endTimeParts = slot.end_time.split(' ');
 
-         // Create Date objects with selected date and API times
-         const startDateTime = new Date(`${selectedDate}T${startTimeStr}`);
-         const endDateTime = new Date(`${selectedDate}T${endTimeStr}`);
+      if (startTimeParts.length === 2 && endTimeParts.length === 2) {
+        const startTimeStr = startTimeParts[1]; // "09:30:00"
+        const endTimeStr = endTimeParts[1]; // "17:00:00"
 
-         // Calculate how many full appointment slots fit in this time range
-         const timeDiff = endDateTime.getTime() - startDateTime.getTime(); // in milliseconds
-         const serviceTimeMs = serviceTime * 60000; // convert minutes to milliseconds
+        // Create Date objects with selected date and API times
+        const startDateTime = new Date(`${selectedDate}T${startTimeStr}`);
+        const endDateTime = new Date(`${selectedDate}T${endTimeStr}`);
 
-         // Only generate slots if there's enough time for at least one full appointment
-         if (timeDiff >= serviceTimeMs) {
-           const maxSlots = Math.floor(timeDiff / serviceTimeMs);
+        // Calculate how many full appointment slots fit in this time range
+        const timeDiff = endDateTime.getTime() - startDateTime.getTime(); // in milliseconds
+        const serviceTimeMs = serviceTime * 60000; // convert minutes to milliseconds
 
-           for (let i = 0; i < maxSlots; i++) {
-             const slotStartTime = new Date(startDateTime.getTime() + (i * serviceTimeMs));
-             const slotEndTime = new Date(slotStartTime.getTime() + serviceTimeMs);
+        // Only generate slots if there's enough time for at least one full appointment
+        if (timeDiff >= serviceTimeMs) {
+          const maxSlots = Math.floor(timeDiff / serviceTimeMs);
 
-             // Only add if the slot end time doesn't exceed the available time slot
-             if (slotEndTime <= endDateTime) {
-               // Format as expected by API: "YYYY-MM-DD HH:mm:ss"
-               const startTimeFormatted = slotStartTime.getFullYear() + '-' +
-                 String(slotStartTime.getMonth() + 1).padStart(2, '0') + '-' +
-                 String(slotStartTime.getDate()).padStart(2, '0') + ' ' +
-                 String(slotStartTime.getHours()).padStart(2, '0') + ':' +
-                 String(slotStartTime.getMinutes()).padStart(2, '0') + ':' +
-                 String(slotStartTime.getSeconds()).padStart(2, '0');
+          for (let i = 0; i < maxSlots; i++) {
+            const slotStartTime = new Date(startDateTime.getTime() + (i * serviceTimeMs));
+            const slotEndTime = new Date(slotStartTime.getTime() + serviceTimeMs);
 
-               const endTimeFormatted = slotEndTime.getFullYear() + '-' +
-                 String(slotEndTime.getMonth() + 1).padStart(2, '0') + '-' +
-                 String(slotEndTime.getDate()).padStart(2, '0') + ' ' +
-                 String(slotEndTime.getHours()).padStart(2, '0') + ':' +
-                 String(slotEndTime.getMinutes()).padStart(2, '0') + ':' +
-                 String(slotEndTime.getSeconds()).padStart(2, '0');
+            // Only add if the slot end time doesn't exceed the available time slot
+            if (slotEndTime <= endDateTime) {
+              // Format as expected by API: "YYYY-MM-DD HH:mm:ss"
+              const startTimeFormatted = slotStartTime.getFullYear() + '-' +
+                String(slotStartTime.getMonth() + 1).padStart(2, '0') + '-' +
+                String(slotStartTime.getDate()).padStart(2, '0') + ' ' +
+                String(slotStartTime.getHours()).padStart(2, '0') + ':' +
+                String(slotStartTime.getMinutes()).padStart(2, '0') + ':' +
+                String(slotStartTime.getSeconds()).padStart(2, '0');
 
-               appointmentSlots.push({
-                 start_time: startTimeFormatted,
-                 end_time: endTimeFormatted,
-                 display_time: `${slotStartTime.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })} - ${slotEndTime.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}`
-               });
-             }
-           }
-         }
-       }
-     });
+              const endTimeFormatted = slotEndTime.getFullYear() + '-' +
+                String(slotEndTime.getMonth() + 1).padStart(2, '0') + '-' +
+                String(slotEndTime.getDate()).padStart(2, '0') + ' ' +
+                String(slotEndTime.getHours()).padStart(2, '0') + ':' +
+                String(slotEndTime.getMinutes()).padStart(2, '0') + ':' +
+                String(slotEndTime.getSeconds()).padStart(2, '0');
 
-     return appointmentSlots;
-   };
+              appointmentSlots.push({
+                start_time: startTimeFormatted,
+                end_time: endTimeFormatted,
+                display_time: `${slotStartTime.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })} - ${slotEndTime.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}`
+              });
+            }
+          }
+        }
+      }
+    });
+
+    return appointmentSlots;
+  };
 
   // Generate available days (next 14 days)
   useEffect(() => {
@@ -198,6 +199,7 @@ const BookingSection = ({ doctorId, serviceId, service }: BookingSectionProps) =
         });*/
 
         const response = await getAvailableTimes(doctorId, serviceId, finalDate);
+
         /*console.log("Doctor ID:", doctorId);
         console.log("📥 Full getAvailableTimes response:", response);
         console.log("Response data:", response.data);*/
@@ -238,7 +240,7 @@ const BookingSection = ({ doctorId, serviceId, service }: BookingSectionProps) =
     }
   };
 
-const handleDateSelect = async (date: any) => {
+  const handleDateSelect = async (date: any) => {
     // console.log("Clicked date raw:", date);
 
     // Check if selected date is in the past
@@ -270,73 +272,73 @@ const handleDateSelect = async (date: any) => {
     setShowForm(false);
     setLoadingTimes(true);
 
-   if (date && doctorId) {
-     try {
-       // Get the date in YYYY-MM-DD format from the Persian date picker
-       let finalDate: string;
+    if (date && doctorId) {
+      try {
+        // Get the date in YYYY-MM-DD format from the Persian date picker
+        let finalDate: string;
 
-       if (date._i) {
-         // If _i exists, use it (Persian date picker format)
-         const rawDate = date._i;
-         const cleanDate = rawDate.replace(/-+$/, "");
-         finalDate = cleanDate;
-       } else if (date.year && date.month && date.day) {
-         // Fallback: construct date from year, month, day
-         finalDate = `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
-       } else {
-         throw new Error("Invalid date format");
-       }
-
-       /*console.log("📤 Sending API request to getAvailableTimes with body:", {
-         user_id: doctorId,
-         service_id: serviceId,
-         date: finalDate,
-       });
-*/
-      const response = await getAvailableTimes(doctorId, serviceId, finalDate);
-      //console.log("📥 Full getAvailableTimes response:", response);
-      //console.log("Response data:", response.data);
-
-      let hasValidData = response.data.length > 0;
-      if (hasValidData) {
-        const responseDate = response.data[0].start_time.split(' ')[0];
-        //console.log("responseDate:", responseDate, "finalDate:", finalDate);
-        if (responseDate !== finalDate) {
-          hasValidData = false;
+        if (date._i) {
+          // If _i exists, use it (Persian date picker format)
+          const rawDate = date._i;
+          const cleanDate = rawDate.replace(/-+$/, "");
+          finalDate = cleanDate;
+        } else if (date.year && date.month && date.day) {
+          // Fallback: construct date from year, month, day
+          finalDate = `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
+        } else {
+          throw new Error("Invalid date format");
         }
-      }
 
-      if (!hasValidData) {
-        setBookingStatus("برای این تاریخ نوبتی موجود نیست");
+        /*console.log("📤 Sending API request to getAvailableTimes with body:", {
+          user_id: doctorId,
+          service_id: serviceId,
+          date: finalDate,
+        });
+ */
+        const response = await getAvailableTimes(doctorId, serviceId, finalDate);
+        //console.log("📥 Full getAvailableTimes response:", response);
+        //console.log("Response data:", response.data);
+
+        let hasValidData = response.data.length > 0;
+        if (hasValidData) {
+          const responseDate = response.data[0].start_time.split(' ')[0];
+          //console.log("responseDate:", responseDate, "finalDate:", finalDate);
+          if (responseDate !== finalDate) {
+            hasValidData = false;
+          }
+        }
+
+        if (!hasValidData) {
+          setBookingStatus("برای این تاریخ نوبتی موجود نیست");
+          setAvailableTimes([]);
+          setLoadingTimes(false);
+          setTimeout(() => setBookingStatus(null), 3000);
+        } else {
+          // Extract service time from the first service (assuming all services in the slot have the same time)
+          const serviceTime = response.data[0]?.services[0]?.time || 60;
+
+          // Break down time slots into appointment slots using the actual service time and selected date
+          const appointmentSlots = generateAppointmentSlots(response.data, serviceTime, finalDate);
+          setAvailableTimes(appointmentSlots);
+          setLoadingTimes(false);
+        }
+      } catch (error: any) {
+        console.error("Error in handleDateSelect:", error.message, error);
+        const errorMessage = error.message === 'نوبتی موجود نیست' ? 'نوبتی نیست برای این تاریخ' : `خطا در دریافت نوبت‌های موجود: ${error.message}`;
+        setBookingStatus(errorMessage);
         setAvailableTimes([]);
-        setLoadingTimes(false);
         setTimeout(() => setBookingStatus(null), 3000);
-      } else {
-        // Extract service time from the first service (assuming all services in the slot have the same time)
-        const serviceTime = response.data[0]?.services[0]?.time || 60;
-
-        // Break down time slots into appointment slots using the actual service time and selected date
-        const appointmentSlots = generateAppointmentSlots(response.data, serviceTime, finalDate);
-        setAvailableTimes(appointmentSlots);
         setLoadingTimes(false);
       }
-    } catch (error: any) {
-      console.error("Error in handleDateSelect:", error.message, error);
-      const errorMessage = error.message === 'نوبتی موجود نیست' ? 'نوبتی نیست برای این تاریخ' : `خطا در دریافت نوبت‌های موجود: ${error.message}`;
-      setBookingStatus(errorMessage);
+    } else {
       setAvailableTimes([]);
-      setTimeout(() => setBookingStatus(null), 3000);
       setLoadingTimes(false);
+      if (!doctorId) {
+        setBookingStatus("شناسه پزشک نامعتبر است");
+        setTimeout(() => setBookingStatus(null), 3000);
+      }
     }
-  } else {
-    setAvailableTimes([]);
-    setLoadingTimes(false);
-    if (!doctorId) {
-      setBookingStatus("شناسه پزشک نامعتبر است");
-      setTimeout(() => setBookingStatus(null), 3000);
-    }
-  }
-};
+  };
 
 
 
@@ -522,17 +524,16 @@ const handleDateSelect = async (date: any) => {
                       day: currentDate.getDate()
                     })}
                     disabled={isPast}
-                    className={`h-8 w-8 sm:h-10 sm:w-10 text-xs sm:text-sm rounded-lg transition-all duration-200 ${
-                      !isCurrentMonth
-                        ? 'text-gray-300 cursor-not-allowed'
-                        : isSelected
+                    className={`h-8 w-8 sm:h-10 sm:w-10 text-xs sm:text-sm rounded-lg transition-all duration-200 ${!isCurrentMonth
+                      ? 'text-gray-300 cursor-not-allowed'
+                      : isSelected
                         ? 'bg-blue-500 text-white shadow-lg'
                         : isPast
-                        ? 'text-gray-300 cursor-not-allowed'
-                        : isToday
-                        ? 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
+                          ? 'text-gray-300 cursor-not-allowed'
+                          : isToday
+                            ? 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                            : 'text-gray-700 hover:bg-gray-100'
+                      }`}
                   >
                     {currentDate.getDate()}
                   </button>
@@ -561,13 +562,12 @@ const handleDateSelect = async (date: any) => {
                 key={index}
                 onClick={() => !isPast && handleDaySelect(day)}
                 disabled={isPast}
-                className={`flex-shrink-0 w-20 h-20 rounded-xl border-2 transition-all duration-200 transform hover:scale-105 ${
-                  isSelected
-                    ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-blue-500 shadow-lg'
-                    : isPast
+                className={`flex-shrink-0 w-20 h-20 rounded-xl border-2 transition-all duration-200 transform hover:scale-105 ${isSelected
+                  ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-blue-500 shadow-lg'
+                  : isPast
                     ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                     : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50'
-                }`}
+                  }`}
               >
                 <div className="flex flex-col items-center justify-center h-full">
                   <span className={`text-xs font-medium ${isSelected ? 'text-blue-100' : isPast ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -621,11 +621,10 @@ const handleDateSelect = async (date: any) => {
                     <button
                       key={index}
                       onClick={() => handleTimeSelect(time)}
-                      className={`group relative p-3 sm:p-4 rounded-xl text-center transition-all duration-200 transform hover:scale-105 ${
-                        selectedTime?.start_time === time.start_time
-                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
-                          : 'bg-gray-50 text-gray-700 hover:bg-blue-50 hover:shadow-md border border-gray-200'
-                      }`}
+                      className={`group relative p-3 sm:p-4 rounded-xl text-center transition-all duration-200 transform hover:scale-105 ${selectedTime?.start_time === time.start_time
+                        ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
+                        : 'bg-gray-50 text-gray-700 hover:bg-blue-50 hover:shadow-md border border-gray-200'
+                        }`}
                     >
                       <div className="flex items-center justify-center gap-1 sm:gap-2">
                         <HiOutlineClock className={`text-xs sm:text-sm ${selectedTime?.start_time === time.start_time ? 'text-blue-100' : 'text-blue-500'}`} />
@@ -669,11 +668,10 @@ const handleDateSelect = async (date: any) => {
 
               {/* Status Message */}
               {bookingStatus && (
-                <div className={`rounded-xl p-3 sm:p-4 text-center text-xs sm:text-sm font-medium ${
-                  bookingStatus.includes('موفقیت') || bookingStatus.includes('ثبت')
-                    ? 'bg-green-50 text-green-700 border border-green-200'
-                    : 'bg-blue-50 text-blue-700 border border-blue-200'
-                }`}>
+                <div className={`rounded-xl p-3 sm:p-4 text-center text-xs sm:text-sm font-medium ${bookingStatus.includes('موفقیت') || bookingStatus.includes('ثبت')
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : 'bg-blue-50 text-blue-700 border border-blue-200'
+                  }`}>
                   {bookingStatus}
                 </div>
               )}
@@ -815,11 +813,10 @@ const handleDateSelect = async (date: any) => {
                   }
                 }}
                 disabled={isPaymentProcessing}
-                className={`w-full py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-semibold text-sm sm:text-base md:text-lg transition-all duration-200 flex items-center justify-center gap-2 sm:gap-3 ${
-                  isPaymentProcessing
-                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 transform hover:scale-105 shadow-lg'
-                }`}
+                className={`w-full py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-semibold text-sm sm:text-base md:text-lg transition-all duration-200 flex items-center justify-center gap-2 sm:gap-3 ${isPaymentProcessing
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 transform hover:scale-105 shadow-lg'
+                  }`}
               >
                 {isPaymentProcessing ? (
                   <>

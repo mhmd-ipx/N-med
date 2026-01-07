@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { HiOutlinePlusCircle, HiOutlineTrash , HiChevronDown , HiChevronUp } from 'react-icons/hi2';
+import { HiOutlinePlusCircle, HiOutlineTrash, HiChevronDown, HiChevronUp } from 'react-icons/hi2';
 import type { CreateSchedulesRequest, ScheduleData, ScheduleTime, Service } from '../../../../../types/types';
-import { createSchedules, getServices, getUserTimes } from '../../../../../services/serverapi';
+import { createSchedules, getDoctorServices, getUserTimes } from '../../../../../services/serverapi';
 import { cacheUserTimes } from '../Clinices/ClinicDataManager.ts';
 import Select from 'react-select';
 
@@ -30,14 +30,16 @@ const AddScheduleModal: React.FC<AddScheduleModalProps> = ({ userId, clinicId, i
   useEffect(() => {
     const loadServices = async () => {
       try {
-        const response = await getServices();
-        setServices(response.data);
+        // دریافت خدمات دکتر و فیلتر بر اساس کلینیک
+        const response = await getDoctorServices(userId);
+        const filteredServices = response.data.filter((service) => service.clinic?.id === clinicId);
+        setServices(filteredServices);
       } catch (err) {
         setErrorMessage('خطا در بارگذاری خدمات');
       }
     };
     loadServices();
-  }, []);
+  }, [userId, clinicId]);
 
   const handleAddTimeSlot = (index: number) => {
     const newSchedules = [...schedules];
@@ -211,6 +213,7 @@ const AddScheduleModal: React.FC<AddScheduleModalProps> = ({ userId, clinicId, i
   const availableWeekdays = (index: number) =>
     weekdays.filter((day) => !selectedDays.includes(day) || schedules[index].weekdays.includes(day));
 
+  // خدمات قبلاً فیلتر شده‌اند، نیازی به فیلتر مجدد نیست
   const serviceOptions = services.map((service) => ({
     value: service.id,
     label: service.title,
@@ -452,38 +455,38 @@ const AddScheduleModal: React.FC<AddScheduleModalProps> = ({ userId, clinicId, i
         <div className="p-6 border-t border-gray-200 bg-white">
           <div className="flex justify-between w-full gap-4  items-center">
             <div className='w-2/3 '>
-                {errorMessage && (
+              {errorMessage && (
                 <span className="message error">{errorMessage}</span>
-                )}
-                {successMessage && (
+              )}
+              {successMessage && (
                 <span className="message success">{successMessage}</span>
-                )}
+              )}
             </div>
             <div className='flex gap-2 w-1/3'>
-                <button
+              <button
                 type="button"
                 className="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200"
                 onClick={handleClose}
-                >
+              >
                 انصراف
-                </button>
-                <button
+              </button>
+              <button
                 type="button"
                 className="inline-flex justify-center items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:bg-indigo-400"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                >
+              >
                 {isSubmitting ? (
-                    <>
+                  <>
                     <span className="loading-spinner" />
                     در حال ثبت...
-                    </>
+                  </>
                 ) : (
-                    'ثبت زمان‌بندی'
+                  'ثبت زمان‌بندی'
                 )}
-                </button>
+              </button>
             </div>
-            
+
           </div>
         </div>
       </div>
