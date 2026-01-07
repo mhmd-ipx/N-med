@@ -1,8 +1,8 @@
 import React, { useState, useEffect, Component } from "react";
 import type { ErrorInfo } from "react";
 import { getDoctorDashboard } from "../../../../services/serverapi";
-import type { DoctorDashboardResponse } from "../../../../types/types";
-import { FaUser, FaClinicMedical, FaCalendarCheck, FaExchangeAlt, FaStethoscope, FaMapMarkerAlt, FaDollarSign, FaSyncAlt } from 'react-icons/fa';
+import { getWalletBalance } from "../../../../services/walletApi";
+import { FaClinicMedical, FaCalendarCheck, FaExchangeAlt, FaStethoscope, FaMapMarkerAlt, FaDollarSign, FaWallet } from 'react-icons/fa';
 
 // تعریف نوع برای دیتای داشبورد
 interface DashboardData {
@@ -10,30 +10,6 @@ interface DashboardData {
   services_count: number;
   appointments_count: number;
   referrals_count: number;
-}
-
-// تعریف نوع برای دیتای کاربر از authData
-interface AuthData {
-  message: string;
-  token: string;
-  user: {
-    id: number;
-    name: string;
-    phone: string;
-    role: string;
-    related_data: {
-      id: number;
-      specialties: null;
-      address: null;
-      bio: null;
-      avatar: null;
-      code: null;
-      status: string;
-      clinics: Clinic[];
-      created_at: string;
-      updated_at: string;
-    };
-  };
 }
 
 // تعریف نوع برای کلینیک‌ها از clinics_cache
@@ -95,24 +71,6 @@ interface Service {
   updated_at: string;
 }
 
-// تابع فرضی برای دریافت اطلاعات کاربر (حالا از API واقعی یا فرضی)
-const getUserData = async (): Promise<AuthData> => {
-  // فرضی: در واقعیت از API بگیرید
-  return JSON.parse(localStorage.getItem('authData') || '{}') as AuthData;
-};
-
-// تابع فرضی برای دریافت کلینیک‌ها
-const getClinicsData = async (): Promise<ClinicsCache> => {
-  // فرضی
-  return JSON.parse(localStorage.getItem('clinics_cache') || '{}') as ClinicsCache;
-};
-
-// تابع فرضی برای دریافت خدمات
-const getServicesData = async (): Promise<Service[]> => {
-  // فرضی
-  return JSON.parse(localStorage.getItem('cached_services') || '[]') as Service[];
-};
-
 // Error Boundary
 class DashboardErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
@@ -144,9 +102,9 @@ const Dashboard: React.FC = () => {
     appointments_count: 0,
     referrals_count: 0,
   });
-  const [authData, setAuthData] = useState<AuthData | null>(null);
   const [clinicsData, setClinicsData] = useState<ClinicsCache | null>(null);
   const [servicesData, setServicesData] = useState<Service[]>([]);
+  const [walletBalance, setWalletBalance] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -154,13 +112,14 @@ const Dashboard: React.FC = () => {
   const fetchAndUpdateData = async () => {
     try {
       setLoading(true);
-      const [dashboard,] = await Promise.all([
+      const [dashboard, walletData] = await Promise.all([
         getDoctorDashboard(),
-
+        getWalletBalance().catch(() => ({ data: { balance: 0, formatted_balance: '0 تومان' } }))
       ]);
       // ذخیره دیتا در لوکال استوریج
       localStorage.setItem("dashboardData", JSON.stringify(dashboard));
       setDashboardData(dashboard);
+      setWalletBalance(walletData.data.balance);
     } catch (err: any) {
       setError(err.message || "خطایی در دریافت اطلاعات رخ داد");
     } finally {
@@ -175,14 +134,12 @@ const Dashboard: React.FC = () => {
         setLoading(true);
         // چک کردن لوکال استوریج
         const storedDashboardData = localStorage.getItem("dashboardData");
-        const storedAuthData = localStorage.getItem("authData");
         const storedClinicsData = localStorage.getItem("clinics_cache");
         const storedServicesData = localStorage.getItem("cached_services");
 
-        if (storedDashboardData && storedAuthData && storedClinicsData && storedServicesData) {
+        if (storedDashboardData && storedClinicsData && storedServicesData) {
           try {
             const parsedDashboardData = JSON.parse(storedDashboardData);
-            const parsedAuthData = JSON.parse(storedAuthData);
             const parsedClinicsData = JSON.parse(storedClinicsData);
             const parsedServicesData = JSON.parse(storedServicesData);
             // اعتبارسنجی ساده
@@ -190,16 +147,12 @@ const Dashboard: React.FC = () => {
               parsedDashboardData &&
               typeof parsedDashboardData === "object" &&
               "clinics_count" in parsedDashboardData &&
-              parsedAuthData &&
-              typeof parsedAuthData === "object" &&
-              "user" in parsedAuthData &&
               parsedClinicsData &&
               typeof parsedClinicsData === "object" &&
               "clinics" in parsedClinicsData &&
               Array.isArray(parsedServicesData)
             ) {
               setDashboardData(parsedDashboardData);
-              setAuthData(parsedAuthData);
               setClinicsData(parsedClinicsData);
               setServicesData(parsedServicesData);
               setLoading(false);
@@ -220,11 +173,6 @@ const Dashboard: React.FC = () => {
     loadData();
   }, []);
 
-  // هندلر دکمه بروزرسانی
-  const handleRefresh = async () => {
-    await fetchAndUpdateData();
-  };
-
   if (loading) {
     return <div className="text-center py-10">در حال بارگذاری...</div>;
   }
@@ -237,35 +185,26 @@ const Dashboard: React.FC = () => {
     <DashboardErrorBoundary>
       <div className="px-4 min-h-screen " dir="rtl">
 
-
-        {/* باکس اطلاعات کاربر */}
-
-        <div className="mb-6 border border-gray-200 p-4 rounded-xl bg-primary flex items-center justify-between text-right transition-colors">
-          <div>
-            <h3 className="font-semibold mb-3 text-gray-700 flex items-center text-white">
-              <FaUser className="text-primary bg-white p-2 rounded-3xl text-4xl ml-3" />
-              دکتر {authData?.user.name || "نامشخص"}            </h3>
-            <p className="text-white">شماره موبایل: {authData?.user.phone || "نامشخص"}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-            onClick={handleRefresh}
-            className="bg-white text-white p-3 rounded-lg  transition-colors flex items-center gap-2"
-            >
-            <FaSyncAlt className="text-primary "/>
-            </button>
-            <a href="/account-settings" className="block">
-              <button className="bg-white text-primary px-4 py-2 rounded-lg">
-                تنظیمات حساب کاربری
-              </button>
-            </a>
-          </div>
-          
-        </div>
-
-
         {/* چهار باکس چارتی */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <a href="/doctor-Profile/Wallet" className="block">
+            <div className="border border-gray-200 p-4 rounded-xl bg-white flex items-center text-right hover:bg-gray-50 transition-colors">
+              <FaWallet className="text-3xl text-primary ml-3" />
+              <div>
+                <h3 className="font-semibold text-gray-700">موجودی کیف پول</h3>
+                <p className="text-2xl font-bold text-gray-800">{new Intl.NumberFormat('fa-IR').format(walletBalance)} تومان</p>
+              </div>
+            </div>
+          </a>
+          <a href="/doctor-Profile/Services" className="block">
+            <div className="border border-gray-200 p-4 rounded-xl bg-white flex items-center text-right hover:bg-gray-50 transition-colors">
+              <FaExchangeAlt className="text-3xl text-primary ml-3" />
+              <div>
+                <h3 className="font-semibold text-gray-700">تعداد ارجاعات  </h3>
+                <p className="text-2xl font-bold text-gray-800">{dashboardData.referrals_count}</p>
+              </div>
+            </div>
+          </a>
           <a href="/doctor-Profile/Turns" className="block">
             <div className="border border-gray-200 p-4 rounded-xl bg-white flex items-center text-right hover:bg-gray-50 transition-colors">
               <FaCalendarCheck className="text-3xl text-primary ml-3" />
@@ -275,30 +214,13 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </a>
-          <a href="/doctor-Profile/Services" className="block">
-            <div className="border border-gray-200 p-4 rounded-xl bg-white flex items-center text-right hover:bg-gray-50 transition-colors">
-              <FaClinicMedical className="text-3xl text-primary ml-3" />
-              <div>
-                <h3 className="font-semibold text-gray-700">تعداد کلینیک‌ها</h3>
-                <p className="text-2xl font-bold text-gray-800">{dashboardData.clinics_count}</p>
-              </div>
-            </div>
-          </a>
+
           <a href="/doctor-Profile/Services" className="block">
             <div className="border border-gray-200 p-4 rounded-xl bg-white flex items-center text-right hover:bg-gray-50 transition-colors">
               <FaStethoscope className="text-3xl text-primary ml-3" />
               <div>
                 <h3 className="font-semibold text-gray-700">تعداد خدمات</h3>
                 <p className="text-2xl font-bold text-gray-800">{dashboardData.services_count}</p>
-              </div>
-            </div>
-          </a>
-          <a href="/doctor-Profile/References" className="block">
-            <div className="border border-gray-200 p-4 rounded-xl bg-white flex items-center text-right hover:bg-gray-50 transition-colors">
-              <FaExchangeAlt className="text-3xl text-primary ml-3" />
-              <div>
-                <h3 className="font-semibold text-gray-700">تعداد ارجاعات</h3>
-                <p className="text-2xl font-bold text-gray-800">{dashboardData.referrals_count}</p>
               </div>
             </div>
           </a>
@@ -327,7 +249,7 @@ const Dashboard: React.FC = () => {
             </div>
           </a>
 
-          
+
         </div>
 
         {/* دیو دو ستونه برای کلینیک‌ها و خدمات */}
@@ -352,7 +274,7 @@ const Dashboard: React.FC = () => {
               </ul>
             </div>
           </a>
-          
+
           <a href="/doctor-Profile/Services" className="block">
             <div className="border p-4 rounded-xl  bg-white hover:bg-gray-50">
               <h3 className="font-semibold mb-3 text-gray-700 flex items-center gap-2 text-lg">
@@ -373,7 +295,15 @@ const Dashboard: React.FC = () => {
               </ul>
             </div>
           </a>
-          
+
+        </div>
+
+        {/* محل تبلیغات و بنر */}
+        <div className="mt-6 mb-4">
+          <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 bg-gray-50 text-center">
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">محل تبلیغات و بنر شما</h3>
+            <p className="text-sm text-gray-500">این فضا برای نمایش تبلیغات و بنرهای شما در نظر گرفته شده است</p>
+          </div>
         </div>
       </div>
     </DashboardErrorBoundary>

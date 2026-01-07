@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Helmet } from 'react-helmet-async';
 import Filters from '../components/ServiceCategories/Filters';
 import { getDoctors, getProvinces, getSpecialties, getSymptoms, type Doctor, type DoctorsResponse, type Province, type Specialty, type Symptom } from '../services/publicApi';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -204,6 +205,9 @@ const Doctors: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <Helmet>
+        <title>آرشیو پزشکان | نیلو درمان</title>
+      </Helmet>
       <div className="container mx-auto px-4 py-8 max-w-[1300px]">
         {/* Header */}
         <div className="text-center mb-8">

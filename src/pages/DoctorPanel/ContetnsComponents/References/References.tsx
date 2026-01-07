@@ -359,13 +359,13 @@ const References: React.FC = () => {
     // Get unique doctors for filter
     const uniqueDoctors = isReceived
       ? [...new Set(filteredReferrals.map(r => r.referring_doctor?.name || r.referring_doctor_id.toString()))].map(name => ({
-          id: name,
-          name: name.startsWith('دکتر ') ? name : `دکتر ${name}`
-        }))
+        id: name,
+        name: name.startsWith('دکتر ') ? name : `دکتر ${name}`
+      }))
       : [...new Set(filteredReferrals.map(r => r.referred_doctor?.name || r.referred_doctor_id.toString()))].map(name => ({
-          id: name,
-          name: name.startsWith('دکتر ') ? name : `دکتر ${name}`
-        }));
+        id: name,
+        name: name.startsWith('دکتر ') ? name : `دکتر ${name}`
+      }));
 
     if (loading) {
       return (
@@ -518,8 +518,8 @@ const References: React.FC = () => {
             </table>
           </div>
         )}
-  
-  
+
+
         {/* Commission Confirm Modal */}
         {isCommissionModalOpen && commissionReferral && (
           <CommissionConfirmModal
@@ -661,10 +661,10 @@ const References: React.FC = () => {
                   variant="solid"
                   onClick={handleCreateReferral}
                   disabled={createLoading || !selectedDoctor || !patientMobile.trim()}
-                  className="px-6 bg-blue-600 hover:bg-blue-700 text-white"
+                  className="px-6 bg-blue-600 hover:bg-blue-700 text-primary"
                 >
                   {createLoading ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 text-primary">
                       <div className="animate-spin rounded-full h-4 w-4 text-primary border-b-2 border-white"></div>
                       در حال ثبت...
                     </div>

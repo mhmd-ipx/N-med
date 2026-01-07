@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import UserDataProvider from '../../components/ui/login/UserDataProvider';
 import SidebarMenu from './SidebarMenu';
@@ -52,6 +53,9 @@ const UserProfile = () => {
 
         return (
           <div className='bg-primary min-h-screen'>
+            <Helmet>
+              <title>پنل بیمار | نیلو درمان</title>
+            </Helmet>
             <div className="max-w-[1300px] mx-auto px-4">
               {/* Header Section */}
               <div className='flex flex-col gap-3 lg:pr-72 pb-3 text-white pt-14'>

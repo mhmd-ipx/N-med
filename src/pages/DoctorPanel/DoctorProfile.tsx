@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import UserDataProvider from '../../components/ui/login/UserDataProvider';
 import SidebarMenu from './SidebarMenu';
@@ -52,6 +53,9 @@ const DoctorProfile = () => {
 
         return (
           <div className='bg-primary min-h-screen'>
+            <Helmet>
+              <title>پنل پزشک | نیلو درمان</title>
+            </Helmet>
             <div className="max-w-[1300px] mx-auto px-4">
               {/* Header Section */}
               <div className='flex flex-col gap-3 lg:pr-72 pb-3 text-white pt-14 lg:pt-14'>
@@ -59,7 +63,7 @@ const DoctorProfile = () => {
                   <div>
                     <span className='text-xl md:text-2xl font-medium'>{`دکتر ${user.name || 'بدون نام'}`}</span>
                     <div className='flex gap-2 mt-1'>
-                      <span className='text-sm'>فوق تخصص قلب و عروق</span>
+                      <span className='text-sm'>پنل مدیریت حساب کاربری پزشک</span>
                       <HiMiniPencilSquare
                         className='text-xl cursor-pointer hover:text-blue-200 transition-colors'
                         onClick={() => setActiveItem('Edit-account')}

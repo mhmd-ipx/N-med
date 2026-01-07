@@ -87,9 +87,9 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
 
       {/* Sidebar */}
       <div className={`
-        fixed lg:static inset-y-0 right-0 z-50 w-64  transform transition-transform duration-300  ease-in-out
-        ${isMobileOpen ? 'translate-x-0 bg-white ' : 'translate-x-full lg:translate-x-0 '}
-        lg:w-64 -mt-32 p-4 flex flex-col  gap-3 shadow-lg lg:shadow-none
+        fixed lg:static inset-y-0 right-0 transform transition-transform duration-300  ease-in-out
+        ${isMobileOpen ? 'translate-x-0 bg-white z-50' : 'translate-x-full lg:translate-x-0 lg:z-10'}
+        w-64 -mt-32 p-4 flex flex-col  gap-3 shadow-lg lg:shadow-none
       `}>
         {/* Mobile Close Button */}
         <button
@@ -99,11 +99,11 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
           <HiOutlineXMark className="text-xl" />
         </button>
 
-        <div className="relative aspect-square">
+        <div className="w-full aspect-square overflow-hidden rounded-2xl border-4 border-blue-500 bg-white">
           <img
             src={profileImage}
             alt="پروفایل کاربر"
-            className="absolute inset-0 w-full h-full object-contain rounded-2xl"
+            className="w-full h-full object-cover"
           />
         </div>
 

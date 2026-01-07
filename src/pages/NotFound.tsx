@@ -1,8 +1,12 @@
+import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 
 const NotFound = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <Helmet>
+        <title>404 - صفحه یافت نشد | نیلو درمان</title>
+      </Helmet>
       <div className="max-w-md w-full text-center">
         {/* 404 Image */}
         <div className="mb-8">

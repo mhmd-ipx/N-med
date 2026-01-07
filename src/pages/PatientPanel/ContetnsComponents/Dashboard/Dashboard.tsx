@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
-import { FaUser, FaCalendarCheck, FaFileMedical, FaHeart, FaSyncAlt } from 'react-icons/fa';
+import { FaUser, FaCalendarCheck, FaFileMedical } from 'react-icons/fa';
 import { useUser } from '../../../../components/ui/login/UserDataProvider';
-import Userimage from '../../../../assets/images/userimg.png';
 import { getPatientAppointments } from '../../../../services/serverapi';
 
 // تعریف نوع برای دیتای داشبورد بیمار
@@ -11,26 +9,6 @@ interface PatientDashboardData {
   appointments_count: number;
   medical_records_count: number;
   referrals_count: number;
-}
-
-// تعریف نوع برای دیتای کاربر از authData
-interface AuthData {
-  message: string;
-  token: string;
-  user: {
-    id: number;
-    name: string;
-    phone: string;
-    role: string;
-    related_data?: {
-      id: number;
-      avatar?: string;
-      address?: string;
-      bio?: string;
-      created_at: string;
-      updated_at: string;
-    };
-  };
 }
 
 // داده‌های تستی برای داشبورد بیمار
@@ -94,74 +72,42 @@ const Dashboard: React.FC = () => {
   // لود اولیه دیتا
   useEffect(() => {
     const loadData = async () => {
-  // در واقعیت اینجا از API دریافت می‌کنیم
-  setDashboardData(mockPatientDashboardData);
+      // در واقعیت اینجا از API دریافت می‌کنیم
+      setDashboardData(mockPatientDashboardData);
 
-  if (user) {
-    try {
-      const appointments = await getPatientAppointments();
-      const transformedAppointments = appointments.map(
-        transformApiAppointmentToDashboardAppointment
-      );
+      if (user) {
+        try {
+          const appointments = await getPatientAppointments();
+          const transformedAppointments = appointments.map(
+            transformApiAppointmentToDashboardAppointment
+          );
 
-      // مرتب‌سازی بر اساس تاریخ و ساعت (جدیدترین اول)
-      const sortedAppointments = transformedAppointments.sort((a, b) => {
-        const dateA = new Date(a.date + ' ' + a.time);
-        const dateB = new Date(b.date + ' ' + b.time);
-        return dateB - dateA;
-      });
+          // مرتب‌سازی بر اساس تاریخ و ساعت (جدیدترین اول)
+          const sortedAppointments = transformedAppointments.sort((a, b) => {
+            const dateA = new Date(a.date + ' ' + a.time);
+            const dateB = new Date(b.date + ' ' + b.time);
+            return dateB.getTime() - dateA.getTime();
+          });
 
-      // نمایش 4 نوبت آخر (جدیدترین‌ها)
-      setUpcomingAppointments(sortedAppointments.slice(0, 4));
-    } catch (error) {
-      console.error('Error fetching appointments:', error);
-    }
-  }
-};
+          // نمایش 4 نوبت آخر (جدیدترین‌ها)
+          setUpcomingAppointments(sortedAppointments.slice(0, 4));
+        } catch (error) {
+          console.error('Error fetching appointments:', error);
+        }
+      }
+    };
 
     if (!isLoading) {
       loadData();
     }
   }, [user, isLoading]);
 
-  // هندلر دکمه بروزرسانی
-  const handleRefresh = () => {
-    // در واقعیت اینجا API call می‌کنیم
-    // console.log("بروزرسانی داشبورد...");
-  };
-
   if (isLoading) {
     return <div className="text-center py-10">در حال بارگذاری...</div>;
   }
 
-  const profileImage = user?.related_data?.avatar || Userimage;
-
   return (
     <div className="px-4 min-h-screen" dir="rtl">
-      {/* باکس اطلاعات کاربر */}
-      <div className="mb-6 border border-gray-200 p-4 rounded-xl bg-primary flex items-center justify-between text-right transition-colors">
-        <div>
-          <h3 className="font-semibold mb-3 text-gray-700 flex items-center text-white">
-            <img src={profileImage} alt="پروفایل کاربر" className="w-12 h-12 rounded-3xl ml-3 object-contain bg-white p-1" />
-            {user?.name || "بیمار گرامی"}
-          </h3>
-          <p className="text-white">شماره موبایل: {user?.phone || "نامشخص"}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleRefresh}
-            className="bg-white text-white p-3 rounded-lg transition-colors flex items-center gap-2"
-          >
-            <FaSyncAlt className="text-primary" />
-          </button>
-          <a href="/UserProfile/Edit-account" className="block">
-            <button className="bg-white text-primary px-4 py-2 rounded-lg">
-              تنظیمات حساب کاربری
-            </button>
-          </a>
-        </div>
-      </div>
-
       {/* چهار باکس چارتی */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mb-4">
 
@@ -175,7 +121,7 @@ const Dashboard: React.FC = () => {
           </div>
         </Link>
         <a href="/UserProfile/Support" >
-        <div className="border border-gray-200 p-4 rounded-xl bg-white flex items-center text-right hover:bg-gray-50 transition-colors">
+          <div className="border border-gray-200 p-4 rounded-xl bg-white flex items-center text-right hover:bg-gray-50 transition-colors">
             <FaUser className="text-3xl text-primary ml-3" />
             <div>
               <h3 className="font-semibold text-gray-700">ارجاعات دریافتی</h3>
@@ -184,14 +130,14 @@ const Dashboard: React.FC = () => {
           </div>
 
         </a>
-        
-          
+
+
       </div>
 
       {/* دیو برای نوبت‌ها */}
       <div className="mb-4">
         <a href="/UserProfile/Turns" >
-        <div className="border p-4 rounded-xl bg-white hover:bg-gray-50">
+          <div className="border p-4 rounded-xl bg-white hover:bg-gray-50">
             <h3 className="font-semibold mb-3 text-gray-700 flex items-center gap-2 text-lg">
               <FaCalendarCheck className="text-2xl text-primary ml-3" />
               نوبت‌های آینده
@@ -208,11 +154,10 @@ const Dashboard: React.FC = () => {
                     <div className="text-left">
                       <p className="text-sm font-medium">{appointment.date}</p>
                       <p className="text-sm text-gray-600">{appointment.time}</p>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        appointment.status === 'تایید شده'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-yellow-100 text-yellow-700'
-                      }`}>
+                      <span className={`text-xs px-2 py-1 rounded-full ${appointment.status === 'تایید شده'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-yellow-100 text-yellow-700'
+                        }`}>
                         {appointment.status}
                       </span>
                     </div>
@@ -222,7 +167,15 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </a>
-      
+
+      </div>
+
+      {/* محل تبلیغات و بنر */}
+      <div className="mt-6 mb-4">
+        <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 bg-gray-50 text-center">
+          <h3 className="text-lg font-semibold text-gray-600 mb-2">محل تبلیغات و بنر شما</h3>
+          <p className="text-sm text-gray-500">این فضا برای نمایش تبلیغات و بنرهای شما در نظر گرفته شده است</p>
+        </div>
       </div>
 
     </div>

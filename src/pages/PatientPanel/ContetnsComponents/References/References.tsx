@@ -556,7 +556,7 @@ const References: React.FC = () => {
                   variant="solid"
                   onClick={handleCreateReferral}
                   disabled={createLoading || !selectedDoctor || !patientMobile.trim()}
-                  className="px-6 bg-blue-600 hover:bg-blue-700 text-white"
+                  className="px-6 bg-blue-600 hover:bg-blue-700 text-primary"
                 >
                   {createLoading ? (
                     <div className="flex items-center gap-2">

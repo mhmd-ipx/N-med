@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useParams, Link } from 'react-router-dom';
 import { HiOutlineArrowLeft } from 'react-icons/hi2';
 import { getDoctorById, getSpecialties, getDoctorReviews } from '../services/publicApi';
@@ -126,6 +127,9 @@ const DoctorDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Helmet>
+        <title>{doctor.user.name} | نیلو درمان</title>
+      </Helmet>
       {/* Header */}
       <div className="bg-white shadow-sm ">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

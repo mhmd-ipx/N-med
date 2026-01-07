@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Helmet } from 'react-helmet-async';
 import Filters from '../components/ServiceCategories/Filters';
 import { getDoctors, type Doctor } from '../services/referralApi';
 import { getServices, SingleServiceCard } from '../pages/HomeComponents/ServiceCard';
-import { getProvinces, getSpecialties, type Province, type Specialty } from '../services/publicApi';
+import { getProvinces, type Province } from '../services/publicApi';
 import type { Service } from '../pages/HomeComponents/ServiceCard';
 import { HiOutlineFilter, HiOutlineSearch } from 'react-icons/hi';
 import { useSearchParams } from 'react-router-dom';
@@ -109,6 +110,9 @@ const ServiceCategories: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <Helmet>
+        <title>دسته‌بندی خدمات | نیلو درمان</title>
+      </Helmet>
       <div className="container mx-auto px-4 py-8 max-w-[1300px]">
         {/* Header */}
         <div className="text-center mb-8">
